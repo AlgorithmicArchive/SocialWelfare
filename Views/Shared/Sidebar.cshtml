@@ -1,0 +1,51 @@
+<nav class="py-3 sidebar-size" style="background-color: #66615B;">
+    <div class="container-fluid">
+        <span class="text-white fs-5 center-align"> SOCIAL WELFARE </span>
+        <span class="text-white fs-5 center-align"> DEPARTMENT</span>
+
+        <p class="border-top border-bottom border-secondary center-align text-secondary fs-1 my-4">PROFILE</p>
+        <ul class="navbar-nav mt-4">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">
+                    <i class="fa-solid fa-sliders"></i>
+                    DASHBOARD
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link dropdown-caret" href="#servicesMenu" data-bs-toggle="collapse" role="button"
+                    aria-expanded="false" aria-controls="servicesMenu">
+                    <i class="fa-solid fa-list-ul"></i>
+                    SERVICES
+                </a>
+                <div class="collapse" id="servicesMenu">
+                    <ul class="navbar-nav ms-5">
+                        <li class="nav-item"><a class="nav-link" href="#">CREATE</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">MODIFY</a></li>
+                    </ul>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fa-solid fa-sliders"></i>
+                    REPORTS
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<script>
+    $(document).ready(function () {
+
+        if ($(window).width() < 768) {
+            $("#dashboardToggler").show();
+        }
+
+        $("#dashboardToggler").click(function () {
+            if ($(window).width() < 768) {
+                $(".sidebar-size").toggleClass("show");
+            }
+        });
+
+    })
+</script>

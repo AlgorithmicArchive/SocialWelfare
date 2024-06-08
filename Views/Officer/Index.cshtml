@@ -1,0 +1,73 @@
+<div class="full-screen-section center-align flex-column py-5">
+    <div class="container mt-5">
+        <div class="row p-5 justify-content-between">
+            <div class="col-md-4 mt-2">
+                <div class="card border-0 p-3 py-5 rounded-border"
+                    style="cursor: pointer;background-color: #FFC107;color:#000" data-bs-toggle="tooltip"
+                    data-bs-placement="top">
+                    <div class="center-align gap-4">
+                        <i class="fas fa-hourglass-half fs-1"></i>
+                        <p class="text-center fs-1 value my-auto" id="pending">0</p>
+                    </div>
+                    <p class="text-center fs-4 fw-bold">Pending Applications</p>
+                </div>
+            </div>
+
+            <div class="col-md-4 mt-2">
+                <div class="card border-0 p-3 py-5 rounded-border"
+                    style="cursor: pointer;background-color: #007BFF;color:#fff" data-bs-toggle="tooltip"
+                    data-bs-placement="top">
+                    <div class="center-align gap-4">
+                        <i class="fas fa-arrow-right fs-1"></i>
+                        <p class="text-center fs-1 value my-auto" id="forward">4</p>
+                    </div>
+                    <p class="text-center fs-4 fw-bold">Forwarded Applications</p>
+                </div>
+            </div>
+
+            <div class="col-md-4 mt-2">
+                <div class="card border-0 p-3 py-5 rounded-border"
+                    style="cursor: pointer;background-color: #28A745;color:#fff" data-bs-toggle="tooltip"
+                    data-bs-placement="top">
+                    <div class="center-align gap-4">
+                        <i class="fas fa-check-circle fs-1"></i>
+                        <p class="text-center fs-1 value my-auto" id="sanction">3</p>
+                    </div>
+                    <p class="text-center fs-4 fw-bold">Sanctioned Applications</p>
+                </div>
+            </div>
+
+            <div class="col-md-4 mt-2">
+                <div class="card border-0 p-3 py-5 rounded-border"
+                    style="cursor: pointer;background-color: #DC3545;color:#fff" data-bs-toggle="tooltip"
+                    data-bs-placement="top">
+                    <div class="center-align gap-4">
+                        <i class="fas fa-times-circle fs-1"></i>
+                        <p class="text-center fs-1 value my-auto" id="reject">0</p>
+                    </div>
+                    <p class="text-center fs-4 fw-bold">Rejected Applications</p>
+                </div>
+            </div>
+
+            <div class="col-md-4 mt-2">
+                <div class="card border-0 p-3 py-5 rounded-border"
+                    style="cursor: pointer;background-color: #FD7E14;color:#fff" data-bs-toggle="tooltip"
+                    data-bs-placement="top">
+                    <div class="center-align gap-4">
+                        <i class="fas fa-undo-alt fs-1"></i>
+                        <p class="text-center fs-1 value my-auto" id="return">4</p>
+                    </div>
+                    <p class="text-center fs-4 fw-bold">Returned Applications</p>
+                </div>
+            </div>
+
+            <div class="col-md-4"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const countList = @Html.Raw(Json.Serialize(Model));
+</script>
+<script src="/js/Officer/index.js"></script>

@@ -1,0 +1,26 @@
+<div class="full-screen-section center-align py-5">
+    <div class="container">
+        <table class="table table-striped table-hover table-bordered" style="border-radius:10px;overflow:hidden;">
+            <thead class="bg-dark text-white">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
+                    <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
+                    <th scope="col">Property To Update</th>
+                    <th scope="col">New Value</th>
+                    <th scope="col">Option</th>
+                </tr>
+            </thead>
+            <tbody id="userDetails">
+            </tbody>
+        </table>
+    </div>
+</div>
+<form id="UserDetails" action="/Officer/UserDetails" method="post">
+    <input type="hidden" name="ApplicationId" id="ApplicationId">
+</form>
+<script>
+    const applications = @Html.Raw(Json.Serialize(Model));
+</script>
+<script src="/js/Officer/updateRequest.js"></script>
+<script src="/js/pagination.js"></script>

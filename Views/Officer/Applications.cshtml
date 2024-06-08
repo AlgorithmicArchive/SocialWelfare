@@ -1,0 +1,57 @@
+<div class="full-screen-section center-align flex-column">
+    <div class="container center-align gap-2 mb-2" id="containerSwitcher" style="display: none;">
+        <button class="btn btn-dark" id="mainButton">Main</button>
+        <button class="btn btn-secondary" id="poolButton">Pool</button>
+    </div>
+    <div id="mainContainer" class="container">
+        <table class="table table-bordered table-responsive table-striped table-hover">
+            <thead class="bg-dark text-white">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
+                    <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
+                    <th scope="col">Option</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+    <div class="container mt-5" id="updateContainer" style="display: none;">
+        <table class="table table-bordered table-responsive table-striped table-hover">
+            <thead class="bg-dark text-white">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
+                    <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
+                    <th scope="col">Option</th>
+                </tr>
+            </thead>
+            <tbody id="updateListTbody">
+            </tbody>
+        </table>
+    </div>
+    <div id="PoolContainer" class="container" style="display: none;">
+        <table class="table table-striped table-hover table-bordered" style="border-radius:10px;overflow:hidden;">
+            <thead class="bg-dark text-white">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
+                    <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
+                </tr>
+            </thead>
+            <tbody id="poolArray">
+            </tbody>
+        </table>
+
+        <button class="btn btn-dark d-flex mx-auto" id="sanctionAll">Sanction All</button>
+    </div>
+</div>
+
+
+<script>
+    const list = @Html.Raw(Json.Serialize(Model));
+</script>
+<script src="/js/pagination.js"></script>
+<script src="/js/Officer/Applications/helperFunctions.js"></script>
+<script src="/js/Officer/Applications/tableCreation.js"></script>
+<script src="/js/Officer/Applications/script.js"></script>

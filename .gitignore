@@ -1,0 +1,38 @@
+# Compiled binary files
+bin/
+obj/
+
+# User-specific files
+*.user
+*.rsuser
+*.suo
+
+# Log files
+*.log
+
+# Configuration files
+appsettings.Development.json
+appsettings.*.json
+
+# Package management
+packages/
+
+# IDE files
+.vs/
+
+# uploads folder
+/wwwroot/uploads/
+/wwwroot/files/
+
+# Backup files
+*_backup_*/
+
+# Generated files
+**/Generated_Code/
+
+# Temporary files
+.temp/
+
+# Build output
+.build/
+

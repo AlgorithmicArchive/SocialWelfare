@@ -1,0 +1,164 @@
+
+html,body{
+    scroll-behavior: smooth;
+    font-family: Metropolis, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.margin-center{
+    margin-top: 10%;
+}
+
+.background-primary{
+    background-color: #97bdfb;
+}
+svg{
+    fill: #97bdfb;
+}
+.width-25{
+    width: 25%;
+}
+.width-50 {
+    width: 50%;
+}
+
+.rounded-border{
+    border-radius: 0.8rem;
+}
+
+.full-screen-section {
+    min-height: 100vh;
+    width: 100vw;
+}
+
+.center-align{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+p{
+    font-family: var(--bs-body-font-family);
+}
+.font-heading {
+    font-size: xx-large;
+    font-weight: 500;
+}
+.card img{
+    border-radius: 20px;
+}
+
+.overlay {
+    position: absolute;
+    bottom: 0;
+    background-color: rgba(251, 28, 28, 0.467);
+    overflow: hidden;
+    height: 100%;
+    opacity: 0;
+    transition: 0.5s ease;
+}
+
+.card:hover .overlay {
+    opacity: 1;
+}
+
+.errorMsg{
+    font-size: 12px;
+    color: red;
+}
+/* Spinner styles */
+#loadingSpinner {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    /* Sit on top of the page content */
+    width: 100%;
+    /* Full width (cover the whole page) */
+    height: 100%;
+    /* Full height (cover the whole page) */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Black background with opacity */
+    z-index: 9999;
+    /* Ensure it sits on top */
+    text-align: center;
+}
+#loadingSpinner img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.main-admin-body{
+    width: 85%;
+}
+.sidebar-admin-section{
+    width: 15%;
+}
+.sm-position{
+    position: absolute;
+}
+
+.md-hidden{
+    display: none;
+}
+
+.custom-card{
+    padding: 1.5rem;
+    border-radius: 3px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    background-color: white;
+}
+
+@media only screen and (max-width: 600px) {
+    .sm-hidden{
+        display: none;
+    }
+    .sm-flex-column{
+        flex-direction: column;
+    }
+    .font-heading {
+        font-size: xx-large;
+        font-weight: 500;
+    }
+    .sm-height-auto{
+        height: auto;
+    }
+    .width-25 {
+        width: 100%;
+    }
+    .width-50 {
+        width: 100%;
+    }
+    .margin-center {
+        margin-top: 40%;
+    }
+    .md-hidden {
+        display: block;
+    }
+    .sm-position {
+        position: relative;
+    }
+
+    .main-admin-body {
+        width: 100%;
+    }
+    .sidebar-admin-section {
+        width: 0;
+    }
+}
+  
+@media only screen and (min-width: 601px) and (max-width: 1024px) {
+
+  .margin-center{
+    margin-top: 20%;
+  }
+}

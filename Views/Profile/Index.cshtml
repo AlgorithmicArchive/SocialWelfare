@@ -1,0 +1,65 @@
+<div class="full-screen-section center-align py-5 mt-5">
+    <div class="container rounded-border shadow-lg p-5 mt-5">
+        <div class="row">
+            <div class="col-sm-4 d-flex flex-column gap-2">
+                <img src="/resources/profile.jpg" alt="Profile" class="img-fluid">
+                <button class="btn btn-dark">Change Image</button>
+                <button class="btn btn-dark" onclick="ChangePassword();">Change Password</button>
+            </div>
+            <div class="col-sm-8">
+                <table class="table table-responsive table-borderless fs-4">
+                    <tbody id="userDetails">
+                        <tr>
+                            <th>Username</th>
+                            <td class="d-flex align-items-center gap-2 text-break" id="usernameText">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Email</th>
+                            <td class="d-flex align-items-center gap-2 text-break" id="emailText"></td>
+                        </tr>
+                        <tr>
+                            <th>Mobile Number</th>
+                            <td class="d-flex align-items-center gap-2 text-break" id="mobileNumberText"></td>
+                        </tr>
+                        <tr>
+                            <th>Designation</th>
+                            <td class="d-flex align-items-center gap-2 text-break" id="designationText"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <hr>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<button class="d-none" id="updateDetailsButton" data-bs-toggle="modal" data-bs-target="#updateDetails"></button>
+
+<div class="modal fade" id="updateDetails" tabindex="-1" aria-labelledby="updateDetailsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content w-100">
+            <div class="modal-header bg-dark text-white">
+                <h1 class="modal-title fs-5" id="updateDetailsLabel">Update Details</h1>
+                <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="UpdateColumn" action="/Profile/UpdateColumn" method="post">
+                    <div class="container-fluid d-flex flex-column gap-2" id="updateDetailsContainer">
+
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-dark" id="statusButtons">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const userDetails = @Html.Raw(Json.Serialize(Model));
+</script>
+<script src="/js/validations.js"></script>
+<script src="/js/Profile/index.js"></script>

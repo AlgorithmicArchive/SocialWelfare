@@ -1,0 +1,24 @@
+<nav class="navbar navbar-expand-lg flex-column fixed-top py-4 px-0 gap-4 ">
+    <div class="container-fluid border-bottom border-3 border-danger">Horizontal Section</div>
+    <div class="container-fluid d-flex justify-content-center">
+        <i class=" navbar-toggler fa-solid fa-bars" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navbarNavDropdown"></i>
+        <a class="navbar-brand fw-bold text-primary md-hidden fs-6">Social Welfare Department</a>
+        <div class="collapse navbar-collapse justify-content-center" id="navbarNavDropdown">
+            <a class="navbar-brand fw-bold text-primary sm-hidden fs-2 px-5 border-end border-dark">Social Welfare
+                Department</a>
+            <ul class="navbar-nav" id="leftContainer">
+            </ul>
+            <ul class="navbar-nav" id="rightContainer">
+            </ul>
+            <ul class="navbar-nav sm-position end-0" id="profileContainer">
+            </ul>
+        </div>
+
+    </div>
+</nav>
+
+<script>
+    var userType = @Html.Raw(Json.Serialize(ViewData["UserType"]));
+    var userName = @Html.Raw(Json.Serialize(ViewData["UserName"]));
+</script>

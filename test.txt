@@ -1,0 +1,14 @@
+  -- Construct SQL for backup code authentication
+        SET @Sql = N'
+            SELECT *
+            FROM ' + QUOTENAME(@TableName) + N'
+            WHERE Username = @Username
+            AND EXISTS (
+                SELECT 1
+                FROM OPENJSON((SELECT BackupCodes FROM ' + QUOTENAME(@TableName) + N' WHERE Username = @Username), ''$.unused'')
+                WHERE [value] = @BackupCode
+            );
+        ';
+        SET @ParamDefinition = N'@Username NVARCHAR(50), @BackupCode NVARCHAR(100)';
+
+        EXEC sp_executesql @Sql, @ParamDefinition, @Username, @BackupCode;

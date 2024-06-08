@@ -1,0 +1,42 @@
+<div class="full-screen-section center-align flex-column">
+
+    <div class="container center-align flex-column shadow rounded-border p-3">
+        <img src="/resources/emblem.png" alt="Emblem" class="img-fluid" style="height: 100px;width:100px;">
+        <p class="fs-3 fw-bold">Union Teritory of Jammu and Kashmir</p>
+        <p class="fs-4 fw-bold">Acknowledgement</p>
+        <table class="fs-4" id="acknowledgement">
+        </table>
+    </div>
+    <button class="btn btn-dark d-flex mx-auto mt-3" onclick="downloadFile()">Export as PDF</button>
+</div>
+
+<script>
+    const details = @Html.Raw(Json.Serialize(Model));
+    for (let item in details) {
+        $("#acknowledgement").append(`
+             <tr>
+                <td style="border: 1px solid black;">${item}</td>
+                <td id="applicationId" style="border: 1px solid black;">${details[item]}</td>
+            </tr>
+        `);
+    }
+    const ApplicationId = details["REFERENCE NUMBER"];
+
+
+    function downloadFile() {
+        const filePath = "/files/" + ApplicationId.replace(/\//g, "_") + "Acknowledgement.pdf";
+        fetch(filePath)
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = filePath.split('/').pop(); // Extract filename from path
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => console.error('Error downloading file:', error));
+    }
+</script>

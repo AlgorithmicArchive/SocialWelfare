@@ -1,0 +1,108 @@
+<div class="full-screen-section center-align flex-column px-1">
+    <div class="container shadow-lg rounded-border" style="max-height: 60vh;overflow-y: auto;">
+        <div class="row p-3">
+            <div class="col-sm-4">
+                <img id="userImage" src="/resources/profile.png" alt="Profile"
+                    class="img-fluid rounded-circle object-fit-contain border border-2 border-dark mx-auto"
+                    style="width: 200px; height:200px;">
+            </div>
+            <div class="col-sm-8">
+                <div class="row" id="personalDetails">
+                    <div class="col-sm-12">
+                        <p class="font-heading">Personal Details</p>
+                    </div>
+                </div>
+                <div class="row" id="addressDetails">
+                    <div class="col-sm-12">
+                        <p class="font-heading">Address Details</p>
+                    </div>
+                </div>
+                <div class="row" id="bankDetails">
+                    <div class="col-sm-12">
+                        <p class="font-heading">Bank Details</p>
+                    </div>
+                </div>
+                <div class="row" id="documents">
+                    <div class="col-sm-12">
+                        <p class="font-heading">Documents</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-dark width-25 mt-4" data-bs-toggle="modal" data-bs-target="#exampleModal">Take
+        Action</button>
+</div>
+
+<button class="d-none" id="showDoc" data-bs-toggle="modal" data-bs-target="#showDocument"></button>
+<button class="d-none" id="sanctionButton" data-bs-toggle="modal" data-bs-target="#showSanctionLetter"></button>
+
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Action To Take</h1>
+                <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="container d-flex flex-column gap-2">
+                    <label for="Choose Action">Choose Action</label>
+                    <select name="action" id="action" class="form-select">
+                    </select>
+                    <div id="extra" style="max-height:240px;overflow-y:auto">
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-dark">
+                <button type="button" class="btn btn-light" id="closeExmpleModal" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="showDocument">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <!-- Modal body -->
+            <div class="modal-body">
+                <div class="container-fluid" id="documentDisplay">
+                    <iframe id="myIframe" style="width: 100%; height: 800px;"></iframe>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="showSanctionLetter">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <!-- Modal body -->
+            <div class="modal-body">
+                <div class="container-fluid" id="sanctionLetterDistplay">
+                    <iframe id="sactionFrame" style="width: 100%; height: 800px;"></iframe>
+                    <button class="btn btn-dark d-flex mx-auto">Approve</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const ApplicationDetails = @Html.Raw(Json.Serialize(Model));
+</script>
+
+<script src="/js/Officer/UserDetails/userDetailsHelper.js"></script>
+<script src="/js/Officer/UserDetails/userDetails.js"></script>

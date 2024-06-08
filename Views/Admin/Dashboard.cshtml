@@ -1,0 +1,103 @@
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container-fluid center-align flex-column gap-5 py-5">
+    <div class="row w-100">
+        <div class="col-md-3">
+            <div class="custom-card">
+                <p class="fs-1"><i class="fa-solid fa-server text-warning"></i></p>
+                <p class="d-flex flex-column">
+                    <span class="fs-5">Services</span>
+                    <span class="fs-2 fw-bold" id="services">20</span>
+                </p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="custom-card">
+                <p class="fs-1"><i class="fa-solid fa-briefcase text-success"></i></p>
+                <p class="d-flex flex-column">
+                    <span class="fs-5">Officers</span>
+                    <span class="fs-2 fw-bold" id="officers">25</span>
+                </p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="custom-card">
+                <p class="fs-1"><i class="fa-solid fa-users text-danger"></i></p>
+                <p class="d-flex flex-column">
+                    <span class="fs-5">Citizens</span>
+                    <span class="fs-2 fw-bold" id="citizens">50</span>
+                </p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="custom-card">
+                <p class="fs-1"><i class="fa-solid fa-file-pen text-info"></i></p>
+                <p class="d-flex flex-column">
+                    <span class="fs-5">Applications</span>
+                    <span class="fs-2 fw-bold" id="applications">100</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row w-100">
+        <div class="col-sm-4">
+            <select class="form-select" name="district" id="district">
+                <option value="">Select District</option>
+                <option value="Jammu">Jammu</option>
+            </select>
+        </div>
+        <div class="col-sm-4">
+            <select class="form-select" name="officer" id="officer">
+                <option value="">Select Officer</option>
+                <option value="District Social Welfare Offcier">District Social Welfare Offcier</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row w-100">
+        <div class="col-md-4">
+            <div class="custom-card">
+                <p class="fs-1"><i class="fa-solid fa-hourglass-half text-warning fs-1"></i></p>
+                <p class="d-flex flex-column">
+                    <span class="fs-5">Pending</span>
+                    <span class="fs-2 fw-bold" id="services">20</span>
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="custom-card">
+                <p class="fs-1"><i class="fa-solid fa-ban text-danger fs-1"></i></p>
+                <p class="d-flex flex-column">
+                    <span class="fs-5">Rejected</span>
+                    <span class="fs-2 fw-bold" id="services">20</span>
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="custom-card">
+                <p class="fs-1"><i class="fa-solid fa-flag-checkered text-success fs-1"></i></p>
+                <p class="d-flex flex-column">
+                    <span class="fs-5">Sanctioned</span>
+                    <span class="fs-2 fw-bold" id="services">20</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row w-100">
+        <div class="col-md-4 offset-md-4">
+            <div class="custom-card" style="height: 40vh;">
+                A
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const countList = @Html.Raw(Json.Serialize(Model));
+</script>
+<script src="/js/Admin/dashboard.js"></script>

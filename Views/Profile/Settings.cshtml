@@ -1,0 +1,16 @@
+<div class="full-screen-section center-align">
+    <div class="container center-align flex-column width-50 rounded-border shadow p-3 gap-3">
+        <p class="fs-4 fw-bold">Backup Codes</p>
+        <div class="d-flex gap-2">
+            <label>Used</label>
+            <p class="bg-warning" style="width: 20px;height:20px"></p>
+            <label>Unused</label>
+            <p class="bg-success" style="width: 20px;height:20px"></p>
+        </div>
+        <div class="row justify-content-center d-flex gap-2" id="backupCodes"></div>
+    </div>
+</div>
+<script>
+    const userDetails = @Html.Raw(Json.Serialize(Model));
+</script>
+<script src="/js/Profile/settings.js"></script>

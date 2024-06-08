@@ -1,0 +1,53 @@
+<div class="full-screen-section center-align py-5">
+    <div class="container mt-5">
+        <div class="row  p-5 justify-content-center">
+            <div class="col-sm-6 p-3">
+                <div class="row">
+                    <div class="col-md-12 bg-white p-3 py-5 shadow-lg rounded-border">
+                        <h3>Applications</h3>
+                        <ul class="list-group">
+                            <li
+                                class="list-group-item border-0 text-secondary d-flex justify-content-between align-items-center">
+                                Initiated Applications
+                                <span class="badge bg-primary" id="initiated"></span>
+                            </li>
+                            <li
+                                class="list-group-item border-0 text-secondary d-flex justify-content-between align-items-center">
+                                Incomplete Applications
+                                <span class="badge bg-danger" id="incomplete"></span>
+                            </li>
+                            <li
+                                class="list-group-item border-0 text-secondary d-flex justify-content-between align-items-center">
+                                Sanctioned Applications
+                                <span class="badge bg-success" id="sanction"></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="card border-0 p-3 py-5 bg-white shadow rounded-border">
+                    <h3>My Profile</h3>
+                    <img src="/resources/profile.jpg" class="card-img-top rounded-pill w-25 mx-auto"
+                        alt="Profile Picture">
+                    <div class="card-body">
+                        <h5 class="card-title" id="username"></h5>
+                        <p class="card-text" id="email"></p>
+                        <p class="card-text" id="mobileNumber"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const details = @Html.Raw(Json.Serialize(Model));
+    console.log(details)
+    $("#username").text("Username: " + details.userDetails["username"]);
+    $("#email").text("Email: " + details.userDetails["email"]);
+    $("#mobileNumber").text("Mobile Number: " + details.userDetails["mobileNumber"]);
+    $("#initiated").text(details.initiated)
+    $("#incomplete").text(details.incomplete)
+    $("#sanction").text(details.sanctioned)
+</script>

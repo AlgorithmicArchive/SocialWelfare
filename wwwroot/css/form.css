@@ -1,0 +1,71 @@
+label{
+    font-size: 14px;
+    font-family: 'Courier New', Courier, monospace; 
+}
+
+.form-heading{
+    font-size: 5vh;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+#formOverlay{
+    transform: translateX(100%);
+    z-index: 1;
+}
+
+.form-control:focus,.btn:focus,.form-select:focus{
+    outline: none;
+    box-shadow: none;
+}
+
+.form-control:read-only,.form-select:read-only{
+    background-color: transparent;
+}
+
+.form-control::placeholder{
+    font-size: 18px !important;
+    color: rgb(205, 205, 205);
+}
+
+.left-to-right {
+    animation: slideIn 0.5s ease-in-out forwards;
+}
+
+.right-to-left{
+    animation: slideOut 0.5s ease-out forwards;
+}
+
+@keyframes slideIn {
+    0% {
+        transform: translateX(0%);
+    }
+    25%{
+        transform: translateX(25%);
+    }
+
+    50% {
+        transform: translateX(50%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes slideOut {
+    0% {
+        transform: translateX(100%);
+    }
+
+    25% {
+        transform: translateX(50%);
+    }
+
+    50% {
+        transform: translateX(25%);
+    }
+
+    100% {
+        transform: translateX(0%);
+    }
+}

@@ -1,0 +1,53 @@
+<form id="registration">
+    <div class="full-screen-section px-2 mb-5">
+        <div class="container border shadow-lg margin-center mb-5" style="border-radius: 15px;overflow: hidden;">
+            <div class="row" style="min-height: 50vh;">
+                <div class="col-sm-12 center-align flex-column rounded-border shadow-lg py-3" id="registerContainer">
+                    <p class="form-heading text-center">Register</p>
+                    <div class="container d-flex flex-column">
+                        <label for="Username">Username</label>
+                        <input type="text" name="Username" id="Username" placeholder="Username"
+                            class="form-control border-0 border-bottom rounded-0 mb-2">
+                        <label for="Email">Email</label>
+                        <input type="email" name="Email" id="Email" placeholder="Email"
+                            class="form-control border-0 border-bottom rounded-0 mb-2">
+                        <label for="MobileNumber">MobileNumber</label>
+                        <input type="text" name="MobileNumber" id="MobileNumber" placeholder="Mobile Number"
+                            class="form-control border-0 border-bottom rounded-0 mb-2">
+                        <label for="Password">Password</label>
+                        <input type="password" name="Password" id="Password" placeholder="Password"
+                            class="form-control border-0 border-bottom rounded-0 mb-2">
+                        <label for="Confirm Password">Confirm Password</label>
+                        <input type="password" name="ConfirmPassword" id="ConfirmPassword"
+                            placeholder="Confirm Password" class="form-control border-0 border-bottom rounded-0 mb-2">
+                        <label for="Designation">Designation</label>
+                        <select class="form-select mb-2 border-0 border-bottom rounded-0" name="designation"
+                            id="designation">
+                        </select>
+                        <label for="Select Postioned District">Select Postioned District</label>
+                        <select class="form-select mb-2 border-0 border-bottom rounded-0" name="District" id="District">
+                        </select>
+                        <label for="Select Postioned Tehsil">Select Postioned Tehsil</label>
+                        <select class="form-select mb-2 border-0 border-bottom rounded-0" name="Tehsil" id="Tehsil">
+                        </select>
+                        <div class="d-flex justify-content-between border rounded-pill mb-2">
+                            <span id="captchaCanvas"
+                                class="captchaCanvas d-flex justify-content-center align-items-center w-75 p-0"></span>
+                            <i id="refreshCaptcha" class="btn bi bi-arrow-clockwise fs-4"></i>
+                        </div>
+                        <label for="Captcha">Captcha</label>
+                        <input type="text" class="form-control border-0 border-bottom rounded-0 mb-2" id="captchaInput"
+                            placeholder="Captcha">
+                        <p id="captchaError" class="fs-6 text-danger text-center"></p>
+                        <button id="registerButton" class="btn btn-dark w-25 mx-auto">Register
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+<script src="/js/validations.js"></script>
+<script src="/js/User/Forms/dataFetching.js"></script>
+<script src="/js/Home/officerRegistration.js"></script>

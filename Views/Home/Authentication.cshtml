@@ -1,0 +1,105 @@
+@{
+    ViewData["Title"] = "Registration Page";
+}
+
+<form id="authForm">
+    <div class="full-screen-section px-2 mb-5">
+        <div class="container border shadow-lg margin-center mb-5" style="border-radius: 15px;overflow: hidden;">
+            <div class="row position-relative" style="min-height: 70vh;">
+                <div id="formOverlay" class="col-sm-6 bg-danger position-absolute h-100 center-align text-white">
+                    <div class="center-align flex-column">
+                        <p class="font-heading" id="formHeading">Welcome Back</p>
+                        <img id="formImage" src="~/resources/login.png" alt="Login" class="img-fluid w-75">
+                    </div>
+                </div>
+                <div class="col-sm-6 center-align flex-column" id="loginContainer">
+                    <p class="form-heading text-center">Login</p>
+                    <div class="container d-flex flex-column">
+                        <label for="Username">Username</label>
+                        <input type="text" name="Username" id="Username" placeholder="Username"
+                            class="form-control border-0 border-bottom rounded-0 mb-3">
+                        <label for="Password">Password</label>
+                        <input type="password" name="Password" id="Password" placeholder="Password"
+                            class="form-control border-0 border-bottom rounded-0 mb-3">
+                        <div class="d-flex justify-content-between border rounded-pill mb-3">
+                            <span id="captchaCanvas"
+                                class="captchaCanvas d-flex justify-content-center align-items-center w-75 p-0"></span>
+                            <i id="refreshCaptcha" class="btn bi bi-arrow-clockwise fs-4"></i>
+                        </div>
+                        <label for="Captcha">Captcha</label>
+                        <input type="text" class="form-control border-0 border-bottom rounded-0 mb-3" id="captchaInput"
+                            placeholder="Captcha">
+                        <p id="captchaError" class="fs-6 text-danger text-center"></p>
+                        <button id="loginButton" class="btn btn-dark w-25 mx-auto">Login</button>
+                    </div>
+                    <p class="fs-5 text-center mt-4">OR</p>
+                    <p id="switchToRegister" class="text-center" role="button">Register</p>
+                </div>
+                <div class="col-sm-6 center-align flex-column" id="registerContainer">
+                    <p class="form-heading text-center">Register</p>
+                    <div class="container d-flex flex-column">
+                        <label for="Username">Username</label>
+                        <input type="text" name="Username" id="Username" placeholder="Username"
+                            class="form-control border-0 border-bottom rounded-0 mb-2">
+                        <label for="Email">Email</label>
+                        <input type="email" name="Email" id="Email" placeholder="Email"
+                            class="form-control border-0 border-bottom rounded-0 mb-2">
+                        <label for="MobileNumber">MobileNumber</label>
+                        <input type="text" name="MobileNumber" id="MobileNumber" placeholder="Mobile Number"
+                            class="form-control border-0 border-bottom rounded-0 mb-2">
+                        <label for="Password">Password</label>
+                        <input type="password" name="Password" id="Password" placeholder="Password"
+                            class="form-control border-0 border-bottom rounded-0 mb-2">
+                        <label for="Confirm Password">ConfirmPassword</label>
+                        <input type="password" name="ConfirmPassword" id="ConfirmPassword"
+                            placeholder="Confirm Password" class="form-control border-0 border-bottom rounded-0 mb-2">
+                        <div class="d-flex justify-content-between border rounded-pill mb-2">
+                            <span id="captchaCanvas"
+                                class="captchaCanvas d-flex justify-content-center align-items-center w-75 p-0"></span>
+                            <i id="refreshCaptcha" class="btn bi bi-arrow-clockwise fs-4"></i>
+                        </div>
+                        <label for="Captcha">Captcha</label>
+                        <input type="text" class="form-control border-0 border-bottom rounded-0 mb-2" id="captchaInput"
+                            placeholder="Captcha">
+                        <p id="captchaError" class="fs-6 text-danger text-center"></p>
+                        <button id="registerButton" class="btn btn-dark w-25 mx-auto d-flex align-items-center">Register
+                            <div class="spinner-border text-muted"></div>
+                        </button>
+                    </div>
+                    <p class="fs-5 text-center">OR</p>
+                    <p id="switchToLogin" class="text-center" role="button">Login</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<button class="d-none" id="otpButton" data-bs-toggle="modal" data-bs-target="#otpModal">OPEN</button>
+
+
+<div class="modal fade" id="otpModal" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <form id="otpForm">
+
+                <div class="modal-header bg-dark text-white">
+                    <h1 class="modal-title fs-5" id="otpModalLabel">OTP has been sent to your email</h1>
+                    <button type="button" class="btn-close text-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <label for="OTP">OTP</label>
+                        <input class="form-control" type="text" name="otp" id="otp" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-dark d-flex justify-content-between">
+                    <button type="submit" class="btn btn-light">Submit</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="~/js/validations.js"></script>
+<script src="~/js/Home/authentication.js"></script>

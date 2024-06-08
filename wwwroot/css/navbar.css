@@ -1,0 +1,45 @@
+.navbar .navbar-brand {
+    color: #0061F2;
+    font-weight: bold;
+}
+
+.navbar .nav-link {
+    color: rgb(109, 108, 108);
+    font-weight: 500;
+    margin-right: 10px;
+}
+
+.dropdown-menu {
+    position: absolute;
+    opacity: 0;
+    transition: 1.5s ease;
+}
+.dropdown-menu.show{
+    opacity: 1;
+}
+
+.dropdown-menu[data-bs-popper] {
+    top: 120%;
+    left: -50%;
+    margin-top: .125rem;
+}
+
+.fixed-top.scrolled {
+    background-color: white;
+    border-bottom: 0.5px solid rgb(219, 219, 219);
+    transition: background-color 0.3s;
+}
+
+
+@media only screen and (max-width: 600px) {
+    .navbar .nav-link {
+        margin-right: 0;
+    }
+    .navbar-collapse{
+        background-color: white;
+        border: 1px solid black;
+        border-radius: 5px;
+        margin-top: 15px;
+        padding: 10px;
+    }
+}
