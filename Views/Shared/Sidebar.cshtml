@@ -3,10 +3,21 @@
         <span class="text-white fs-5 center-align"> SOCIAL WELFARE </span>
         <span class="text-white fs-5 center-align"> DEPARTMENT</span>
 
-        <p class="border-top border-bottom border-secondary center-align text-secondary fs-1 my-4">PROFILE</p>
+        <p class="border-top border-bottom border-secondary text-secondary my-4">
+            <a class="nav-link dropdown-caret text-white" href="#profileMenu" data-bs-toggle="collapse" role="button"
+                aria-expanded="false" aria-controls="profileMenu">
+                Profile
+            </a>
+        <div class="collapse" id="profileMenu">
+            <ul class="navbar-nav ms-5">
+                <li class="nav-item"><a class="nav-link" href="#">Change Password</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Home/Logout">Logout</a></li>
+            </ul>
+        </div>
+        </p>
         <ul class="navbar-nav mt-4">
             <li class="nav-item">
-                <a class="nav-link active" href="#">
+                <a class="nav-link" href="/Admin/Dashboard">
                     <i class="fa-solid fa-sliders"></i>
                     DASHBOARD
                 </a>
@@ -19,13 +30,13 @@
                 </a>
                 <div class="collapse" id="servicesMenu">
                     <ul class="navbar-nav ms-5">
-                        <li class="nav-item"><a class="nav-link" href="#">CREATE</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">MODIFY</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Admin/Services/Create">Create</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Admin/Services/Modify">Modify</a></li>
                     </ul>
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="/Admin/Reports">
                     <i class="fa-solid fa-sliders"></i>
                     REPORTS
                 </a>
@@ -36,16 +47,27 @@
 
 <script>
     $(document).ready(function () {
+        // Get the current URL path
+        var path = window.location.pathname;
 
-        if ($(window).width() < 768) {
-            $("#dashboardToggler").show();
-        }
+        // Remove active class from all nav links
+        $(".nav-link").removeClass("active");
+
+        // Add active class to the nav link corresponding to the current path
+        $(".nav-link[href='" + path + "']").addClass("active");
+
+        // Add active class to the dropdown button if any dropdown menu item is active
+        const menuId = $(".navbar-nav .active").parent().parent().parent().attr("id");
+        $(".nav-link[href='#" + menuId + "']").addClass("active");
+
+
+        // Show/hide sidebar based on screen width
+        $("#dashboardToggler").toggle($(window).width() < 768);
 
         $("#dashboardToggler").click(function () {
             if ($(window).width() < 768) {
                 $(".sidebar-size").toggleClass("show");
             }
         });
-
-    })
+    });
 </script>

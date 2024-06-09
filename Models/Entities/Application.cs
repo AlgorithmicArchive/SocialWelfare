@@ -47,4 +47,5 @@ public partial class Application
 
     public DateTime SubmissionDate { get; set; }
 
+    public virtual Service Service { get; set; } = null!;
 }

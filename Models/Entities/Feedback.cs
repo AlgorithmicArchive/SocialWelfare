@@ -1,4 +1,7 @@
-﻿namespace SocialWelfare.Models.Entities;
+﻿using System;
+using System.Collections.Generic;
+
+namespace SocialWelfare.Models.Entities;
 
 public partial class Feedback
 {

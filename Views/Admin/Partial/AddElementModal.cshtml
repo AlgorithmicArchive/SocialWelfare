@@ -1,0 +1,51 @@
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="addElementModal" tabindex="-1" aria-labelledby="addElementModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addElementModalLabel">Add New Element</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addElementForm">
+                    <div class="mb-3">
+                        <label for="elementType" class="form-label">Type</label>
+                        <select class="form-select" id="elementType" required>
+                            <option value="">Select Element Type</option>
+                            <option value="text">Text</option>
+                            <option value="select">Select</option>
+                            <option value="radio">Radio</option>
+                            <option value="checkbox">Checkbox</option>
+                            <option value="date">Date</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="elementName" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="elementName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="elementLabel" class="form-label">Label</label>
+                        <input type="text" class="form-control" id="elementLabel" required>
+                    </div>
+                    <div id="optionsContainer" class="mb-3" style="display: none;">
+                        <label class="form-label">Options</label>
+                        <div id="optionsList"></div>
+                        <button type="button" class="btn btn-secondary btn-sm mt-2" id="addOptionButton">Add
+                            Option</button>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Validations</label>
+                        <div id="validationList">
+                        </div>
+                    </div>
+                    <input type="hidden" id="itemIndex">
+                    <input type="hidden" id="fieldIndex">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveElementButton">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>

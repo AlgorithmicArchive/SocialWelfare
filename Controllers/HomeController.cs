@@ -98,28 +98,49 @@ namespace SocialWelfare.Controllers
             }
         }
 
-        public IActionResult Login(IFormCollection form)
+        public async Task<IActionResult> Login(IFormCollection form)
         {
             var username = new SqlParameter("Username", form["Username"].ToString());
             SqlParameter password = !string.IsNullOrEmpty(form["Password"]) ? new SqlParameter("Password", form["Password"].ToString()) : null!;
 
             var isCitizen = _dbContext.Citizens.FromSqlRaw("EXEC UserLogin @Username, @Password, @TableName", username, password, new SqlParameter("TableName", "Citizens")).ToList();
             var isOfficer = _dbContext.Officers.FromSqlRaw("EXEC UserLogin @Username, @Password, @TableName", username, password, new SqlParameter("TableName", "Officers")).ToList();
+            var isAdmin = _dbContext.Admins.FromSqlRaw("EXEC UserLogin @Username, @Password, @TableName", username, password, new SqlParameter("TableName", "Admins")).ToList();
 
 
             int userId;
+            string? url = "";
 
             if (isCitizen.Count != 0)
             {
                 userId = isCitizen[0].CitizenId;
                 HttpContext.Session.SetString("UserType", "Citizen");
+                url = "/Home/Verification";
             }
             else if (isOfficer.Count != 0)
             {
-                // ;
                 userId = isOfficer[0].OfficerId;
                 HttpContext.Session.SetString("Designation", isOfficer[0].Designation);
                 HttpContext.Session.SetString("UserType", "Officer");
+                url = "/Home/Verification";
+            }
+            else if (isAdmin.Count != 0)
+            {
+                userId = isAdmin[0].Uuid;
+                HttpContext.Session.SetString("UserType", "Admin");
+                url = "/Admin/Dashboard";
+                List<Claim> claims = [new Claim(ClaimTypes.NameIdentifier, isAdmin[0].Username)];
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var principal = new ClaimsPrincipal(identity);
+
+                // Sign in the user with a persistent cookie
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true, // Create a persistent cookie
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30) // Set the cookie expiration to 30 days
+                };
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
             }
             else
             {
@@ -130,7 +151,7 @@ namespace SocialWelfare.Controllers
             HttpContext.Session.SetInt32("UserId", userId);
             HttpContext.Session.SetString("Username", form["Username"].ToString());
 
-            return Json(new { status = true, url = "/Home/Verification" });
+            return Json(new { status = true, url });
         }
 
         public IActionResult Verification()
@@ -285,7 +306,7 @@ namespace SocialWelfare.Controllers
         public async Task<IActionResult> Authentication([FromForm] IFormCollection form)
         {
             _logger.LogInformation($"Form Type: {form["formType"].ToString()}");
-            return form["formType"].ToString() == "login" ? Login(form) : await Register(form);
+            return form["formType"].ToString() == "login" ? await Login(form) : await Register(form);
         }
 
         [HttpPost]

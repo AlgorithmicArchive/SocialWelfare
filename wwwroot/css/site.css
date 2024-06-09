@@ -118,6 +118,10 @@ p{
     background-color: white;
 }
 
+.hover-card:hover{
+    background-color: rgb(156, 156, 156);
+}
+
 @media only screen and (max-width: 600px) {
     .sm-hidden{
         display: none;

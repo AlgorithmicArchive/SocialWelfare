@@ -17,6 +17,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<Address> Addresses { get; set; }
 
+    public virtual DbSet<Admin> Admins { get; set; }
+
     public virtual DbSet<Application> Applications { get; set; }
 
     public virtual DbSet<ApplicationPerDistrict> ApplicationPerDistricts { get; set; }
@@ -44,8 +46,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Village> Villages { get; set; }
 
     public virtual DbSet<Ward> Wards { get; set; }
-
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("name=DefaultConnection");
@@ -59,6 +61,14 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.ToTable("Address");
 
             entity.Property(e => e.AddressDetails).IsUnicode(false);
+        });
+
+        modelBuilder.Entity<Admin>(entity =>
+        {
+            entity.HasKey(e => e.Uuid);
+
+            entity.Property(e => e.Uuid).HasColumnName("UUID");
+            entity.Property(e => e.Username).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Application>(entity =>
@@ -101,6 +111,10 @@ public partial class SocialWelfareDepartmentContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
+            entity.HasOne(d => d.Service).WithMany(p => p.Applications)
+                .HasForeignKey(d => d.ServiceId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Applicati__Servi__25DB9BFC");
         });
 
         modelBuilder.Entity<ApplicationPerDistrict>(entity =>
@@ -168,9 +182,7 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
             entity.ToTable("Feedback");
 
-            entity.Property(e => e.Uuid)
-                .ValueGeneratedNever()
-                .HasColumnName("UUID");
+            entity.Property(e => e.Uuid).HasColumnName("UUID");
             entity.Property(e => e.Message).HasColumnType("text");
             entity.Property(e => e.ServiceRelated).HasMaxLength(50);
             entity.Property(e => e.SubmittedAt)

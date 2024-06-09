@@ -1,0 +1,24 @@
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Create Service";
+}
+
+<div class="container-fluid center-align flex-column gap-5 py-5">
+    <div id="FormInfo" class="w-100">
+        <partial name="Partial/FormInfo.cshtml" />
+    </div>
+    <div id="FormChoice" style="display: none;">
+        <partial name="Partial/FormChoice.cshtml" />
+    </div>
+    <div id="Form" style="display: none;">
+        <partial name="Partial/Form.cshtml" />
+    </div>
+</div>
+
+
+<partial name="Partial/AddElementModal.cshtml" />
+<partial name="Partial/AddDocumentModal.cshtml" />
+
+<script src="/js/formvalidations.js"></script>
+<script src="/js/Admin/create/formGeneration.js"></script>
+<script src="/js/Admin/create/script.js"></script>

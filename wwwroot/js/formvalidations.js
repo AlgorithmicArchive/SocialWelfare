@@ -111,7 +111,7 @@ function isDateWithinRange(field, value) {
   } else {
     setErrorSpan(
       field.name,
-      "The range should be between 1 to 6 months from current date."
+      `The range should be between ${field.minLength} to ${field.maxLength} months from current date.`
     );
   }
   return msg;
