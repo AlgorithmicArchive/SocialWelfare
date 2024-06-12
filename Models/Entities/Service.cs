@@ -11,7 +11,7 @@ public partial class Service
 
     public string Department { get; set; } = null!;
 
-    public string FormElement { get; set; } = null!;
+    public string? FormElement { get; set; }
 
     public string? WorkForceOfficers { get; set; }
 

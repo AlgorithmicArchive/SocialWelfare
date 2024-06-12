@@ -13,12 +13,265 @@
     <div id="Form" style="display: none;">
         <partial name="Partial/Form.cshtml" />
     </div>
+    <div id="WorkForceOfficer" class="w-100" style="display: none;">
+        <partial name="Partial/WorkForceOfficers.cshtml" />
+    </div>
+    <div id="Final" style="display: none;">
+        <p class="fs-1 fw-bold text-center">Service Created Successfully!</p>
+    </div>
 </div>
 
 
 <partial name="Partial/AddElementModal.cshtml" />
 <partial name="Partial/AddDocumentModal.cshtml" />
 
+<script>
+    let serviceId = 0;
+    const Form = [
+        {
+            section: "Applicant Details",
+            fields: [
+                {
+                    type: "select",
+                    label: "Select District Social Welfare Officer",
+                    name: "District",
+                    isFormSpecific: true,
+                },
+                {
+                    type: "text",
+                    label: "Full Name",
+                    name: "ApplicantName",
+                    validationFunctions: [
+                        "notEmpty",
+                        "CapitalizeAlphabets",
+                        "onlyAlphabets",
+                    ],
+                },
+                {
+                    type: "file",
+                    label: "Applicant Photo",
+                    name: "ApplicantImage",
+                    validationFunctions: ["notEmpty"],
+                    accept: ".jpg,.jpeg,.png",
+                },
+                {
+                    type: "date",
+                    label: "Date Of Birth",
+                    name: "DateOfBirth",
+                    validationFunctions: [
+                        "notEmpty",
+                        "CapitalizeAlphabets",
+                        "isAgeGreaterThan",
+                    ],
+                    maxLength: 18,
+                },
+                {
+                    type: "text",
+                    label: "Mobile Number",
+                    name: "MobileNumber",
+                    validationFunctions: ["notEmpty", "onlyDigits", "specificLength"],
+                    maxLength: 10,
+                },
+                {
+                    type: "email",
+                    label: "Email",
+                    name: "Email",
+                    validationFunctions: ["notEmpty", "isEmailValid"],
+                },
+                {
+                    type: "select",
+                    label: "Category",
+                    name: "Category",
+                    options: ["PRIORITY HOUSEHOLD (PHH)", "ANTYODAYA ANNA YOJANA (AAY)"],
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "radio",
+                    label: "Relation Name",
+                    name: "Relation",
+                    options: ["Father", "Guardian"],
+                    validationFunctions: ["notEmpty"],
+                },
+            ],
+        },
+        {
+            section: "Present Address Details",
+            fields: [
+                {
+                    type: "text",
+                    label: "Address",
+                    name: "PresentAddress",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "select",
+                    label: " District",
+                    name: "PresentDistrict",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "select",
+                    label: " Tehsil",
+                    name: "PresentTehsil",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "select",
+                    label: " Block",
+                    name: "PresentBlock",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "text",
+                    label: " Halqa Panchayat/ Muncipality Name",
+                    name: "PresentPanchayatMuncipality",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "text",
+                    label: " Village Name",
+                    name: "PresentVillage",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "text",
+                    label: " Ward Name",
+                    name: "PresentWard",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "text",
+                    label: " Pincode",
+                    name: "PresentPincode",
+                    validationFunctions: [
+                        "notEmpty",
+                        "CapitalizeAlphabets",
+                        "onlyDigits",
+                        "specificLength",
+                    ],
+                    maxLength: 6,
+                },
+            ],
+        },
+        {
+            section: "Permanent Address Details",
+            fields: [
+                {
+                    type: "checkbox",
+                    label: "Same As Present",
+                    name: "SameAsPresent",
+                    validationFunctions: [],
+                },
+                {
+                    type: "text",
+                    label: " Address",
+                    name: "PermanentAddress",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "select",
+                    label: " District",
+                    name: "PermanentDistrict",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "select",
+                    label: " Tehsil",
+                    name: "PermanentTehsil",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "select",
+                    label: " Block",
+                    name: "PermanentBlock",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "text",
+                    label: " Halqa Panchayat/ Muncipality Name",
+                    name: "PermanentPanchayatMuncipality",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "text",
+                    label: " Village Name",
+                    name: "PermanentVillage",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "text",
+                    label: " Ward Name",
+                    name: "PermanentWard",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "text",
+                    label: " Pincode",
+                    name: "PermanentPincode",
+                    validationFunctions: [
+                        "notEmpty",
+                        "CapitalizeAlphabets",
+                        "onlyDigits",
+                        "specificLength",
+                    ],
+                    maxLength: 6,
+                },
+            ],
+        },
+        {
+            section: "Bank Details",
+            fields: [
+                {
+                    type: "select",
+                    label: "Bank Name",
+                    name: "BankName",
+                    options: [
+                        "THE JAMMU AND KASHMIR BANK LTD.",
+                        "J & K GRAMEEN BANK",
+                        "ELLAQUAI DEHTI BANK",
+                        "INDIA POST PAYMENTS BANK",
+                    ],
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "text",
+                    label: "Branch Name",
+                    name: "BranchName",
+                    validationFunctions: ["notEmpty", "CapitalizeAlphabets"],
+                },
+                {
+                    type: "text",
+                    label: "IFSC Code",
+                    name: "IfscCode",
+                    validationFunctions: [
+                        "notEmpty",
+                        "CapitalizeAlphabets",
+                        "specificLength",
+                    ],
+                    maxLength: 11,
+                },
+                {
+                    type: "text",
+                    label: "Account Number",
+                    name: "AccountNumber",
+                    validationFunctions: [
+                        "notEmpty",
+                        "CapitalizeAlphabets",
+                        "onlyDigits",
+                        "specificLength",
+                    ],
+                    maxLength: 16,
+                },
+            ],
+        },
+        {
+            section: "Documents",
+            fields: [],
+        },
+    ];
+    let workForceOfficers = [];
+</script>
 <script src="/js/formvalidations.js"></script>
+<script src="/js/Admin/create/workForceOfficer.js"></script>
 <script src="/js/Admin/create/formGeneration.js"></script>
 <script src="/js/Admin/create/script.js"></script>

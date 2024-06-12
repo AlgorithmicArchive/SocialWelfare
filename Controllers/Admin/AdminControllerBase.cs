@@ -14,7 +14,7 @@ namespace SocialWelfare.Controllers.Admin
         protected readonly SocialWelfareDepartmentContext dbcontext = dbcontext;
         protected readonly ILogger<AdminController> _logger = logger;
 
-         public IActionResult Dashboard()
+        public IActionResult Dashboard()
         {
             int ServiceCount = dbcontext.Services.ToList().Count;
             int OfficerCount = dbcontext.Officers.ToList().Count;
@@ -57,6 +57,39 @@ namespace SocialWelfare.Controllers.Admin
             return View();
         }
 
-       
+        [HttpPost]
+        public IActionResult CreateService([FromForm] IFormCollection form)
+        {
+
+            var service = new Service
+            {
+                ServiceName = form["serviceName"].ToString(),
+                Department = form["departmentName"].ToString(),
+            };
+
+            dbcontext.Add(service);
+            dbcontext.SaveChanges();
+
+            return Json(new { status = true, serviceId = service.ServiceId });
+        }
+
+        [HttpPost]
+        public IActionResult UpdateService([FromForm] IFormCollection form)
+        {
+            int serviceId = Convert.ToInt32(form["serviceId"].ToString());
+            var service = dbcontext.Services.Find(serviceId);
+
+            if (form.ContainsKey("formElements") && !string.IsNullOrEmpty(form["formElements"]))
+            {
+                service!.FormElement = form["formElements"].ToString();
+            }
+            if (form.ContainsKey("workForceOfficers") && !string.IsNullOrEmpty(form["workForceOfficers"]))
+            {
+                service!.WorkForceOfficers = form["workForceOfficers"].ToString();
+            }
+
+            dbcontext.SaveChanges();
+            return Json(new { status = true });
+        }
     }
 }
