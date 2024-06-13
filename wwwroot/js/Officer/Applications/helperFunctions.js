@@ -5,7 +5,7 @@ function PullApplication(applicationId) {
     .then((res) => res.json())
     .then((data) => {
       if (data.status) {
-        window.location.href = "/Officer/Inbox";
+        window.location.href = "/Officer/Index";
       }
     });
 }

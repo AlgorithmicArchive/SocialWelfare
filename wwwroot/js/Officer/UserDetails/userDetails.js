@@ -5,7 +5,6 @@ $(document).ready(function () {
     ApplicationDetails.generalDetails.applicationId
   );
 
-  console.log(ApplicationDetails);
   const generalDetails = ApplicationDetails.generalDetails;
   const preAddressDetails = ApplicationDetails.preAddressDetails;
   const perAddressDetails = ApplicationDetails.perAddressDetails;
@@ -61,6 +60,8 @@ $(document).ready(function () {
         $("#extra").append(ul);
         $("#extra").append(`<hr>`);
       });
+    } else {
+      $("#extra").empty();
     }
   });
 

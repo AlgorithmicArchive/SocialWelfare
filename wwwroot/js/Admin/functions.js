@@ -75,7 +75,7 @@ function updateConditions(conditions) {
   }
 }
 
-function SetDistricts() {
+function SetDistricts(districtCode) {
   fetch("/Admin/GetDistricts")
     .then((res) => res.json())
     .then((data) => {
@@ -86,6 +86,7 @@ function SetDistricts() {
           list += `<option value="${item.uuid}">${item.districtName}</option>`;
         });
         $("#district").append(list);
+        $("#district").val(districtCode);
       }
     });
 }

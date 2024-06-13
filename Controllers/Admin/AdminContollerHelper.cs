@@ -66,16 +66,13 @@ namespace SocialWelfare.Controllers.Admin
                 foreach (var condition in conditions)
                 {
                     if (conditionCount < splitPoint)
-                    {
                         Condition1.Append($" AND {condition.Key}='{condition.Value}'");
-                    }
                     else
-                    {
                         Condition2.Append($" AND {condition.Key}='{condition.Value}'");
-                    }
 
                     conditionCount++;
                 }
+
             }
 
             if (conditions != null && conditions.ContainsKey("JSON_VALUE(app.value, '$.Officer')") && type != "Total")

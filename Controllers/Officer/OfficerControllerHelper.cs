@@ -9,11 +9,14 @@ namespace SocialWelfare.Controllers.Officer
 {
     public partial class OfficerController : Controller
     {
-
-        public dynamic PendingApplications(Models.Entities.Officer Officer)
+        public dynamic PendingApplications(Models.Entities.User Officer)
         {
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
+            string officerDesignation = UserSpecificDetails!["Designation"];
+            string districtCode = UserSpecificDetails["DistrictCode"];
 
-            var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationsForOfficer @OfficerDesignation,@District,@ServiceId", new SqlParameter("@OfficerDesignation", Officer.Designation), new SqlParameter("@District", Officer.DistrictCode), new SqlParameter("@ServiceId", 1)).ToList();
+
+            var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationsForOfficer @OfficerDesignation,@ActionTaken,@District,@ServiceId", new SqlParameter("@OfficerDesignation", officerDesignation), new SqlParameter("@ActionTaken", "Pending"), new SqlParameter("@District", districtCode), new SqlParameter("@ServiceId", 1)).ToList();
 
 
             bool canSanction = false;
@@ -27,24 +30,24 @@ namespace SocialWelfare.Controllers.Officer
                 var updateRequest = JsonConvert.DeserializeObject<dynamic>(application.UpdateRequest!);
                 var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(dbcontext.Services.FirstOrDefault(u => u.ServiceId == application.ServiceId)!.WorkForceOfficers!);
 
-                var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == Officer.Designation);
+                var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
                 canSanction = officer!["canSanction"];
                 canUpdate = officer["canUpdate"];
                 int requested = updateRequest!["requested"];
                 int updated = updateRequest!["updated"];
 
-                if (Officer.Designation == "Director Finance" && canSanction)
+                if (officerDesignation == "Director Finance" && canSanction)
                     pool = JArray.Parse(officer["pool"].ToString());
                 else if (canSanction)
                 {
-                    var districtCode = Officer.DistrictCode.ToString();
+                    var DistrictCode = districtCode.ToString();
                     var poolElement = officer["pool"][districtCode];
                     if (poolElement != null)
                         pool = JArray.Parse(poolElement.ToString());
                     else
                     {
                         pool = [];
-                        officer["pool"][districtCode] = pool;
+                        officer["pool"][DistrictCode] = pool;
                     }
                 }
 
@@ -72,9 +75,15 @@ namespace SocialWelfare.Controllers.Officer
 
             return obj;
         }
-        public dynamic SentApplications(Models.Entities.Officer Officer)
+        public dynamic SentApplications(Models.Entities.User Officer)
         {
-            var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetPullApplicationsForOfficer @OfficerDesignation, @District", new SqlParameter("@OfficerDesignation", Officer!.Designation), new SqlParameter("@District", Officer!.DistrictCode.ToString())).ToList();
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
+            string officerDesignation = UserSpecificDetails!["Designation"];
+            string districtCode = UserSpecificDetails["DistrictCode"];
+
+
+            var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationsForOfficer @OfficerDesignation,@ActionTaken,@District,@ServiceId", new SqlParameter("@OfficerDesignation", officerDesignation), new SqlParameter("@ActionTaken", "Forward,Return"), new SqlParameter("@District", districtCode), new SqlParameter("@ServiceId", 1)).ToList();
+
 
             var SentApplications = new List<dynamic>();
 
@@ -84,7 +93,7 @@ namespace SocialWelfare.Controllers.Officer
                 var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
                 foreach (var phase in phases!)
                 {
-                    if (phase["Officer"] == Officer.Designation)
+                    if (phase["Officer"] == officerDesignation)
                         canPull = phase["CanPull"];
                 }
                 var data = new
@@ -101,9 +110,13 @@ namespace SocialWelfare.Controllers.Officer
             obj.Type = "Sent";
             return obj;
         }
-        public dynamic SanctionApplications(Models.Entities.Officer Officer)
+        public dynamic SanctionApplications(Models.Entities.User Officer)
         {
-            var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationCountForOfficer @OfficerDesignation,@ActionTaken,@HasApplication,@District", new SqlParameter("@OfficerDesignation", Officer!.Designation), new SqlParameter("@ActionTaken", "Sanction"), new SqlParameter("@HasApplication", "false"), new SqlParameter("@District", Officer!.DistrictCode.ToString())).ToList();
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
+            string officerDesignation = UserSpecificDetails!["Designation"];
+            string districtCode = UserSpecificDetails["DistrictCode"];
+
+            var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationsForOfficer @OfficerDesignation,@ActionTaken,@District,@ServiceId", new SqlParameter("@OfficerDesignation", officerDesignation), new SqlParameter("@ActionTaken", "Sanction"), new SqlParameter("@District", districtCode), new SqlParameter("@ServiceId", 1)).ToList();
 
             var SantionApplications = new List<dynamic>();
 
@@ -123,9 +136,13 @@ namespace SocialWelfare.Controllers.Officer
             obj.Type = "Sanction";
             return obj;
         }
-        public dynamic RejectApplications(Models.Entities.Officer Officer)
+        public dynamic RejectApplications(Models.Entities.User Officer)
         {
-            var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationCountForOfficer @OfficerDesignation,@ActionTaken,@HasApplication,@District", new SqlParameter("@OfficerDesignation", Officer!.Designation), new SqlParameter("@ActionTaken", "Reject"), new SqlParameter("@HasApplication", "false"), new SqlParameter("@District", Officer!.DistrictCode.ToString())).ToList();
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
+            string officerDesignation = UserSpecificDetails!["Designation"];
+            string districtCode = UserSpecificDetails["DistrictCode"];
+
+            var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationsForOfficer @OfficerDesignation,@ActionTaken,@District,@ServiceId", new SqlParameter("@OfficerDesignation", officerDesignation), new SqlParameter("@ActionTaken", "Reject"), new SqlParameter("@District", districtCode), new SqlParameter("@ServiceId", 1)).ToList();
 
             var SantionApplications = new List<dynamic>();
 

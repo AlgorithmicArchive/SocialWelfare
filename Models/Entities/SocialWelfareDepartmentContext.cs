@@ -43,9 +43,12 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<Tehsil> Tehsils { get; set; }
 
+    public virtual DbSet<User> Users { get; set; }
+
     public virtual DbSet<Village> Villages { get; set; }
 
     public virtual DbSet<Ward> Wards { get; set; }
+
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
 
 
@@ -271,6 +274,17 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.TehsilName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.Property(e => e.Email).HasMaxLength(50);
+            entity.Property(e => e.MobileNumber).HasMaxLength(10);
+            entity.Property(e => e.RegisteredDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UserType).HasMaxLength(15);
+            entity.Property(e => e.Username).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Village>(entity =>

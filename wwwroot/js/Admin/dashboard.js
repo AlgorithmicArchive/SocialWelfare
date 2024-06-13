@@ -1,8 +1,7 @@
 $(document).ready(function () {
-  SetServices();
-  SetDistricts();
-  SetDesinations();
+  
   const count = countList;
+  const districtCode = count.districtCode;
   const conditions = {};
   const mappings = [
     { id: "#services", value: count.serviceCount },
@@ -14,6 +13,12 @@ $(document).ready(function () {
     { id: "#rejected", value: count.rejectCount },
     { id: "#sanction", value: count.sanctionCount },
   ];
+
+  SetServices();
+  SetDistricts(districtCode);
+  SetDesinations();
+
+  if (districtCode != undefined) $("#district").val(districtCode);
 
   mappings.forEach((mapping) => {
     $(mapping.id).text(mapping.value);

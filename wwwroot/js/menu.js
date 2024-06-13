@@ -64,6 +64,7 @@ $(document).ready(function () {
           label: userName,
           dropdown: [
             { label: "Manage Profile", link: "/Profile/Index" },
+            { label: "Settings", link: "/Profile/Settings" },
             { label: "Logout", link: "/Home/Logout" },
           ],
         },

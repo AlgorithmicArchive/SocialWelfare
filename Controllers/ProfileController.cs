@@ -90,13 +90,7 @@ namespace SocialWelfare.Controllers.Profile
         public IActionResult GenerateBackupCodes()
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
-            string? userType = HttpContext.Session.GetString("UserType");
-            string? TableName = "";
-
-            if (userType == "Citizen")
-                TableName = "Citizens";
-            else if (userType == "Officer")
-                TableName = "Officers";
+            string? TableName = "Users";
 
 
             var unused = helper.GenerateUniqueRandomCodes(10, 8);
@@ -108,9 +102,6 @@ namespace SocialWelfare.Controllers.Profile
 
             var bankupCodesParam = new SqlParameter("@ColumnValue", JsonConvert.SerializeObject(backupCodes));
 
-            _logger.LogInformation($"Backup Codes: {JsonConvert.SerializeObject(backupCodes)}");
-
-            _logger.LogInformation($"Table Name: {TableName}");
 
             dbcontext.Database.ExecuteSqlRaw("EXEC UpdateCitizenDetail @ColumnName,@ColumnValue,@TableName,@CitizenId", new SqlParameter("@ColumnName", "BackupCodes"), bankupCodesParam, new SqlParameter("@TableName", TableName), new SqlParameter("@CitizenId", userId));
 
@@ -127,22 +118,24 @@ namespace SocialWelfare.Controllers.Profile
 
             if (userId.HasValue && !string.IsNullOrEmpty(userType))
             {
-                if (userType == "Citizen")
-                {
-                    var userDetails = dbcontext.Citizens.FirstOrDefault(u => u.CitizenId == userId);
-                    if (userDetails != null)
-                    {
-                        return View(userDetails);
-                    }
-                }
-                else if (userType == "Officer")
-                {
-                    var userDetails = dbcontext.Officers.FirstOrDefault(u => u.OfficerId == userId);
-                    if (userDetails != null)
-                    {
-                        return View(userDetails);
-                    }
-                }
+                var userDetails = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+                if (userDetails != null) return View(userDetails);
+                // if (userType == "Citizen")
+                // {
+                //     var userDetails = dbcontext.Citizens.FirstOrDefault(u => u.CitizenId == userId);
+                //     if (userDetails != null)
+                //     {
+                //         return View(userDetails);
+                //     }
+                // }
+                // else if (userType == "Officer")
+                // {
+                //     var userDetails = dbcontext.Officers.FirstOrDefault(u => u.OfficerId == userId);
+                //     if (userDetails != null)
+                //     {
+                //         return View(userDetails);
+                //     }
+                // }
             }
             return RedirectToAction("Error", "Home");
         }

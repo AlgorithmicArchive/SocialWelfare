@@ -1,8 +1,5 @@
-using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using SocialWelfare.Models.Entities;
 
@@ -16,15 +13,23 @@ namespace SocialWelfare.Controllers.Admin
 
         public IActionResult Dashboard()
         {
+            int? UserId = HttpContext.Session.GetInt32("UserId");
             int ServiceCount = dbcontext.Services.ToList().Count;
             int OfficerCount = dbcontext.Officers.ToList().Count;
             int CitizenCount = dbcontext.Citizens.ToList().Count;
             int ApplicationCount = dbcontext.Applications.ToList().Count;
+            var conditions = new Dictionary<string, string>();
+            string districtCode = JsonConvert.DeserializeObject<dynamic>(dbcontext.Users.FirstOrDefault(u => u.UserId == UserId)!.UserSpecificDetails)!["DistrictCode"];
 
-            int TotalCount = GetCount("Total", null!);
-            int PendingCount = GetCount("Pending", null!);
-            int RejectCount = GetCount("Reject", null!);
-            int SanctionCount = GetCount("Sanction", null!);
+            if (districtCode != null)
+                conditions.Add("specific.District", districtCode);
+
+
+            int TotalCount = GetCount("Total", conditions.Count != 0 ? conditions : null!);
+            int PendingCount = GetCount("Pending", conditions.Count != 0 ? conditions : null!);
+            int RejectCount = GetCount("Reject", conditions.Count != 0 ? conditions : null!);
+            int SanctionCount = GetCount("Sanction", conditions.Count != 0 ? conditions : null!);
+
 
             var countList = new
             {
@@ -32,10 +37,11 @@ namespace SocialWelfare.Controllers.Admin
                 OfficerCount,
                 CitizenCount,
                 ApplicationCount,
-                TotalCount,
+                TotalCount = 4,
                 PendingCount,
-                RejectCount,
-                SanctionCount
+                RejectCount = RejectCount == 0 ? 4 : 0,
+                SanctionCount = SanctionCount == 0 ? 4 : 0,
+                districtCode
             };
             return View(countList);
         }

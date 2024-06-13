@@ -33,7 +33,11 @@ namespace SocialWelfare.Controllers.Officer
         public async Task<IActionResult> Action([FromForm] IFormCollection form)
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
-            var Officer = dbcontext.Officers.FirstOrDefault(u => u.OfficerId == userId);
+            var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
+            string officerDesignation = UserSpecificDetails!["Designation"];
+            string districtCode = UserSpecificDetails["DistrictCode"];
+
             string? ApplicationId = form["ApplicationId"].ToString();
 
             string? Action = form["Action"].ToString();
@@ -47,9 +51,8 @@ namespace SocialWelfare.Controllers.Officer
 
             for (var i = 0; i < phases!.Count; i++)
             {
-                if (phases[i]["Officer"] == Officer!.Designation)
+                if (phases[i]["Officer"] == officerDesignation)
                 {
-                    _logger.LogInformation($"ACTION: {Action}");
                     if (Action == "Forward")
                     {
                         phases[i]["HasApplication"] = false;
@@ -57,7 +60,8 @@ namespace SocialWelfare.Controllers.Officer
                         phases[i]["Remarks"] = Remarks;
                         phases[i]["CanPull"] = true;
                         phases[i + 1]["HasApplication"] = true;
-                        phases[i + 1]["ReceivedOn"] = DateTime.Now.ToString();
+                        phases[i + 1]["ActionTaken"] = "Pending";
+                        phases[i + 1]["ReceivedOn"] = DateTime.Now.ToString("dd MMM yyyy hh:mm tt");
                     }
                     else if (Action == "Return")
                     {
@@ -66,6 +70,8 @@ namespace SocialWelfare.Controllers.Officer
                         phases[i]["Remarks"] = Remarks;
                         phases[i]["CanPull"] = false;
                         phases[i - 1]["HasApplication"] = true;
+                        phases[i - 1]["ActionTaken"] = "Pending";
+
                     }
                     else if (Action == "Reject" || Action == "Sanction" || Action == "ReturnToEdit")
                     {
@@ -78,18 +84,18 @@ namespace SocialWelfare.Controllers.Officer
             }
 
 
-            await emailSender.SendEmail(email, "Acknowledgement", "Your Application with Reference Number " + ApplicationId + " is " + Action + " by " + Officer + " at " + DateTime.Now.ToString());
+            await emailSender.SendEmail(email, "Acknowledgement", "Your Application with Reference Number " + ApplicationId + " is " + Action + " by " + officerDesignation + " at " + DateTime.Now.ToString("dd MMM yyyy hh:mm tt"));
 
             helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", ApplicationId));
 
             helper.UpdateApplication("EditList", form["editList"].ToString(), new SqlParameter("@ApplicationId", ApplicationId));
 
             if (Action == "Sanction")
-                Sanction(ApplicationId, Officer!.Designation);
+                Sanction(ApplicationId, officerDesignation);
             if (Action == "Sanction" || Action == "Reject")
                 helper.UpdateApplication("ApplicationStatus", Action + "ed", new SqlParameter("@ApplicationId", ApplicationId));
 
-            return Json(new { status = true, url = "/Officer/Index" });
+            return Json(new { status = true, url = "/Officer/Index", ApplicationId });
         }
     }
 }

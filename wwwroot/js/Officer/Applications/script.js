@@ -1,5 +1,6 @@
 $(document).ready(function () {
   const Applications = list;
+  console.log(Applications);
   if (Applications.Type == "Pending") {
     PendingTable(Applications);
     PoolTable(Applications);

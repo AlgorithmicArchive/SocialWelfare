@@ -69,28 +69,39 @@ namespace SocialWelfare.Controllers
             var password = new SqlParameter("@Password", form["Password"].ToString());
             var email = new SqlParameter("@Email", form["Email"].ToString());
             var mobileNumber = new SqlParameter("@MobileNumber", form["MobileNumber"].ToString());
-            var designation = new SqlParameter("@Designation", form["designation"].ToString());
-            var divisionCode = new SqlParameter("@DivisionCode", 1);
-            var districtCode = new SqlParameter("@DistrictCode", Convert.ToInt32(form["District"].ToString()));
-            var tehsilCode = new SqlParameter("@TehsilCode", Convert.ToInt32(form["Tehsil"].ToString()));
+            var designation = form["designation"].ToString();
+            var divisionCode = 1;
+            var districtCode = Convert.ToInt32(form["District"].ToString());
+            var tehsilCode = Convert.ToInt32(form["Tehsil"].ToString());
 
-            var used = _helper.GenerateUniqueRandomCodes(10, 8);
+            var unused = _helper.GenerateUniqueRandomCodes(10, 8);
             var backupCodes = new
             {
-                used,
-                unused = new string[0],
+                unused,
+                used = Array.Empty<string>(),
             };
 
+            var UserSpecificDetails = new
+            {
+                Profile = "",
+                Designation = designation,
+                DivisionCode = divisionCode,
+                DistrictCode = districtCode,
+                TehsilCode = tehsilCode
+            };
+
+            var UserType = new SqlParameter("@UserType", designation == "Admin" ? "Admin" : "Officer");
+            var UserSpecificParam = new SqlParameter("@UserSpecificDetails", JsonConvert.SerializeObject(UserSpecificDetails));
             var backupCodesParam = new SqlParameter("@BackupCodes", JsonConvert.SerializeObject(backupCodes));
 
-            var result = _dbContext.Officers.FromSqlRaw("EXEC RegisterOfficer @Username,@Email,@Password,@MobileNumber,@Designation,@DivisionCode,@DistrictCode,@TehsilCode,@BackupCodes", username, email, password, mobileNumber, designation, divisionCode, districtCode, tehsilCode, backupCodesParam).ToList();
+            var result = _dbContext.Users.FromSqlRaw("EXEC RegisterUser @Username,@Email,@Password,@MobileNumber,@UserSpecificDetails,@UserType,@BackupCodes", username, email, password, mobileNumber, UserSpecificParam, UserType, backupCodesParam).ToList();
 
             if (result.Count > 0)
             {
                 string otp = GenerateOTP(6);
                 _otpStore.StoreOtp("registration", otp);
                 await _emailSender.SendEmail(form["Email"].ToString(), "OTP For Registration.", otp);
-                return Json(new { status = true, result[0].OfficerId });
+                return Json(new { status = true, result[0].UserId });
             }
             else
             {
@@ -98,49 +109,25 @@ namespace SocialWelfare.Controllers
             }
         }
 
-        public async Task<IActionResult> Login(IFormCollection form)
+        public IActionResult Login(IFormCollection form)
         {
             var username = new SqlParameter("Username", form["Username"].ToString());
             SqlParameter password = !string.IsNullOrEmpty(form["Password"]) ? new SqlParameter("Password", form["Password"].ToString()) : null!;
 
-            var isCitizen = _dbContext.Citizens.FromSqlRaw("EXEC UserLogin @Username, @Password, @TableName", username, password, new SqlParameter("TableName", "Citizens")).ToList();
-            var isOfficer = _dbContext.Officers.FromSqlRaw("EXEC UserLogin @Username, @Password, @TableName", username, password, new SqlParameter("TableName", "Officers")).ToList();
-            var isAdmin = _dbContext.Admins.FromSqlRaw("EXEC UserLogin @Username, @Password, @TableName", username, password, new SqlParameter("TableName", "Admins")).ToList();
+            var user = _dbContext.Users.FromSqlRaw("EXEC UserLogin @Username,@Password", username, password).ToList();
 
-
-            int userId;
-            string? url = "";
-
-            if (isCitizen.Count != 0)
+            if (user.Count != 0)
             {
-                userId = isCitizen[0].CitizenId;
-                HttpContext.Session.SetString("UserType", "Citizen");
-                url = "/Home/Verification";
-            }
-            else if (isOfficer.Count != 0)
-            {
-                userId = isOfficer[0].OfficerId;
-                HttpContext.Session.SetString("Designation", isOfficer[0].Designation);
-                HttpContext.Session.SetString("UserType", "Officer");
-                url = "/Home/Verification";
-            }
-            else if (isAdmin.Count != 0)
-            {
-                userId = isAdmin[0].Uuid;
-                HttpContext.Session.SetString("UserType", "Admin");
-                url = "/Admin/Dashboard";
-                List<Claim> claims = [new Claim(ClaimTypes.NameIdentifier, isAdmin[0].Username)];
-                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
-                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var principal = new ClaimsPrincipal(identity);
+                HttpContext.Session.SetInt32("UserId", user[0].UserId);
+                HttpContext.Session.SetString("UserType", user[0].UserType);
+                HttpContext.Session.SetString("Username", form["Username"].ToString());
 
-                // Sign in the user with a persistent cookie
-                var authProperties = new AuthenticationProperties
+
+                if (user[0].UserType == "Officer")
                 {
-                    IsPersistent = true, // Create a persistent cookie
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30) // Set the cookie expiration to 30 days
-                };
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
+                    var UserSpecificDetails = JsonConvert.DeserializeObject<Dictionary<string, string>>(user[0].UserSpecificDetails);
+                    HttpContext.Session.SetString("Designation", UserSpecificDetails!["Designation"].ToString());
+                }
             }
             else
             {
@@ -148,10 +135,7 @@ namespace SocialWelfare.Controllers
             }
 
 
-            HttpContext.Session.SetInt32("UserId", userId);
-            HttpContext.Session.SetString("Username", form["Username"].ToString());
-
-            return Json(new { status = true, url });
+            return Json(new { status = true, url = "/Home/Verification" });
         }
 
         public IActionResult Verification()
@@ -185,84 +169,66 @@ namespace SocialWelfare.Controllers
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
             string? userType = HttpContext.Session.GetString("UserType");
-            string? Username = HttpContext.Session.GetString("Username");
+            string? username = HttpContext.Session.GetString("Username");
             string otp = form["otp"].ToString();
             string backupCode = form["backupCode"].ToString();
             bool verified = false;
 
-            List<Claim> claims =
-            [
-                new Claim(ClaimTypes.NameIdentifier, Username!)
-            ];
-            if (otp != "" && backupCode == "")
+            if (string.IsNullOrEmpty(username))
             {
-                string otpCache = _otpStore.RetrieveOtp("verification")!;
-                if (otpCache == otp) verified = true;
+                TempData["ErrorMessage"] = "User not found. Please try again.";
+                return View("Verification");
             }
-            else if (otp == "" && backupCode != "")
+
+            List<Claim> claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, username) };
+
+            if (!string.IsNullOrEmpty(otp) && string.IsNullOrEmpty(backupCode))
             {
-                if (userType == "Citizen")
+                string? otpCache = _otpStore.RetrieveOtp("verification");
+                if (otpCache == otp)
                 {
-                    var citizen = _dbContext.Citizens.FirstOrDefault(u => u.CitizenId == userId)!;
-                    var backupCodes = JsonConvert.DeserializeObject<dynamic>(citizen.BackupCodes!);
-                    var unused = backupCodes!["unused"];
-                    var used = backupCodes!["used"];
-
-                    foreach (var code in unused)
+                    verified = true;
+                }
+            }
+            else if (string.IsNullOrEmpty(otp) && !string.IsNullOrEmpty(backupCode))
+            {
+                var user = _dbContext.Users.FirstOrDefault(u => u.UserId == userId);
+                if (user != null)
+                {
+                    var backupCodes = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(user.BackupCodes);
+                    if (backupCodes != null && backupCodes.TryGetValue("unused", out var unused) && backupCodes.TryGetValue("used", out var used))
                     {
-                        if (code == backupCode)
+                        if (unused.Contains(backupCode))
                         {
                             verified = true;
-                            used.Add(code);
-                            unused.Remove(code);
-                            _dbContext.Database.ExecuteSqlRaw("EXEC UpdateCitizenDetail @ColumnName,@ColumnValue,@TableName,@CitizenId", new SqlParameter("@ColumnName", "BackupCodes"), new SqlParameter("@ColumnValue", JsonConvert.SerializeObject(backupCodes)), new SqlParameter("@TableName", "Citizens"), new SqlParameter("@CitizenId", userId));
-                            break;
+                            unused.Remove(backupCode);
+                            used.Add(backupCode);
+                            user.BackupCodes = JsonConvert.SerializeObject(backupCodes);
+                            _dbContext.SaveChanges();
                         }
                     }
                 }
-                else if (userType == "Officer")
-                {
-                    var officer = _dbContext.Officers.FirstOrDefault(u => u.OfficerId == userId)!;
-                    var backupCodes = JsonConvert.DeserializeObject<dynamic>(officer.BackupCodes!);
-                    var unused = backupCodes!["unused"];
-                    var used = backupCodes!["used"];
-
-                    foreach (var code in unused)
-                    {
-                        if (code == backupCode)
-                        {
-                            verified = true;
-                            used.Add(code);
-                            unused.Remove(code);
-                            _dbContext.Database.ExecuteSqlRaw("EXEC UpdateCitizenDetail @ColumnName,@ColumnValue,@TableName,@CitizenId", new SqlParameter("@ColumnName", "BackupCodes"), new SqlParameter("@ColumnValue", JsonConvert.SerializeObject(backupCodes)), new SqlParameter("@TableName", "Officers"), new SqlParameter("@CitizenId", userId));
-                            break;
-                        }
-                    }
-
-                }
-
             }
 
             if (verified)
             {
-                if (userType == "Citizen")
-                    claims.Add(new Claim(ClaimTypes.Role, "Citizen"));
-                else if (userType == "Officer")
-                    claims.Add(new Claim(ClaimTypes.Role, "Officer"));
-
+                claims.Add(new Claim(ClaimTypes.Role, userType!));
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var principal = new ClaimsPrincipal(identity);
 
-                // Sign in the user with a persistent cookie
                 var authProperties = new AuthenticationProperties
                 {
-                    IsPersistent = true, // Create a persistent cookie
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30) // Set the cookie expiration to 30 days
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30)
                 };
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
 
-                return RedirectToAction("Index", userType == "Citizen" ? "User" : "Officer");
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
+                if (userType == "Citizen" || userType == "Officer")
+                    return RedirectToAction("Index", userType == "Citizen" ? "User" : "Officer");
+                else if (userType == "Admin") return RedirectToAction("Dashboard", "Admin");
+                else
+                    return RedirectToAction("Authentication", "Home");
             }
             else
             {
@@ -271,6 +237,7 @@ namespace SocialWelfare.Controllers
             }
         }
 
+
         public async Task<IActionResult> Register(IFormCollection form)
         {
             var username = new SqlParameter("@Username", form["Username"].ToString());
@@ -278,23 +245,36 @@ namespace SocialWelfare.Controllers
             var email = new SqlParameter("@Email", form["Email"].ToString());
             var mobileNumber = new SqlParameter("@MobileNumber", form["MobileNumber"].ToString());
 
-            var used = _helper.GenerateUniqueRandomCodes(10, 8);
+            var unused = _helper.GenerateUniqueRandomCodes(10, 8);
             var backupCodes = new
             {
-                used,
-                unused = Array.Empty<string>()
+                unused,
+                used = Array.Empty<string>()
             };
+
+            var UserSpecificDetails = new
+            {
+                Profile = ""
+            };
+
+            var UserSpecificParam = new SqlParameter("@UserSpecificDetails", JsonConvert.SerializeObject(UserSpecificDetails));
+
+            var UserType = new SqlParameter("@UserType", "Citizen");
 
             var backupCodesParam = new SqlParameter("@BackupCodes", JsonConvert.SerializeObject(backupCodes));
 
-            var result = _dbContext.Citizens.FromSqlRaw("EXEC RegisterCitizen @Username,@Email,@Password,@MobileNumber,@BackupCodes", username, email, password, mobileNumber, backupCodesParam).ToList();
+            var result = _dbContext.Users.FromSqlRaw("EXEC RegisterUser @Username,@Email,@Password,@MobileNumber,@UserSpecificDetails,@UserType,@BackupCodes", username, email, password, mobileNumber, UserSpecificParam, UserType, backupCodesParam).ToList();
 
             if (result.Count != 0)
             {
                 string otp = GenerateOTP(6);
                 _otpStore.StoreOtp("registration", otp);
                 await _emailSender.SendEmail(form["Email"].ToString(), "OTP For Registration.", otp);
-                return Json(new { status = true, result[0].CitizenId });
+                return Json(new
+                {
+                    status = true,
+                    result[0].UserId
+                });
             }
             else
             {
@@ -306,7 +286,7 @@ namespace SocialWelfare.Controllers
         public async Task<IActionResult> Authentication([FromForm] IFormCollection form)
         {
             _logger.LogInformation($"Form Type: {form["formType"].ToString()}");
-            return form["formType"].ToString() == "login" ? await Login(form) : await Register(form);
+            return form["formType"].ToString() == "login" ? Login(form) : await Register(form);
         }
 
         [HttpPost]

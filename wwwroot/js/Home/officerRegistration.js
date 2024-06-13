@@ -68,7 +68,7 @@ $(document).ready(function () {
       .then((res) => res.json())
       .then((data) => {
         if (data.status) {
-          window.location.href = data.url;
+          window.location.href = "/Home/Authentication";
         }
       });
   });
@@ -82,14 +82,15 @@ $(document).ready(function () {
 
   handleDistrictChange("#District", "#Tehsil");
 
-  $(document).on("blur", "input", function () {
+  $(document).on("blur", "input", async function () {
     const id = $(this).attr("id");
     const value = $(this).val();
     let errorList = [];
-    if (id == "Username") errorList = validateUsername(value);
+    if (id == "Username") errorList = await validateUsername(value);
     else if (id == "Password") errorList = validatePassword(value);
-    else if (id == "Email") errorList = validateEmail(value);
-    else if (id == "MobileNumber") errorList = validateMobileNumber(value);
+    else if (id == "Email") errorList = await validateEmail(value);
+    else if (id == "MobileNumber")
+      errorList = await validateMobileNumber(value);
     else if (id == "ConfirmPassword" && value != $("#Password").val())
       errorList = ["Confirm Password should be same as Password."];
 

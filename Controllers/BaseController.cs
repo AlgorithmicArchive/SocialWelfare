@@ -18,10 +18,9 @@ namespace SocialWelfare.Controllers
 
         public IActionResult UsernameAlreadyExist(string Username)
         {
-            var isUsernameInCitizens = dbcontext.Citizens.FirstOrDefault(u => u.Username == Username);
-            var isUsernameInOfficers = dbcontext.Citizens.FirstOrDefault(u => u.Username == Username);
+            var isUsernameInUsers = dbcontext.Users.FirstOrDefault(u => u.Username == Username);
 
-            if (isUsernameInCitizens == null && isUsernameInOfficers == null)
+            if (isUsernameInUsers == null)
                 return Json(new { status = false });
             else
                 return Json(new { status = true });
@@ -29,10 +28,9 @@ namespace SocialWelfare.Controllers
 
         public IActionResult EmailAlreadyExist(string email)
         {
-            var isEmailInCitizens = dbcontext.Citizens.FirstOrDefault(u => u.Email == email);
-            var isEmailInOfficers = dbcontext.Citizens.FirstOrDefault(u => u.Email == email);
+            var isEmailInUsers = dbcontext.Users.FirstOrDefault(u => u.Email == email);
 
-            if (isEmailInCitizens == null && isEmailInOfficers == null)
+            if (isEmailInUsers == null)
                 return Json(new { status = false });
             else
                 return Json(new { status = true });
@@ -40,10 +38,9 @@ namespace SocialWelfare.Controllers
 
         public IActionResult MobileNumberAlreadyExist(string MobileNumber)
         {
-            var isMobileNumberInCitizens = dbcontext.Citizens.FirstOrDefault(u => u.MobileNumber == MobileNumber);
-            var isMobileNumberInOfficers = dbcontext.Citizens.FirstOrDefault(u => u.MobileNumber == MobileNumber);
+            var isMobileNumberInUsers = dbcontext.Users.FirstOrDefault(u => u.MobileNumber == MobileNumber);
 
-            if (isMobileNumberInCitizens == null && isMobileNumberInOfficers == null)
+            if (isMobileNumberInUsers == null)
                 return Json(new { status = false });
             else
                 return Json(new { status = true });
@@ -53,11 +50,9 @@ namespace SocialWelfare.Controllers
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
 
-            var isPasswordInCitizens = dbcontext.Citizens.FromSqlRaw("EXEC IsOldPasswordValid @UserId,@Password,@TableName", new SqlParameter("@UserId", userId), new SqlParameter("@Password", Password), new SqlParameter("@TableName", "Citizens")).ToList();
+            var isPasswordInUsers = dbcontext.Users.FromSqlRaw("EXEC IsOldPasswordValid @UserId,@Password,@TableName", new SqlParameter("@UserId", userId), new SqlParameter("@Password", Password), new SqlParameter("@TableName", "Users")).ToList();
 
-            var isPasswordInOfficers = dbcontext.Officers.FromSqlRaw("EXEC IsOldPasswordValid @UserId,@Password,@TableName", new SqlParameter("@UserId", userId), new SqlParameter("@Password", Password), new SqlParameter("@TableName", "Officers")).ToList();
-
-            if (isPasswordInCitizens!.Count == 0 && isPasswordInOfficers!.Count == 0)
+            if (isPasswordInUsers!.Count == 0)
             {
                 return Json(new { status = false });
             }

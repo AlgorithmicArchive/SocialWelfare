@@ -32,7 +32,7 @@ namespace SocialWelfare.Controllers.User
         {
             base.OnActionExecuted(context);
             int? userId = HttpContext.Session.GetInt32("UserId");
-            var Citizen = dbcontext.Citizens.FirstOrDefault(u => u.CitizenId == userId);
+            var Citizen = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
             ViewData["UserType"] = "Citizen";
             ViewData["UserName"] = Citizen!.Username;
 
@@ -44,7 +44,7 @@ namespace SocialWelfare.Controllers.User
             int initiated = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus == "Initiated").ToList().Count;
             int incomplete = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus == "Incomplete").ToList().Count;
             int sanctioned = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus == "Sanctioned").ToList().Count;
-            var userDetails = dbcontext.Citizens.FirstOrDefault(u => u.CitizenId == userId);
+            var userDetails = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
 
 
 
