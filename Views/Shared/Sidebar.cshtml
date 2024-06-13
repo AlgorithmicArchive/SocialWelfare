@@ -4,13 +4,14 @@
         <span class="text-white fs-5 center-align"> DEPARTMENT</span>
 
         <p class="border-top border-bottom border-secondary text-secondary my-4">
-            <a class="nav-link dropdown-caret text-white" href="#profileMenu" data-bs-toggle="collapse" role="button"
-                aria-expanded="false" aria-controls="profileMenu">
+            <a id="username" class="nav-link dropdown-caret text-white" href="#profileMenu" data-bs-toggle="collapse"
+                role="button" aria-expanded="false" aria-controls="profileMenu">
                 Profile
             </a>
         <div class="collapse" id="profileMenu">
             <ul class="navbar-nav ms-5">
                 <li class="nav-item"><a class="nav-link" href="#">Change Password</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Profile/Settings">Settings</a></li>
                 <li class="nav-item"><a class="nav-link" href="/Home/Logout">Logout</a></li>
             </ul>
         </div>
@@ -46,6 +47,11 @@
 </nav>
 
 <script>
+    var userType = @Html.Raw(Json.Serialize(ViewData["UserType"]));
+    var userName = @Html.Raw(Json.Serialize(ViewData["UserName"]));
+</script>
+
+<script>
     $(document).ready(function () {
         // Get the current URL path
         var path = window.location.pathname;
@@ -69,5 +75,7 @@
                 $(".sidebar-size").toggleClass("show");
             }
         });
+
+        if (userName != undefined) $("#username").text(userName);
     });
 </script>

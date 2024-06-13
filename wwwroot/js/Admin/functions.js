@@ -3,27 +3,54 @@ const isEmpty = (obj) => {
 };
 
 function createChart(labels, data) {
+  const options = {
+    labels: labels,
+    datasets: [
+      {
+        label: "Applications",
+        data: data,
+        backgroundColor: ["orange", "red", "darkgreen"],
+        borderColor: ["orange", "red", "darkgreen"],
+        borderWidth: 1,
+      },
+    ],
+  };
+  // Config for the bar chart
   const config = {
-    type: "line",
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: "Applications",
-          backgroundColor: "rgba(255, 99, 132, 0.2)",
-          borderColor: "rgba(255, 99, 132, 1)",
-          borderWidth: 1,
-          data: data,
-        },
-      ],
-    },
+    type: "bar",
+    data: options,
     options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+        tooltip: {
+          enabled: true,
+        },
+        datalabels: {
+          color: "#fff",
+          anchor: "end",
+          align: "top",
+          backgroundColor: (context) => {
+            const index = context.dataIndex;
+            const backgroundColors = ["orange", "red", "darkgreen"];
+            return backgroundColors[index];
+          },
+          borderRadius: 4,
+          padding: 6,
+          formatter: (value) => {
+            return value;
+          },
+        },
+      },
       scales: {
         y: {
           beginAtZero: true,
         },
       },
     },
+    plugins: [ChartDataLabels],
   };
 
   if (myChart) {
@@ -32,6 +59,63 @@ function createChart(labels, data) {
 
   // Create new chart instance
   myChart = new Chart(document.getElementById("myChart"), config);
+}
+
+function createPieChart(labels, values) {
+  const data = {
+    labels: labels,
+    datasets: [
+      {
+        label: "All Districts",
+        data: values,
+        backgroundColor: ["orange", "red", "darkgreen"],
+        borderColor: ["orange", "red", "darkgreen"],
+        borderWidth: 1,
+      },
+    ],
+  };
+  // Config for the doughnut chart
+  const config = {
+    type: "doughnut",
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+        tooltip: {
+          enabled: true,
+        },
+        datalabels: {
+          color: "#fff",
+          anchor: "center",
+          align: "center",
+          backgroundColor: (context) => {
+            const index = context.dataIndex;
+            const backgroundColors = ["maroon", "red", "purple"];
+            return backgroundColors[index];
+          },
+          borderRadius: 4,
+          padding: 5,
+          formatter: (value, ctx) => {
+            let sum = 0;
+            const dataArr = ctx.chart.data.datasets[0].data;
+            dataArr.map((data) => {
+              sum += data;
+            });
+            const percentage = ((value * 100) / sum).toFixed(2) + "%";
+            return percentage;
+          },
+        },
+      },
+    },
+    plugins: [ChartDataLabels],
+  };
+  const doughnutChart = new Chart(
+    document.getElementById("allDistrict"),
+    config
+  );
 }
 
 function updateConditions(conditions) {
@@ -70,6 +154,8 @@ function updateConditions(conditions) {
             ["Pending", "Rejected", "Sanctioned"],
             [data.pendingCount, data.rejectCount, data.sanctionCount]
           );
+          $("#chartService").text($("#service option:selected").text());
+          $("#chartOfficer").text(officerValue);
         }
       });
   }
@@ -87,6 +173,7 @@ function SetDistricts(districtCode) {
         });
         $("#district").append(list);
         $("#district").val(districtCode);
+        $("#chartDistirct").text($("#district option:selected").text());
       }
     });
 }
@@ -116,7 +203,6 @@ function SetServices() {
         services.map((item) => {
           list += `<option value="${item.serviceId}">${item.serviceName}</option>`;
         });
-        console.log(list);
         $("#service").append(list);
       }
     });

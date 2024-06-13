@@ -1,5 +1,4 @@
 $(document).ready(function () {
-  
   const count = countList;
   const districtCode = count.districtCode;
   const conditions = {};
@@ -10,9 +9,19 @@ $(document).ready(function () {
     { id: "#applications", value: count.applicationCount },
     { id: "#total", value: count.totalCount },
     { id: "#pending", value: count.pendingCount },
+    { id: "#pendingWithCitizen", value: count.pendingWithCitizenCount },
     { id: "#rejected", value: count.rejectCount },
     { id: "#sanction", value: count.sanctionCount },
   ];
+  const AllDistrictCount = count.allDistrictCount;
+  createPieChart(
+    ["Pending", "Rejected", "Sanctioned"],
+    [
+      AllDistrictCount.pending,
+      AllDistrictCount.rejected,
+      AllDistrictCount.sanctioned,
+    ]
+  );
 
   SetServices();
   SetDistricts(districtCode);

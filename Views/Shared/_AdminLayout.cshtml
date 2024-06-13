@@ -16,7 +16,8 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </head>
@@ -31,7 +32,7 @@
         <div class="sidebar-admin-section">
 
         </div>
-        <div class="center-align main-admin-body" style="background-color: #F4F3EF;">
+        <div class="main-admin-body" style="background-color: #F4F3EF;max-height:100vh;overflow-y: auto;">
             @RenderBody()
         </div>
     </div>

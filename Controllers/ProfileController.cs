@@ -8,7 +8,7 @@ using SocialWelfare.Models.Entities;
 
 namespace SocialWelfare.Controllers.Profile
 {
-    [Authorize(Roles = "Citizen,Officer")]
+    [Authorize(Roles = "Citizen,Officer,Admin")]
     public class ProfileController(SocialWelfareDepartmentContext dbcontext, ILogger<ProfileController> logger, UserHelperFunctions _helper) : Controller
     {
 
@@ -119,23 +119,10 @@ namespace SocialWelfare.Controllers.Profile
             if (userId.HasValue && !string.IsNullOrEmpty(userType))
             {
                 var userDetails = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+                if (userType == "Admin") ViewData["Layout"] = "_AdminLayout";
+
                 if (userDetails != null) return View(userDetails);
-                // if (userType == "Citizen")
-                // {
-                //     var userDetails = dbcontext.Citizens.FirstOrDefault(u => u.CitizenId == userId);
-                //     if (userDetails != null)
-                //     {
-                //         return View(userDetails);
-                //     }
-                // }
-                // else if (userType == "Officer")
-                // {
-                //     var userDetails = dbcontext.Officers.FirstOrDefault(u => u.OfficerId == userId);
-                //     if (userDetails != null)
-                //     {
-                //         return View(userDetails);
-                //     }
-                // }
+
             }
             return RedirectToAction("Error", "Home");
         }

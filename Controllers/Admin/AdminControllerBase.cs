@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json;
 using SocialWelfare.Models.Entities;
 
@@ -10,6 +11,17 @@ namespace SocialWelfare.Controllers.Admin
     {
         protected readonly SocialWelfareDepartmentContext dbcontext = dbcontext;
         protected readonly ILogger<AdminController> _logger = logger;
+
+
+        public override void OnActionExecuted(ActionExecutedContext context)
+        {
+            base.OnActionExecuted(context);
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            var Admin = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+            ViewData["UserType"] = "Admin";
+            ViewData["UserName"] = Admin!.Username;
+
+        }
 
         public IActionResult Dashboard()
         {
@@ -29,6 +41,14 @@ namespace SocialWelfare.Controllers.Admin
             int PendingCount = GetCount("Pending", conditions.Count != 0 ? conditions : null!);
             int RejectCount = GetCount("Reject", conditions.Count != 0 ? conditions : null!);
             int SanctionCount = GetCount("Sanction", conditions.Count != 0 ? conditions : null!);
+            int PendingWithCitizenCount = GetCount("PendingWithCitizen", conditions.Count != 0 ? conditions : null!);
+
+            var AllDistrictCount = new
+            {
+                Pending = GetCount("Pending", null!),
+                Rejected = GetCount("Reject", null!),
+                Sanctioned = GetCount("Sanction", null!),
+            };
 
 
             var countList = new
@@ -37,10 +57,12 @@ namespace SocialWelfare.Controllers.Admin
                 OfficerCount,
                 CitizenCount,
                 ApplicationCount,
-                TotalCount = 4,
+                TotalCount,
                 PendingCount,
-                RejectCount = RejectCount == 0 ? 4 : 0,
-                SanctionCount = SanctionCount == 0 ? 4 : 0,
+                RejectCount,
+                SanctionCount,
+                PendingWithCitizenCount,
+                AllDistrictCount,
                 districtCode
             };
             return View(countList);
