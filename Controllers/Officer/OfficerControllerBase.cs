@@ -129,7 +129,7 @@ namespace SocialWelfare.Controllers.Officer
 
             var generalDetails = dbcontext.Applications.Where(u => u.ApplicationId == ApplicationId).ToList()[0];
             var phases = JsonConvert.DeserializeObject<List<dynamic>>(generalDetails.Phase);
-
+            bool canOfficerTakeAction = true;
 
             for (int i = 0; i < phases!.Count; i++)
             {
@@ -148,8 +148,12 @@ namespace SocialWelfare.Controllers.Officer
                     {
                         nextItem!["CanPull"] = false;
                     }
+                    if (IsMoreThanSpecifiedDays(currentItem["ReceivedOn"].ToString(), 15)) canOfficerTakeAction = false;
                 }
             }
+
+            if (IsMoreThanSpecifiedDays(generalDetails.SubmissionDate.ToString(), 45)) canOfficerTakeAction = false;
+
 
             helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", ApplicationId));
 
@@ -166,6 +170,7 @@ namespace SocialWelfare.Controllers.Officer
                 generalDetails,
                 preAddressDetails,
                 perAddressDetails,
+                canOfficerTakeAction,
             };
             return View(ApplicationDetails);
         }

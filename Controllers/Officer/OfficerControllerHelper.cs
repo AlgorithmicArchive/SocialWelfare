@@ -18,7 +18,6 @@ namespace SocialWelfare.Controllers.Officer
 
             var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationsForOfficer @OfficerDesignation,@ActionTaken,@District,@ServiceId", new SqlParameter("@OfficerDesignation", officerDesignation), new SqlParameter("@ActionTaken", "Pending"), new SqlParameter("@District", districtCode), new SqlParameter("@ServiceId", 1)).ToList();
 
-
             bool canSanction = false;
             bool canUpdate = false;
             List<Application> UpdateList = [];
@@ -163,5 +162,18 @@ namespace SocialWelfare.Controllers.Officer
             return obj;
         }
 
+        public bool IsMoreThanSpecifiedDays(string dateString, int value)
+        {
+            if (DateTime.TryParse(dateString, out DateTime parsedDate))
+            {
+                DateTime currentDate = DateTime.Now;
+                double daysDifference = (currentDate - parsedDate).TotalDays;
+                return daysDifference > value;
+            }
+            else
+            {
+                throw new ArgumentException("Invalid date format.");
+            }
+        }
     }
 }

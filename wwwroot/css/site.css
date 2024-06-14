@@ -29,8 +29,10 @@ svg{
 }
 
 .full-screen-section {
+    margin-top: 50px;
     min-height: 100vh;
     width: 100vw;
+    overflow-y: auto;
 }
 
 .center-align{
@@ -158,6 +160,9 @@ p{
     }
     .sidebar-admin-section {
         width: 0;
+    }
+    .full-screen-section{
+        margin-top: 150px;
     }
 }
   
