@@ -17,23 +17,17 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<Address> Addresses { get; set; }
 
-    public virtual DbSet<Admin> Admins { get; set; }
-
     public virtual DbSet<Application> Applications { get; set; }
 
     public virtual DbSet<ApplicationPerDistrict> ApplicationPerDistricts { get; set; }
 
     public virtual DbSet<Block> Blocks { get; set; }
 
-    public virtual DbSet<Citizen> Citizens { get; set; }
-
     public virtual DbSet<District> Districts { get; set; }
 
     public virtual DbSet<Feedback> Feedbacks { get; set; }
 
     public virtual DbSet<HalqaPanchayat> HalqaPanchayats { get; set; }
-
-    public virtual DbSet<Officer> Officers { get; set; }
 
     public virtual DbSet<OfficersDesignation> OfficersDesignations { get; set; }
 
@@ -51,7 +45,6 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
 
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("name=DefaultConnection");
 
@@ -64,14 +57,6 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.ToTable("Address");
 
             entity.Property(e => e.AddressDetails).IsUnicode(false);
-        });
-
-        modelBuilder.Entity<Admin>(entity =>
-        {
-            entity.HasKey(e => e.Uuid);
-
-            entity.Property(e => e.Uuid).HasColumnName("UUID");
-            entity.Property(e => e.Username).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Application>(entity =>
@@ -145,24 +130,6 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.DistrictId).HasColumnName("DistrictID");
         });
 
-        modelBuilder.Entity<Citizen>(entity =>
-        {
-            entity.HasKey(e => e.CitizenId).HasName("PK__tmp_ms_x__6E49FA0CC362E330");
-
-            entity.Property(e => e.Email)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.MobileNumber)
-                .HasMaxLength(10)
-                .IsUnicode(false);
-            entity.Property(e => e.RegisteredDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Username)
-                .HasMaxLength(100)
-                .IsUnicode(false);
-        });
-
         modelBuilder.Entity<District>(entity =>
         {
             entity.HasKey(e => e.Uuid);
@@ -191,11 +158,6 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.SubmittedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Feedbacks)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Feedback_Citizens");
         });
 
         modelBuilder.Entity<HalqaPanchayat>(entity =>
@@ -207,27 +169,6 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.Uuid).HasColumnName("UUID");
             entity.Property(e => e.PanchayatName)
                 .HasMaxLength(255)
-                .IsUnicode(false);
-        });
-
-        modelBuilder.Entity<Officer>(entity =>
-        {
-            entity.HasKey(e => e.OfficerId).HasName("PK__tmp_ms_x__2E65577A2C60C698");
-
-            entity.Property(e => e.Designation)
-                .HasMaxLength(255)
-                .IsUnicode(false);
-            entity.Property(e => e.Email)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.MobileNumber)
-                .HasMaxLength(10)
-                .IsUnicode(false);
-            entity.Property(e => e.RegisteredDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Username)
-                .HasMaxLength(100)
                 .IsUnicode(false);
         });
 

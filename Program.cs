@@ -17,6 +17,11 @@ builder.Services.AddDbContext<SocialWelfareDepartmentContext>(options =>
         );
 });
 
+builder.Services.AddControllers().AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+    });
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
 {
     options.LoginPath = "/Home/Authentication";
@@ -25,11 +30,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     options.SlidingExpiration = true;
 });
 
-builder.Services.AddAuthorization(option =>
-{
-    option.AddPolicy("CitizenPolicy", policy => policy.RequireRole("Citizen"));
-    option.AddPolicy("OfficerPolicy", policy => policy.RequireRole("Officer"));
-});
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("CitizenPolicy", policy => policy.RequireRole("Citizen"))
+    .AddPolicy("OfficerPolicy", policy => policy.RequireRole("Officer"));
 
 builder.Services.AddSession(option =>
 {

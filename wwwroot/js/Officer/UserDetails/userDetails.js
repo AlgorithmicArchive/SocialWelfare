@@ -9,6 +9,7 @@ $(document).ready(function () {
   const perAddressDetails = ApplicationDetails.perAddressDetails;
   const bankDetails = JSON.parse(generalDetails.bankDetails);
   const documents = JSON.parse(generalDetails.documents);
+  const previousActions = ApplicationDetails.previousActions;
   const canOfficerTakeAction = ApplicationDetails.canOfficerTakeAction;
   const excludedProperties = [
     "phase",
@@ -29,7 +30,7 @@ $(document).ready(function () {
   appendDetails("addressDetails", perAddressDetails, "Permanent ");
   appendBankDetails(bankDetails);
   appendDocuments(documents);
-
+  appendPerviousActions(previousActions);
   if (!canOfficerTakeAction) {
     $("#takeAction").after(
       `<p class="text-danger width-50 mt-2 custom-card">Cannot proceed with this application because it has been either more than 15 days since it was received by you or more than 45 days since it was submitted.</p>`

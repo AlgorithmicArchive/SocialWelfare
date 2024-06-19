@@ -17,5 +17,7 @@ public partial class Service
 
     public DateTime CreatedAt { get; set; }
 
+    public bool Active { get; set; }
+
     public virtual ICollection<Application> Applications { get; set; } = new List<Application>();
 }

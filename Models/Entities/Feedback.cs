@@ -14,6 +14,4 @@ public partial class Feedback
     public string Message { get; set; } = null!;
 
     public DateTime SubmittedAt { get; set; }
-
-    public virtual Citizen User { get; set; } = null!;
 }

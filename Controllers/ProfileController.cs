@@ -22,16 +22,7 @@ namespace SocialWelfare.Controllers.Profile
             base.OnActionExecuted(context);
             int? userId = HttpContext.Session.GetInt32("UserId");
             string? userType = HttpContext.Session.GetString("UserType");
-            string? username = "";
-            if (userType == "Citizen")
-            {
-                username = dbcontext.Citizens.FirstOrDefault(u => u.CitizenId == userId)!.Username;
-            }
-            else if (userType == "Officer")
-            {
-                username = dbcontext.Officers.FirstOrDefault(u => u.OfficerId == userId)!.Username;
-            }
-
+            string? username = dbcontext.Users.FirstOrDefault(u => u.UserId == userId)!.Username;
             ViewData["UserType"] = userType;
             ViewData["UserName"] = username;
 
@@ -45,22 +36,8 @@ namespace SocialWelfare.Controllers.Profile
 
             if (userId.HasValue && !string.IsNullOrEmpty(userType))
             {
-                if (userType == "Citizen")
-                {
-                    var userDetails = dbcontext.Citizens.FirstOrDefault(u => u.CitizenId == userId);
-                    if (userDetails != null)
-                    {
-                        return View(userDetails);
-                    }
-                }
-                else if (userType == "Officer")
-                {
-                    var userDetails = dbcontext.Officers.FirstOrDefault(u => u.OfficerId == userId);
-                    if (userDetails != null)
-                    {
-                        return View(userDetails);
-                    }
-                }
+                var userDetails = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+                return View(userDetails);
             }
             return RedirectToAction("Error", "Home");
         }

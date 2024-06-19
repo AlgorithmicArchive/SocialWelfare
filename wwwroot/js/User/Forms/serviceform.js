@@ -93,6 +93,16 @@ $(document).ready(function () {
     }
   });
 
+  $(document).on("focus", "input[name*=Date]", function () {
+    var currentYear = new Date().getFullYear();
+    $(this).datepicker({
+      dateFormat: "dd/M/yy",
+      changeMonth: true,
+      changeYear: true,
+      yearRange: "1990:" + currentYear,
+    });
+  });
+
   handleDistrictChange("#PresentDistrict", "#PresentTehsil", "#PresentBlock");
   handleDistrictChange(
     "#PermanentDistrict",

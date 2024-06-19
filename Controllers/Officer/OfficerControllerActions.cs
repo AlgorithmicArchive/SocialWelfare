@@ -48,6 +48,7 @@ namespace SocialWelfare.Controllers.Officer
 
             var phases = JsonConvert.DeserializeObject<List<dynamic>>(dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == ApplicationId)!.Phase);
 
+            string? nextOfficer = "";
 
             for (var i = 0; i < phases!.Count; i++)
             {
@@ -62,6 +63,7 @@ namespace SocialWelfare.Controllers.Officer
                         phases[i + 1]["HasApplication"] = true;
                         phases[i + 1]["ActionTaken"] = "Pending";
                         phases[i + 1]["ReceivedOn"] = DateTime.Now.ToString("dd MMM yyyy hh:mm tt");
+                        nextOfficer = phases[i + 1]["Officer"];
                     }
                     else if (Action == "Return")
                     {
@@ -71,6 +73,7 @@ namespace SocialWelfare.Controllers.Officer
                         phases[i]["CanPull"] = false;
                         phases[i - 1]["HasApplication"] = true;
                         phases[i - 1]["ActionTaken"] = "Pending";
+                        nextOfficer = phases[i - 1]["Officer"];
 
                     }
                     else if (Action == "Reject" || Action == "Sanction" || Action == "ReturnToEdit")
@@ -84,7 +87,15 @@ namespace SocialWelfare.Controllers.Officer
             }
 
 
-            await emailSender.SendEmail(email, "Acknowledgement", "Your Application with Reference Number " + ApplicationId + " is " + Action + " by " + officerDesignation + " at " + DateTime.Now.ToString("dd MMM yyyy hh:mm tt"));
+            await emailSender.SendEmail(
+                email,
+                "Acknowledgement",
+                "Your Application with Reference Number " + ApplicationId + " is " + Action + " by " + officerDesignation +
+                (nextOfficer != "" ? " to " + nextOfficer : "") +
+                " at " + DateTime.Now.ToString("dd MMM yyyy hh:mm tt")
+            );
+
+
 
             helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", ApplicationId));
 

@@ -10,11 +10,9 @@ function camelCaseToTitleCase(input) {
   );
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
-
 function isDigit(input) {
   return /^\d+$/.test(input.toString().replace(/\s/g, ""));
 }
-
 function createInputElement(label, id, value) {
   return `
         <div class="col-sm-6 d-flex flex-column">
@@ -22,7 +20,6 @@ function createInputElement(label, id, value) {
             <input class="form-control mb-2" type="text" name="${id}" id="${id}" value="${value}" readonly />
         </div>`;
 }
-
 function createDocumentInput(label, enclosure, file) {
   return `
         <div class="col-sm-6 d-flex flex-column">
@@ -30,7 +27,6 @@ function createDocumentInput(label, enclosure, file) {
             <a href="#" onclick="openInIframe('${file}'); return false;">${enclosure}</a>
         </div>`;
 }
-
 function appendDetails(containerId, details, prefix = "") {
   for (const item in details) {
     if (
@@ -94,6 +90,19 @@ function appendDocuments(documents) {
     $("#documents").append(inputElement);
   }
 }
+
+function appendPerviousActions(previousActions) {
+  previousActions.map((item) => {
+    $("#previousActions").append(`
+        <tr>
+          <td>${item.officer}</td>
+          <td>${item.actionTaken}</td>
+          <td>${item.remarks}</td>
+        </tr>
+    `);
+  });
+}
+
 function getFormattedDateTime() {
   const now = new Date();
   const options = {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
 
 namespace SocialWelfare.Models.Entities;
 
@@ -48,6 +47,5 @@ public partial class Application
 
     public DateTime SubmissionDate { get; set; }
 
-    [JsonIgnore]
     public virtual Service Service { get; set; } = null!;
 }

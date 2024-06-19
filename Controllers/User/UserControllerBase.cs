@@ -61,7 +61,7 @@ namespace SocialWelfare.Controllers.User
 
         public IActionResult ServicesList()
         {
-            var services = dbcontext.Services.ToList();
+            var services = dbcontext.Services.Where(u => u.Active == true).ToList();
             return View(services);
         }
 

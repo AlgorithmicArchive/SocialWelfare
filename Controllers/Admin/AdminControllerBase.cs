@@ -27,8 +27,8 @@ namespace SocialWelfare.Controllers.Admin
         {
             int? UserId = HttpContext.Session.GetInt32("UserId");
             int ServiceCount = dbcontext.Services.ToList().Count;
-            int OfficerCount = dbcontext.Officers.ToList().Count;
-            int CitizenCount = dbcontext.Citizens.ToList().Count;
+            int OfficerCount = dbcontext.Users.Where(u => u.UserType == "Officer").ToList().Count;
+            int CitizenCount = dbcontext.Users.Where(u => u.UserType == "Citizen").ToList().Count;
             int ApplicationCount = dbcontext.Applications.ToList().Count;
             var conditions = new Dictionary<string, string>();
             string districtCode = JsonConvert.DeserializeObject<dynamic>(dbcontext.Users.FirstOrDefault(u => u.UserId == UserId)!.UserSpecificDetails)!["DistrictCode"];
