@@ -146,19 +146,21 @@ namespace SocialWelfare.Controllers.User
         }
         public async Task<IActionResult> InsertDocuments([FromForm] IFormCollection form)
         {
-            var ApplicationId = new SqlParameter("@ApplicationId", form["ApplicationId"].ToString());
+            var applicationId = form["ApplicationId"].ToString();
+            var ApplicationId = new SqlParameter("@ApplicationId", applicationId);
             var docs = new List<Document>();
             var addedLabels = new HashSet<string>();
-            string[]? labels = JsonConvert.DeserializeObject<string[]>(form["labels"].ToString());
-            foreach (var label in labels!)
+            string[] labels = JsonConvert.DeserializeObject<string[]>(form["labels"].ToString()) ?? Array.Empty<string>();
+
+            foreach (var label in labels)
             {
                 if (addedLabels.Contains(label))
                 {
                     continue;
                 }
 
-                string enclosure = form[label + "Enclosure"].ToString();
-                string file = await helper.GetFilePath(form.Files[label + "File"]);
+                string enclosure = form[$"{label}Enclosure"].ToString();
+                string file = await helper.GetFilePath(form.Files[$"{label}File"]);
                 var doc = new Document
                 {
                     Label = label,
@@ -169,60 +171,61 @@ namespace SocialWelfare.Controllers.User
                 docs.Add(doc);
                 addedLabels.Add(label);
             }
+
             var documents = JsonConvert.SerializeObject(docs);
-            var workForceOfficers = JsonConvert.DeserializeObject<List<dynamic>>(form["workForceOfficers"].ToString());
+            var workForceOfficers = JsonConvert.DeserializeObject<List<dynamic>>(form["workForceOfficers"].ToString()) ?? new List<dynamic>();
 
-            List<object> Phases = [];
-
-            for (var i = 0; i < workForceOfficers!.Count; i++)
+            var phases = workForceOfficers.Select((officer, index) => new
             {
-                var phase = new
-                {
-                    ReceivedOn = i == 0 ? DateTime.Now.ToString() : "",
-                    Officer = workForceOfficers[i]["Designation"],
-                    HasApplication = i == 0,
-                    ActionTaken = i == 0 ? "Pending" : "",
-                    Remarks = "",
-                    CanPull = false
-                };
-                Phases.Add(phase);
-            }
+                ReceivedOn = index == 0 ? DateTime.Now.ToString() : string.Empty,
+                Officer = officer.Designation,
+                HasApplication = index == 0,
+                ActionTaken = index == 0 ? "Pending" : string.Empty,
+                Remarks = string.Empty,
+                CanPull = false
+            }).ToList();
 
-            // Update Phase in Applications Table
-            helper.UpdateApplication("Phase", JsonConvert.SerializeObject(Phases.ToArray()), ApplicationId);
-            // Update/Insert Documents in Applications Table
+            // Update Phase, Documents, and ApplicationStatus in Applications Table
+            helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), ApplicationId);
             helper.UpdateApplication("Documents", documents, ApplicationId);
-            //Update ApplicationStatus to Intitiated
             helper.UpdateApplication("ApplicationStatus", "Initiated", ApplicationId);
 
             if (!form.ContainsKey("returnToEdit"))
             {
-                var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(form["ApplicationId"].ToString());
+                var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(applicationId);
 
                 var details = new Dictionary<string, string>
                 {
                     ["REFERENCE NUMBER"] = userDetails.ApplicationId,
                     ["APPLICANT NAME"] = userDetails.ApplicantName,
                     ["DATE OF MARRIAGE"] = serviceSpecific["DateOfMarriage"],
-                    ["PRESENT ADDRESS"] = preAddressDetails.Address + ",TEHSIL:" + preAddressDetails.Tehsil + ",DISTRICT:" + preAddressDetails.District + ",PIN CODE:" + preAddressDetails.Pincode,
-                    ["PERMANENT ADDRESS"] = perAddressDetails.Address + ",TEHSIL:" + perAddressDetails.Tehsil + ",DISTRICT:" + perAddressDetails.District + ",PIN CODE:" + perAddressDetails.Pincode,
+                    ["PRESENT ADDRESS"] = $"{preAddressDetails.Address}, TEHSIL: {preAddressDetails.Tehsil}, DISTRICT: {preAddressDetails.District}, PIN CODE: {preAddressDetails.Pincode}",
+                    ["PERMANENT ADDRESS"] = $"{perAddressDetails.Address}, TEHSIL: {perAddressDetails.Tehsil}, DISTRICT: {perAddressDetails.District}, PIN CODE: {perAddressDetails.Pincode}"
                 };
 
                 _pdfService.CreateAcknowledgement(details, userDetails.ApplicationId);
-
             }
 
             if (form.ContainsKey("returnToEdit"))
             {
                 helper.UpdateApplication("EditList", "[]", ApplicationId);
+                helper.UpdateApplicationHistory(applicationId, "Citizen", $"Edited and returned to {workForceOfficers[0].Designation}", "NULL");
+            }
+            else
+            {
+                helper.UpdateApplicationHistory(applicationId, "Citizen", "Application Submitted.", "NULL");
             }
 
-            string email = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == form["ApplicationId"].ToString())!.Email;
+            string email = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == applicationId)!.Email;
 
-            await emailSender.SendEmail(email, "Acknowledgement", "Your Application with Reference Number " + form["ApplicationId"].ToString() + " has been sent to " + workForceOfficers[0]["Designation"] + " At " + DateTime.Now.ToString("dd MMM yyyy hh:mm tt"));
+            if (email != null)
+            {
+                await emailSender.SendEmail(email, "Acknowledgement", $"Your Application with Reference Number {applicationId} has been sent to {workForceOfficers[0].Designation} at {DateTime.Now:dd MMM yyyy hh:mm tt}");
+            }
 
-            return Json(new { status = true, ApplicationId = form["ApplicationId"].ToString(), complete = true });
+            return Json(new { status = true, ApplicationId = applicationId, complete = true });
         }
+
         public async Task<IActionResult> UpdateGeneralDetails([FromForm] IFormCollection form)
         {
             string ApplicationId = form["ApplicationId"].ToString();

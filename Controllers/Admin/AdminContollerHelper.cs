@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using SocialWelfare.Models.Entities;
 
 namespace SocialWelfare.Controllers.Admin
 {
     public partial class AdminController
     {
-        public int GetCount(string type, Dictionary<string, string> conditions)
+        public List<Application> GetCount(string type, Dictionary<string, string> conditions, int? divisionCode)
         {
             StringBuilder Condition1 = new StringBuilder();
             StringBuilder Condition2 = new StringBuilder();
@@ -48,30 +49,65 @@ namespace SocialWelfare.Controllers.Admin
                 Condition2.Append($" AND JSON_VALUE(app.value, '$.ActionTaken') != ''");
             }
 
-            int count = dbcontext.Applications.FromSqlRaw("EXEC GetApplications @Condition1, @Condition2",
-        new SqlParameter("@Condition1", Condition1.ToString()),
-        new SqlParameter("@Condition2", Condition2.ToString())).ToList().Count;
+            var applications = dbcontext.Applications.FromSqlRaw("EXEC GetApplications @Condition1, @Condition2",
+            new SqlParameter("@Condition1", Condition1.ToString()),
+           new SqlParameter("@Condition2", Condition2.ToString())).ToList();
 
-            return count;
+            _logger.LogInformation($"HELPER DIVISION CODE: {divisionCode}");
+
+            if (divisionCode == null) return applications;
+            else
+            {
+
+                var filteredApplications = new List<Application>();
+                foreach (var application in applications)
+                {
+                    var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific);
+                    int district = Convert.ToInt32(serviceSpecific!["District"]);
+                    int division = dbcontext.Districts.FirstOrDefault(d => d.Uuid == district)!.Division;
+                    _logger.LogInformation($"DIVISION FROM DATABASE: {division}");
+                    if (division == divisionCode) filteredApplications.Add(application);
+                }
+                return filteredApplications;
+
+            }
+
         }
 
         public IActionResult GetFilteredCount(string? conditions)
         {
             var Conditions = JsonConvert.DeserializeObject<Dictionary<string, string>>(conditions!);
-            int TotalCount = GetCount("Total", Conditions!);
-            int PendingCount = GetCount("Pending", Conditions!);
-            int RejectCount = GetCount("Reject", Conditions!);
-            int SanctionCount = GetCount("Sanction", Conditions!);
+            var TotalCount = GetCount("Total", Conditions!, null);
+            var PendingCount = GetCount("Pending", Conditions!, null);
+            var RejectCount = GetCount("Reject", Conditions!, null);
+            var SanctionCount = GetCount("Sanction", Conditions!, null);
 
             return Json(new { status = true, TotalCount, PendingCount, RejectCount, SanctionCount });
         }
 
         [HttpGet]
-        public IActionResult GetDistricts()
+        public IActionResult GetDistricts(string? division)
         {
-            var districts = dbcontext.Districts.ToList();
-            return Json(new { status = true, districts });
+            var districts = dbcontext.Districts.AsQueryable();
+
+            if (!string.IsNullOrEmpty(division) && division != "null")
+            {
+                int divisionCode;
+                if (int.TryParse(division, out divisionCode))
+                {
+                    districts = districts.Where(d => d.Division == divisionCode);
+                }
+                else
+                {
+                    return Json(new { status = false, message = "Invalid division code" });
+                }
+            }
+
+            var districtList = districts.ToList();
+            return Json(new { status = true, districts = districtList });
         }
+
+
 
         [HttpGet]
         public IActionResult GetDesignations()

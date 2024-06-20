@@ -21,6 +21,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<ApplicationPerDistrict> ApplicationPerDistricts { get; set; }
 
+    public virtual DbSet<ApplicationsHistory> ApplicationsHistories { get; set; }
+
     public virtual DbSet<Block> Blocks { get; set; }
 
     public virtual DbSet<District> Districts { get; set; }
@@ -42,7 +44,6 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Village> Villages { get; set; }
 
     public virtual DbSet<Ward> Wards { get; set; }
-
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -115,6 +116,24 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.FinancialYear)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<ApplicationsHistory>(entity =>
+        {
+            entity.HasKey(e => e.Uuid);
+
+            entity.ToTable("ApplicationsHistory");
+
+            entity.Property(e => e.Uuid).HasColumnName("UUID");
+            entity.Property(e => e.ApplicationId)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.History).HasDefaultValue("[]");
+
+            entity.HasOne(d => d.Application).WithMany(p => p.ApplicationsHistories)
+                .HasForeignKey(d => d.ApplicationId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ApplicationsHistory_Applications");
         });
 
         modelBuilder.Entity<Block>(entity =>

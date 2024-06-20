@@ -96,4 +96,32 @@ $(document).ready(function () {
 
     AddErrorSpan(id, errorList);
   });
+
+  $("#designation").on("change", function () {
+    const designation = $(this).val();
+    if (designation == "Division Level Admin") {
+      $("#dynamicFields").empty();
+      $("#dynamicFields").append(`
+               <label for="Select Postioned Division">Select Postioned Division</label>
+                <select class="form-select mb-2 border-0 border-bottom rounded-0" name="Division"
+                    id="Division">
+                    <option value="1">Jammu</option>
+                    <option value="2">Kashmir</option>
+                </select>
+      `);
+    } else if (designation == "State Level Admin") {
+      $("#dynamicFields").empty();
+    } else {
+      $("#dynamicFields").empty();
+      $("#dynamicFields").append(`
+         <label for="Select Postioned District">Select Postioned District</label>
+          <select class="form-select mb-2 border-0 border-bottom rounded-0" name="District"
+              id="District">
+          </select>
+          <label for="Select Postioned Tehsil">Select Postioned Tehsil</label>
+          <select class="form-select mb-2 border-0 border-bottom rounded-0" name="Tehsil" id="Tehsil">
+          </select>
+      `);
+    }
+  });
 });

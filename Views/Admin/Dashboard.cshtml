@@ -4,49 +4,11 @@
 }
 
 <div class="container-fluid d-flex flex-column gap-5 py-4">
-    @* <div class="row w-100">
-    <div class="col-md-3">
-    <div class="custom-card">
-    <p class="fs-1"><i class="fa-solid fa-server text-warning"></i></p>
-    <p class="d-flex flex-column">
-    <span class="fs-5">Services</span>
-    <span class="fs-2 fw-bold" id="services">20</span>
-    </p>
-    </div>
-    </div>
-    <div class="col-md-3">
-    <div class="custom-card">
-    <p class="fs-1"><i class="fa-solid fa-briefcase text-success"></i></p>
-    <p class="d-flex flex-column">
-    <span class="fs-5">Officers</span>
-    <span class="fs-2 fw-bold" id="officers">25</span>
-    </p>
-    </div>
-    </div>
-    <div class="col-md-3">
-    <div class="custom-card">
-    <p class="fs-1"><i class="fa-solid fa-users text-danger"></i></p>
-    <p class="d-flex flex-column">
-    <span class="fs-5">Citizens</span>
-    <span class="fs-2 fw-bold" id="citizens">50</span>
-    </p>
-    </div>
-    </div>
-    <div class="col-md-3">
-    <div class="custom-card">
-    <p class="fs-1"><i class="fa-solid fa-file-pen text-info"></i></p>
-    <p class="d-flex flex-column">
-    <span class="fs-5">Applications</span>
-    <span class="fs-2 fw-bold" id="applications">100</span>
-    </p>
-    </div>
-    </div>
-    </div> *@
 
     <div class="row w-100 mx-auto">
         <div class="col-sm-4">
             <label for="District">District</label>
-            <select class="form-select bg-white" name="district" id="district" disabled>
+            <select class="form-select bg-white" name="district" id="district">
                 <option value="">Select District</option>
             </select>
         </div>
@@ -67,7 +29,7 @@
     <div class="container-fluid d-flex justify-content-center">
         <div class="row w-100 justify-content-between">
             <div class="col-md-2">
-                <div class="custom-card flex-column py-5 bg-primary text-white fs-3">
+                <div class="custom-card count-card flex-column py-5 bg-primary text-white fs-3">
                     <span class="d-flex gap-2 justify-content-between">
                         <p class="icon"><i class="fa-solid fa-file-pen"></i></p>
                         <p class="text">Total</p>
@@ -76,7 +38,7 @@
                 </div>
             </div>
             <div class="col-md-2 ">
-                <div class="custom-card flex-column py-5 bg-success text-white fs-3">
+                <div class="custom-card count-card flex-column py-5 bg-success text-white fs-3">
                     <span class="d-flex gap-2 justify-content-between">
                         <p class="icon"><i class="fa-solid fa-flag-checkered"></i></p>
                         <p class="text">Sanctioned</p>
@@ -85,7 +47,7 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="custom-card flex-column fs-3 py-5 bg-warning text-dark">
+                <div class="custom-card count-card flex-column fs-3 py-5 bg-warning text-dark">
                     <span class="d-flex gap-2 justify-content-between">
                         <p class="icon"><i class="fa-solid fa-hourglass-half"></i></p>
                         <p class="text">Pending</p>
@@ -94,7 +56,7 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="custom-card flex-column fs-3 py-5 bg-info text-white">
+                <div class="custom-card count-card flex-column fs-3 py-5 bg-info text-white">
                     <span class="d-flex gap-2 justify-content-between">
                         <p class="icon"><i class="fa-solid fa-hourglass-half"></i></p>
                         <p class="text">With Citizen</p>
@@ -103,7 +65,7 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="custom-card flex-column fs-3 py-5 bg-danger text-white">
+                <div class="custom-card count-card flex-column fs-3 py-5 bg-danger text-white">
                     <span class="d-flex gap-2 justify-content-between">
                         <p class="icon"><i class="fa-solid fa-ban"></i></p>
                         <p class="text">Rejected</p>
@@ -121,7 +83,7 @@
             </div>
             <div class="custom-card d-flex flex-column mt-2">
                 <div class="d-flex gap-3">
-                    <p>District: <span class="fw-bold" id="chartDistirct"></span></p>
+                    <p>District: <span class="fw-bold" id="chartDistrict"></span></p>
                     <p>Officer: <span class="fw-bold" id="chartOfficer">All</span></p>
                 </div>
                 <p>Service: <span class="fw-bold" id="chartService">All</span></p>
@@ -136,6 +98,36 @@
         </div>
     </div>
 </div>
+
+
+<div class="modal fade" id="applicationList" tabindex="-1" aria-labelledby="applicationListLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content w-100">
+            <div class="modal-header bg-dark text-white">
+                <h1 class="modal-title fs-5" id="applicationListLabel">Application List</h1>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <table class="table table-responsive table-bordered table-striped">
+                        <thead class="bg-dark text-white">
+                            <th>Application Number</th>
+                            <th>Applicant Name</th>
+                            <th>Application Status</th>
+                        </thead>
+                        <tbody id="applicationListContainer">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-dark" id="statusButtons">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 <script>
     const countList = @Html.Raw(Json.Serialize(Model));

@@ -47,5 +47,7 @@ public partial class Application
 
     public DateTime SubmissionDate { get; set; }
 
+    public virtual ICollection<ApplicationsHistory> ApplicationsHistories { get; set; } = new List<ApplicationsHistory>();
+
     public virtual Service Service { get; set; } = null!;
 }

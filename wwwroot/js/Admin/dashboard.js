@@ -1,33 +1,31 @@
 $(document).ready(function () {
   const count = countList;
-  const districtCode = count.districtCode;
+  const divisionCode = count.divisionCode;
   const conditions = {};
   const mappings = [
-    { id: "#services", value: count.serviceCount },
-    { id: "#officers", value: count.officerCount },
-    { id: "#citizens", value: count.citizenCount },
-    { id: "#applications", value: count.applicationCount },
-    { id: "#total", value: count.totalCount },
-    { id: "#pending", value: count.pendingCount },
-    { id: "#pendingWithCitizen", value: count.pendingWithCitizenCount },
-    { id: "#rejected", value: count.rejectCount },
-    { id: "#sanction", value: count.sanctionCount },
+    { id: "#services", value: count.serviceCount.length },
+    { id: "#officers", value: count.officerCount.length },
+    { id: "#citizens", value: count.citizenCount.length },
+    { id: "#applications", value: count.applicationCount.length },
+    { id: "#total", value: count.totalCount.length },
+    { id: "#pending", value: count.pendingCount.length },
+    { id: "#pendingWithCitizen", value: count.pendingWithCitizenCount.length },
+    { id: "#rejected", value: count.rejectCount.length },
+    { id: "#sanction", value: count.sanctionCount.length },
   ];
   const AllDistrictCount = count.allDistrictCount;
   createPieChart(
     ["Pending", "Rejected", "Sanctioned"],
     [
-      AllDistrictCount.pending,
-      AllDistrictCount.rejected,
-      AllDistrictCount.sanctioned,
+      AllDistrictCount.pending.length,
+      AllDistrictCount.rejected.length,
+      AllDistrictCount.sanctioned.length,
     ]
   );
 
   SetServices();
-  SetDistricts(districtCode);
+  SetDistricts(divisionCode);
   SetDesinations();
-
-  if (districtCode != undefined) $("#district").val(districtCode);
 
   mappings.forEach((mapping) => {
     $(mapping.id).text(mapping.value);
@@ -35,7 +33,11 @@ $(document).ready(function () {
 
   createChart(
     ["Pending", "Rejected", "Sanctioned"],
-    [count.pendingCount, count.rejectCount, count.sanctionCount]
+    [
+      count.pendingCount.length,
+      count.rejectCount.length,
+      count.sanctionCount.length,
+    ]
   );
 
   $("#service").on("change", function () {
@@ -46,5 +48,19 @@ $(document).ready(function () {
   });
   $("#officer").on("change", function () {
     updateConditions(conditions);
+  });
+
+  $(".count-card").on("click", function () {
+    const card = $(this).find(".text").text();
+    let applicationList;
+    if (card == "Total") applicationList = count.totalCount;
+    else if (card == "Pending") applicationList = count.pendingCount;
+    else if (card == "Sanctioned") applicationList = count.sanctionCount;
+    else if (card == "With Citizen")
+      applicationList = count.pendingWithCitizenCount;
+    else if (card == "Rejected") applicationList = count.rejectCount;
+
+    setApplicationList(applicationList);
+    $("#applicationList").modal("show");
   });
 });

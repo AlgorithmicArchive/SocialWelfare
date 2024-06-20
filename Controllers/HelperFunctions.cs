@@ -109,6 +109,53 @@ public class UserHelperFunctions
         dbcontext.Database.ExecuteSqlRaw("EXEC UpdateApplication @ColumnName,@ColumnValue,@ApplicationId", columnNameParam, columnValueParam, applicationId);
     }
 
+    public void UpdateApplicationHistory(string applicationId, string actionTaker, string actionTaken, string remarks)
+    {
+        // Search for an existing history record
+        var historyRecord = dbcontext.ApplicationsHistories.FirstOrDefault(u => u.ApplicationId == applicationId);
+
+        var newAction = new
+        {
+            ActionTaker = actionTaker,
+            ActionTaken = actionTaken,
+            Remarks = remarks,
+            DateTime = DateTime.Now.ToString("dd MMM yyyy hh:mm tt")
+        };
+
+        if (historyRecord == null)
+        {
+            // No result was returned, insert a new record with the initial history action
+            var newHistory = new ApplicationsHistory
+            {
+                ApplicationId = applicationId,
+                History = JsonConvert.SerializeObject(new List<object> { newAction })
+            };
+
+            // Add the new record to the database
+            dbcontext.ApplicationsHistories.Add(newHistory);
+            dbcontext.SaveChanges();
+
+            Console.WriteLine("New history record inserted.");
+        }
+        else
+        {
+            // Result was found, update the History property
+            var history = JsonConvert.DeserializeObject<List<object>>(historyRecord.History) ?? new List<object>();
+
+            // Add the new action to the history
+            history.Add(newAction);
+
+            // Serialize the updated history back to JSON
+            historyRecord.History = JsonConvert.SerializeObject(history);
+
+            // Save the changes to the database
+            dbcontext.SaveChanges();
+
+            Console.WriteLine("History record updated.");
+        }
+    }
+
+
     public (Application UserDetails, AddressJoin PreAddressDetails, AddressJoin PerAddressDetails, dynamic ServiceSpecific, dynamic BankDetails) GetUserDetailsAndRelatedData(string applicationId)
     {
         var userDetails = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == applicationId);
@@ -157,7 +204,7 @@ public class UserHelperFunctions
         codesSet.CopyTo(codesArray);
         return codesArray;
     }
-   
+
 
 }
 

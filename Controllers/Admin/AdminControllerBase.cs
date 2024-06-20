@@ -18,7 +18,8 @@ namespace SocialWelfare.Controllers.Admin
             base.OnActionExecuted(context);
             int? userId = HttpContext.Session.GetInt32("UserId");
             var Admin = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
-            ViewData["UserType"] = "Admin";
+            string AdminDesignation = JsonConvert.DeserializeObject<dynamic>(Admin!.UserSpecificDetails)!["Designation"];
+            ViewData["AdminType"] = AdminDesignation;
             ViewData["UserName"] = Admin!.Username;
 
         }
@@ -31,23 +32,30 @@ namespace SocialWelfare.Controllers.Admin
             int CitizenCount = dbcontext.Users.Where(u => u.UserType == "Citizen").ToList().Count;
             int ApplicationCount = dbcontext.Applications.ToList().Count;
             var conditions = new Dictionary<string, string>();
+
             string districtCode = JsonConvert.DeserializeObject<dynamic>(dbcontext.Users.FirstOrDefault(u => u.UserId == UserId)!.UserSpecificDetails)!["DistrictCode"];
+
+            int? divisionCode = null;
+
+            var user = dbcontext.Users.FirstOrDefault(u => u.UserId == UserId);
+            var userSpecificDetails = JsonConvert.DeserializeObject<dynamic>(user!.UserSpecificDetails);
+            if (userSpecificDetails!["DivisionCode"] != null)
+                divisionCode = Convert.ToInt32(userSpecificDetails["DivisionCode"]);
 
             if (districtCode != null)
                 conditions.Add("specific.District", districtCode);
 
-
-            int TotalCount = GetCount("Total", conditions.Count != 0 ? conditions : null!);
-            int PendingCount = GetCount("Pending", conditions.Count != 0 ? conditions : null!);
-            int RejectCount = GetCount("Reject", conditions.Count != 0 ? conditions : null!);
-            int SanctionCount = GetCount("Sanction", conditions.Count != 0 ? conditions : null!);
-            int PendingWithCitizenCount = GetCount("PendingWithCitizen", conditions.Count != 0 ? conditions : null!);
+            var TotalCount = GetCount("Total", conditions.Count != 0 ? conditions : null!, divisionCode);
+            var PendingCount = GetCount("Pending", conditions.Count != 0 ? conditions : null!, divisionCode);
+            var RejectCount = GetCount("Reject", conditions.Count != 0 ? conditions : null!, divisionCode);
+            var SanctionCount = GetCount("Sanction", conditions.Count != 0 ? conditions : null!, divisionCode);
+            var PendingWithCitizenCount = GetCount("PendingWithCitizen", conditions.Count != 0 ? conditions : null!, divisionCode);
 
             var AllDistrictCount = new
             {
-                Pending = GetCount("Pending", null!),
-                Rejected = GetCount("Reject", null!),
-                Sanctioned = GetCount("Sanction", null!),
+                Pending = GetCount("Pending", null!, null),
+                Rejected = GetCount("Reject", null!, null),
+                Sanctioned = GetCount("Sanction", null!, null),
             };
 
 
@@ -63,7 +71,7 @@ namespace SocialWelfare.Controllers.Admin
                 SanctionCount,
                 PendingWithCitizenCount,
                 AllDistrictCount,
-                districtCode
+                divisionCode
             };
             return View(countList);
         }

@@ -23,7 +23,7 @@
                     DASHBOARD
                 </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" id="serviceLi">
                 <a class="nav-link dropdown-caret" href="#servicesMenu" data-bs-toggle="collapse" role="button"
                     aria-expanded="false" aria-controls="servicesMenu">
                     <i class="fa-solid fa-list-ul"></i>
@@ -47,12 +47,15 @@
 </nav>
 
 <script>
-    var userType = @Html.Raw(Json.Serialize(ViewData["UserType"]));
+    var userType = @Html.Raw(Json.Serialize(ViewData["AdminType"]));
     var userName = @Html.Raw(Json.Serialize(ViewData["UserName"]));
+    console.log(userType)
 </script>
 
 <script>
     $(document).ready(function () {
+
+        if (userType != "Technical Admin") $("#serviceLi").remove();
         // Get the current URL path
         var path = window.location.pathname;
 

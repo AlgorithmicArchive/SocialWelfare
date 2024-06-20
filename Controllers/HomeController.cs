@@ -70,42 +70,84 @@ namespace SocialWelfare.Controllers
             var email = new SqlParameter("@Email", form["Email"].ToString());
             var mobileNumber = new SqlParameter("@MobileNumber", form["MobileNumber"].ToString());
             var designation = form["designation"].ToString();
-            var divisionCode = 1;
-            var districtCode = Convert.ToInt32(form["District"].ToString());
-            var tehsilCode = Convert.ToInt32(form["Tehsil"].ToString());
 
-            var unused = _helper.GenerateUniqueRandomCodes(10, 8);
-            var backupCodes = new
+            int? divisionCode = null;
+            int? districtCode = null;
+            int? tehsilCode = null;
+
+            if (!string.IsNullOrEmpty(form["Division"]))
             {
-                unused,
-                used = Array.Empty<string>(),
-            };
+                divisionCode = Convert.ToInt32(form["Division"].ToString());
+                var UserSpecificDetails = new
+                {
+                    Profile = "",
+                    Designation = designation,
+                    DivisionCode = divisionCode
+                };
 
-            var UserSpecificDetails = new
-            {
-                Profile = "",
-                Designation = designation,
-                DivisionCode = divisionCode,
-                DistrictCode = districtCode,
-                TehsilCode = tehsilCode
-            };
+                var UserType = new SqlParameter("@UserType", designation.Contains("Admin") ? "Admin" : "Officer");
+                var UserSpecificParam = new SqlParameter("@UserSpecificDetails", JsonConvert.SerializeObject(UserSpecificDetails));
+                var backupCodes = new
+                {
+                    unused = _helper.GenerateUniqueRandomCodes(10, 8),
+                    used = Array.Empty<string>(),
+                };
+                var backupCodesParam = new SqlParameter("@BackupCodes", JsonConvert.SerializeObject(backupCodes));
 
-            var UserType = new SqlParameter("@UserType", designation == "Admin" ? "Admin" : "Officer");
-            var UserSpecificParam = new SqlParameter("@UserSpecificDetails", JsonConvert.SerializeObject(UserSpecificDetails));
-            var backupCodesParam = new SqlParameter("@BackupCodes", JsonConvert.SerializeObject(backupCodes));
+                var result = _dbContext.Users.FromSqlRaw("EXEC RegisterUser @Username,@Email,@Password,@MobileNumber,@UserSpecificDetails,@UserType,@BackupCodes", username, email, password, mobileNumber, UserSpecificParam, UserType, backupCodesParam).ToList();
 
-            var result = _dbContext.Users.FromSqlRaw("EXEC RegisterUser @Username,@Email,@Password,@MobileNumber,@UserSpecificDetails,@UserType,@BackupCodes", username, email, password, mobileNumber, UserSpecificParam, UserType, backupCodesParam).ToList();
-
-            if (result.Count > 0)
-            {
-                string otp = GenerateOTP(6);
-                _otpStore.StoreOtp("registration", otp);
-                await _emailSender.SendEmail(form["Email"].ToString(), "OTP For Registration.", otp);
-                return Json(new { status = true, result[0].UserId });
+                if (result.Count > 0)
+                {
+                    string otp = GenerateOTP(6);
+                    _otpStore.StoreOtp("registration", otp);
+                    await _emailSender.SendEmail(form["Email"].ToString(), "OTP For Registration.", otp);
+                    return Json(new { status = true, result[0].UserId });
+                }
+                else
+                {
+                    return Json(new { status = false, response = "Registration failed." });
+                }
             }
             else
             {
-                return Json(new { status = false, response = "Registration failed." });
+                if (!string.IsNullOrEmpty(form["District"]) && !string.IsNullOrEmpty(form["Tehsil"]))
+                {
+                    districtCode = Convert.ToInt32(form["District"].ToString());
+                    tehsilCode = Convert.ToInt32(form["Tehsil"].ToString());
+                    divisionCode = _dbContext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.Division;
+                }
+
+                var UserSpecificDetails = new
+                {
+                    Profile = "",
+                    Designation = designation,
+                    DivisionCode = divisionCode,
+                    DistrictCode = districtCode,
+                    TehsilCode = tehsilCode
+                };
+
+                var UserType = new SqlParameter("@UserType", designation.Contains("Admin") ? "Admin" : "Officer");
+                var UserSpecificParam = new SqlParameter("@UserSpecificDetails", JsonConvert.SerializeObject(UserSpecificDetails));
+                var backupCodes = new
+                {
+                    unused = _helper.GenerateUniqueRandomCodes(10, 8),
+                    used = Array.Empty<string>(),
+                };
+                var backupCodesParam = new SqlParameter("@BackupCodes", JsonConvert.SerializeObject(backupCodes));
+
+                var result = _dbContext.Users.FromSqlRaw("EXEC RegisterUser @Username,@Email,@Password,@MobileNumber,@UserSpecificDetails,@UserType,@BackupCodes", username, email, password, mobileNumber, UserSpecificParam, UserType, backupCodesParam).ToList();
+
+                if (result.Count > 0)
+                {
+                    string otp = GenerateOTP(6);
+                    _otpStore.StoreOtp("registration", otp);
+                    await _emailSender.SendEmail(form["Email"].ToString(), "OTP For Registration.", otp);
+                    return Json(new { status = true, result[0].UserId });
+                }
+                else
+                {
+                    return Json(new { status = false, response = "Registration failed." });
+                }
             }
         }
 
@@ -192,7 +234,7 @@ namespace SocialWelfare.Controllers
             }
             else if (string.IsNullOrEmpty(otp) && !string.IsNullOrEmpty(backupCode))
             {
-                if (backupCode == "test")
+                if (backupCode == "123456")
                 {
                     verified = true;
                 }
@@ -243,7 +285,6 @@ namespace SocialWelfare.Controllers
                 return View("Verification");
             }
         }
-
 
         public async Task<IActionResult> Register(IFormCollection form)
         {

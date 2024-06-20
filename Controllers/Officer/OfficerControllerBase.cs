@@ -188,6 +188,53 @@ namespace SocialWelfare.Controllers.Officer
             };
             return View(ApplicationDetails);
         }
+
+        public IActionResult Reports()
+        {
+            int? UserId = HttpContext.Session.GetInt32("UserId");
+            int ServiceCount = dbcontext.Services.ToList().Count;
+            int OfficerCount = dbcontext.Users.Where(u => u.UserType == "Officer").ToList().Count;
+            int CitizenCount = dbcontext.Users.Where(u => u.UserType == "Citizen").ToList().Count;
+            int ApplicationCount = dbcontext.Applications.ToList().Count;
+            var conditions = new Dictionary<string, string>();
+            string districtCode = JsonConvert.DeserializeObject<dynamic>(dbcontext.Users.FirstOrDefault(u => u.UserId == UserId)!.UserSpecificDetails)!["DistrictCode"];
+            string officerDesignation = JsonConvert.DeserializeObject<dynamic>(dbcontext.Users.FirstOrDefault(u => u.UserId == UserId)!.UserSpecificDetails)!["Designation"];
+
+            conditions.Add("specific.District", districtCode);
+            conditions.Add("JSON_VALUE(app.value, '$.Officer')", officerDesignation);
+
+            int TotalCount = GetCount("Total", conditions.Count != 0 ? conditions : null!);
+            int PendingCount = GetCount("Pending", conditions.Count != 0 ? conditions : null!);
+            int RejectCount = GetCount("Reject", conditions.Count != 0 ? conditions : null!);
+            int SanctionCount = GetCount("Sanction", conditions.Count != 0 ? conditions : null!);
+            int PendingWithCitizenCount = GetCount("PendingWithCitizen", conditions.Count != 0 ? conditions : null!);
+
+            var AllDistrictCount = new
+            {
+                Pending = GetCount("Pending", null!),
+                Rejected = GetCount("Reject", null!),
+                Sanctioned = GetCount("Sanction", null!),
+            };
+
+
+            var countList = new
+            {
+                ServiceCount,
+                OfficerCount,
+                CitizenCount,
+                ApplicationCount,
+                TotalCount,
+                PendingCount,
+                RejectCount,
+                SanctionCount,
+                PendingWithCitizenCount,
+                AllDistrictCount,
+                districtCode,
+                officerDesignation,
+            };
+            return View(countList);
+        }
+
         public IActionResult PullApplication([FromForm] IFormCollection form)
         {
             string? ApplicationId = form["ApplicationId"].ToString();

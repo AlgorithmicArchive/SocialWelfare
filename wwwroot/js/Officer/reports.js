@@ -142,7 +142,7 @@ function updateConditions(conditions) {
   }
 
   if (!isEmpty(conditions)) {
-    fetch("/Admin/GetFilteredCount?conditions=" + JSON.stringify(conditions))
+    fetch("/Base/GetFilteredCount?conditions=" + JSON.stringify(conditions))
       .then((res) => res.json())
       .then((data) => {
         if (data.status) {
@@ -156,14 +156,13 @@ function updateConditions(conditions) {
           );
           $("#chartService").text($("#service option:selected").text());
           $("#chartOfficer").text(officerValue);
-          $("#chartDistrict").text($("#district option:selected").text());
         }
       });
   }
 }
 
-function SetDistricts(divisionCode) {
-  fetch("/Admin/GetDistricts?division=" + divisionCode)
+function SetDistricts(districtCode) {
+  fetch("/Base/GetDistricts")
     .then((res) => res.json())
     .then((data) => {
       if (data.status) {
@@ -173,12 +172,14 @@ function SetDistricts(divisionCode) {
           list += `<option value="${item.uuid}">${item.districtName}</option>`;
         });
         $("#district").append(list);
+        $("#district").val(districtCode);
+        $("#chartDistirct").text($("#district option:selected").text());
       }
     });
 }
 
-function SetDesinations() {
-  fetch("/Admin/GetDesignations")
+function SetDesinations(designation) {
+  fetch("/Base/GetDesignations")
     .then((res) => res.json())
     .then((data) => {
       if (data.status) {
@@ -188,12 +189,14 @@ function SetDesinations() {
           list += `<option value="${item.designation}">${item.designation}</option>`;
         });
         $("#officer").append(list);
+        $("#officer").val(designation);
+        $("#chartOfficer").text($("#officer option:selected").text());
       }
     });
 }
 
 function SetServices() {
-  fetch("/Admin/GetServices")
+  fetch("/Base/GetServices")
     .then((res) => res.json())
     .then((data) => {
       if (data.status) {
@@ -207,16 +210,54 @@ function SetServices() {
     });
 }
 
-function setApplicationList(applicationList) {
-  const container = $("#applicationListContainer");
-  container.empty();
-  applicationList.map((item) => {
-    container.append(`
-      <tr>
-        <td>${item.applicationId}</td>
-        <td>${item.applicantName}</td>
-        <td>${item.applicationStatus}</td>
-      </tr>
-    `);
+$(document).ready(function () {
+  const count = countList;
+  const districtCode = count.districtCode;
+  const designation = count.officerDesignation;
+  const conditions = {};
+  const mappings = [
+    { id: "#services", value: count.serviceCount },
+    { id: "#officers", value: count.officerCount },
+    { id: "#citizens", value: count.citizenCount },
+    { id: "#applications", value: count.applicationCount },
+    { id: "#total", value: count.totalCount },
+    { id: "#pending", value: count.pendingCount },
+    { id: "#pendingWithCitizen", value: count.pendingWithCitizenCount },
+    { id: "#rejected", value: count.rejectCount },
+    { id: "#sanction", value: count.sanctionCount },
+  ];
+  const AllDistrictCount = count.allDistrictCount;
+  createPieChart(
+    ["Pending", "Rejected", "Sanctioned"],
+    [
+      AllDistrictCount.pending,
+      AllDistrictCount.rejected,
+      AllDistrictCount.sanctioned,
+    ]
+  );
+
+  SetServices();
+  SetDistricts(districtCode);
+  SetDesinations(designation);
+
+  if (districtCode != undefined) $("#district").val(districtCode);
+
+  mappings.forEach((mapping) => {
+    $(mapping.id).text(mapping.value);
   });
-}
+
+  createChart(
+    ["Pending", "Rejected", "Sanctioned"],
+    [count.pendingCount, count.rejectCount, count.sanctionCount]
+  );
+
+  $("#service").on("change", function () {
+    updateConditions(conditions);
+  });
+  $("#district").on("change", function () {
+    updateConditions(conditions);
+  });
+  $("#officer").on("change", function () {
+    updateConditions(conditions);
+  });
+});

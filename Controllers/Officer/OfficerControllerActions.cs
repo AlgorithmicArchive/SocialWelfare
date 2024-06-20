@@ -33,80 +33,85 @@ namespace SocialWelfare.Controllers.Officer
         public async Task<IActionResult> Action([FromForm] IFormCollection form)
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
-            var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
-            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
-            string officerDesignation = UserSpecificDetails!["Designation"];
-            string districtCode = UserSpecificDetails["DistrictCode"];
-
-            string? ApplicationId = form["ApplicationId"].ToString();
-
-            string? Action = form["Action"].ToString();
-            string? Remarks = form["Remarks"].ToString();
-
-            string email = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == ApplicationId)!.Email;
-
-
-            var phases = JsonConvert.DeserializeObject<List<dynamic>>(dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == ApplicationId)!.Phase);
-
-            string? nextOfficer = "";
-
-            for (var i = 0; i < phases!.Count; i++)
+            var officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+            if (officer == null)
             {
-                if (phases[i]["Officer"] == officerDesignation)
-                {
-                    if (Action == "Forward")
-                    {
-                        phases[i]["HasApplication"] = false;
-                        phases[i]["ActionTaken"] = Action;
-                        phases[i]["Remarks"] = Remarks;
-                        phases[i]["CanPull"] = true;
-                        phases[i + 1]["HasApplication"] = true;
-                        phases[i + 1]["ActionTaken"] = "Pending";
-                        phases[i + 1]["ReceivedOn"] = DateTime.Now.ToString("dd MMM yyyy hh:mm tt");
-                        nextOfficer = phases[i + 1]["Officer"];
-                    }
-                    else if (Action == "Return")
-                    {
-                        phases[i]["HasApplication"] = false;
-                        phases[i]["ActionTaken"] = Action;
-                        phases[i]["Remarks"] = Remarks;
-                        phases[i]["CanPull"] = false;
-                        phases[i - 1]["HasApplication"] = true;
-                        phases[i - 1]["ActionTaken"] = "Pending";
-                        nextOfficer = phases[i - 1]["Officer"];
+                return Json(new { status = false, message = "Officer not found." });
+            }
 
-                    }
-                    else if (Action == "Reject" || Action == "Sanction" || Action == "ReturnToEdit")
+            var userSpecificDetails = JsonConvert.DeserializeObject<dynamic>(officer.UserSpecificDetails);
+            string officerDesignation = userSpecificDetails!.Designation;
+            string districtCode = userSpecificDetails.DistrictCode;
+
+            string applicationId = form["ApplicationId"].ToString();
+            string action = form["Action"].ToString();
+            string remarks = form["Remarks"].ToString();
+
+            var application = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == applicationId);
+            if (application == null)
+            {
+                return Json(new { status = false, message = "Application not found." });
+            }
+
+            string email = application.Email;
+            var phases = JsonConvert.DeserializeObject<List<dynamic>>(application.Phase);
+
+            string? nextOfficer = null;
+
+            for (int i = 0; i < phases!.Count; i++)
+            {
+                if (phases[i].Officer == officerDesignation)
+                {
+                    phases[i].HasApplication = false;
+                    phases[i].ActionTaken = action;
+                    phases[i].Remarks = remarks;
+                    phases[i].CanPull = action == "ReturnToEdit";
+
+                    if (action == "Forward")
                     {
-                        phases[i]["HasApplication"] = false;
-                        phases[i]["ActionTaken"] = Action;
-                        phases[i]["Remarks"] = Remarks;
-                        phases[i]["CanPull"] = Action == "ReturnToEdit";
+                        phases[i].CanPull = true;
+                        if (i + 1 < phases.Count)
+                        {
+                            phases[i + 1].HasApplication = true;
+                            phases[i + 1].ActionTaken = "Pending";
+                            phases[i + 1].ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt");
+                            nextOfficer = phases[i + 1].Officer;
+                        }
+                    }
+                    else if (action == "Return" && i - 1 >= 0)
+                    {
+                        phases[i - 1].HasApplication = true;
+                        phases[i - 1].ActionTaken = "Pending";
+                        nextOfficer = phases[i - 1].Officer;
                     }
                 }
             }
 
-
             await emailSender.SendEmail(
                 email,
                 "Acknowledgement",
-                "Your Application with Reference Number " + ApplicationId + " is " + Action + " by " + officerDesignation +
-                (nextOfficer != "" ? " to " + nextOfficer : "") +
-                " at " + DateTime.Now.ToString("dd MMM yyyy hh:mm tt")
+                $"Your Application with Reference Number {applicationId} is {action} by {officerDesignation}" +
+                (nextOfficer != null ? $" to {nextOfficer}" : "") +
+                $" at {DateTime.Now:dd MMM yyyy hh:mm tt}"
             );
 
+            var applicationIdParam = new SqlParameter("@ApplicationId", applicationId);
+            helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), applicationIdParam);
+            helper.UpdateApplication("EditList", form["editList"].ToString(), applicationIdParam);
+            helper.UpdateApplicationHistory(applicationId, officerDesignation, action, remarks);
 
+            if (action == "Sanction")
+            {
+                Sanction(applicationId, officerDesignation);
+            }
 
-            helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", ApplicationId));
+            if (action == "Sanction" || action == "Reject")
+            {
+                helper.UpdateApplication("ApplicationStatus", $"{action}ed", applicationIdParam);
+            }
 
-            helper.UpdateApplication("EditList", form["editList"].ToString(), new SqlParameter("@ApplicationId", ApplicationId));
-
-            if (Action == "Sanction")
-                Sanction(ApplicationId, officerDesignation);
-            if (Action == "Sanction" || Action == "Reject")
-                helper.UpdateApplication("ApplicationStatus", Action + "ed", new SqlParameter("@ApplicationId", ApplicationId));
-
-            return Json(new { status = true, url = "/Officer/Index", ApplicationId });
+            return Json(new { status = true, url = "/Officer/Index", ApplicationId = applicationId });
         }
+
     }
 }
