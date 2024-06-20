@@ -1,98 +1,124 @@
-<div class="full-screen-section center-align">
-    <div class="rounded-border shadow" style="max-height: 70vh;width:90%;overflow-y: auto;">
-        <div class="container-fluid d-flex flex-column gap-5 py-4">
-            <div class="row w-100 mx-auto">
-                <div class="col-sm-4">
-                    <label for="District">District</label>
-                    <select class="form-select bg-white" name="district" id="district" disabled>
-                        <option value="">Select District</option>
-                    </select>
+<div class="full-screen-section py-5">
+    <div class="container-fluid d-flex flex-column gap-4 py-5 mt-5 mb-5">
+        <div class="container  d-flex gap-3 justify-content-center align-items-center fs-4">
+            <div class="d-flex gap-2">
+                <p class="fw-bold">District</p>
+                <p id="district"></p>
+            </div>
+            <div class="d-flex gap-2">
+                <p class="fw-bold">Officer</p>
+                <p id="officer"></p>
+            </div>
+
+        </div>
+
+        <div class="row w-100 mx-auto">
+            <div class="col-sm-4">
+                <label for="Service">Service</label>
+                <select class="form-select" name="service" id="service">
+                    <option value="">Select Service</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="container-fluid d-flex justify-content-center">
+            <div class="row w-100  justify-content-between">
+                <div class="col-md-2  p-0">
+                    <div class="custom-card count-card flex-column py-5 bg-primary text-white fs-3"
+                        style="cursor:pointer">
+                        <span class="d-flex gap-2 justify-content-between">
+                            <p class="icon"><i class="fa-solid fa-file-pen"></i></p>
+                            <p class="text">Total</p>
+                        </span>
+                        <p class="value fs-2 fw-bold d-flex justify-content-center" id="total">20</p>
+                    </div>
                 </div>
-                <div class="col-sm-4">
-                    <label for="Service">Service</label>
-                    <select class="form-select" name="service" id="service">
-                        <option value="">Select Service</option>
-                    </select>
+                <div class="col-md-2 p-0 ">
+                    <div class="custom-card count-card flex-column py-5 bg-success text-white fs-3"
+                        style="cursor:pointer">
+                        <span class="d-flex gap-2 justify-content-between">
+                            <p class="icon"><i class="fa-solid fa-flag-checkered"></i></p>
+                            <p class="text">Sanctioned</p>
+                        </span>
+                        <p class="value fs-2 fw-bold d-flex justify-content-center" id="sanction">20</p>
+                    </div>
                 </div>
-                <div class="col-sm-4">
-                    <label for="Officer">Officer</label>
-                    <select class="form-select" name="officer" id="officer" disabled>
-                        <option value="">Select Officer</option>
-                    </select>
+                <div class="col-md-2 p-0">
+                    <div class="custom-card count-card flex-column fs-3 py-5 bg-warning text-dark"
+                        style="cursor:pointer">
+                        <span class="d-flex gap-2 justify-content-between">
+                            <p class="icon"><i class="fa-solid fa-hourglass-half"></i></p>
+                            <p class="text">Pending</p>
+                        </span>
+                        <p class="value fs-2 fw-bold  d-flex justify-content-center" id="pending">20</p>
+                    </div>
+                </div>
+                <div class="col-md-2 p-0">
+                    <div class="custom-card count-card flex-column fs-3 py-5 bg-info text-white" style="cursor:pointer">
+                        <span class="d-flex gap-1 justify-content-between">
+                            <p class="icon"><i class="fa-solid fa-hourglass-half"></i></p>
+                            <p class="text fs-4">Pending With Citizen</p>
+                        </span>
+                        <p class="value fs-2 fw-bold d-flex justify-content-center" id="pendingWithCitizen">20</p>
+                    </div>
+                </div>
+                <div class="col-md-2 p-0">
+                    <div class="custom-card count-card flex-column fs-3 py-5 bg-danger text-white"
+                        style="cursor:pointer">
+                        <span class="d-flex gap-2 justify-content-between">
+                            <p class="icon"><i class="fa-solid fa-ban"></i></p>
+                            <p class="text">Rejected</p>
+                        </span>
+                        <p class="value fs-2 fw-bold  d-flex justify-content-center" id="rejected">20</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row w-100">
+            <div class="col-md-4 offset-md-2">
+                <div class="custom-card d-flex flex-column mb-2" style="height: 10vh;">
+                    <div class="d-flex gap-3">
+                        <p>District: <span class="fw-bold" id="chartDistirct"></span></p>
+                        <p>Officer: <span class="fw-bold" id="chartOfficer">All</span></p>
+                    </div>
+                    <p>Service: <span class="fw-bold" id="chartService">All</span></p>
+                </div>
+                <div class="custom-card flex-column bg-white text-dark">
+                    <canvas id="myChart" height="500" width="500"></canvas>
                 </div>
             </div>
 
-            <div class="container-fluid d-flex justify-content-center">
-                <div class="row w-100 justify-content-between">
-                    <div class="col-md-2">
-                        <div class="custom-card flex-column py-5 bg-primary text-white fs-3">
-                            <span class="d-flex gap-2 justify-content-between">
-                                <p class="icon"><i class="fa-solid fa-file-pen"></i></p>
-                                <p class="text">Total</p>
-                            </span>
-                            <p class="value fs-2 fw-bold d-flex justify-content-center" id="total">20</p>
-                        </div>
-                    </div>
-                    <div class="col-md-2 ">
-                        <div class="custom-card flex-column py-5 bg-success text-white fs-3">
-                            <span class="d-flex gap-2 justify-content-between">
-                                <p class="icon"><i class="fa-solid fa-flag-checkered"></i></p>
-                                <p class="text">Sanctioned</p>
-                            </span>
-                            <p class="value fs-2 fw-bold d-flex justify-content-center" id="sanction">20</p>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="custom-card flex-column fs-3 py-5 bg-warning text-dark">
-                            <span class="d-flex gap-2 justify-content-between">
-                                <p class="icon"><i class="fa-solid fa-hourglass-half"></i></p>
-                                <p class="text">Pending</p>
-                            </span>
-                            <p class="value fs-2 fw-bold  d-flex justify-content-center" id="pending">20</p>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="custom-card flex-column fs-3 py-5 bg-info text-white">
-                            <span class="d-flex gap-2 justify-content-between">
-                                <p class="icon"><i class="fa-solid fa-hourglass-half"></i></p>
-                                <p class="text">With Citizen</p>
-                            </span>
-                            <p class="value fs-2 fw-bold  d-flex justify-content-center" id="pendingWithCitizen">20</p>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="custom-card flex-column fs-3 py-5 bg-danger text-white">
-                            <span class="d-flex gap-2 justify-content-between">
-                                <p class="icon"><i class="fa-solid fa-ban"></i></p>
-                                <p class="text">Rejected</p>
-                            </span>
-                            <p class="value fs-2 fw-bold  d-flex justify-content-center" id="rejected">20</p>
-                        </div>
-                    </div>
+            <div class="col-md-4">
+                <div class="custom-card d-flex flex-column mb-2" style="height: 10vh;">
+                    <p class="fw-bold">All District Data</p>
+                </div>
+                <div class="custom-card flex-column">
+                    <canvas id="allDistrict" height="500" width="500"></canvas>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="row w-100">
-                <div class="col-md-4 offset-md-2">
-                    <div class="custom-card flex-column bg-white text-dark">
-                        <canvas id="myChart" height="500" width="500"></canvas>
-                    </div>
-                    <div class="custom-card d-flex flex-column mt-2">
-                        <div class="d-flex gap-3">
-                            <p>District: <span class="fw-bold" id="chartDistirct"></span></p>
-                            <p>Officer: <span class="fw-bold" id="chartOfficer">All</span></p>
-                        </div>
-                        <p>Service: <span class="fw-bold" id="chartService">All</span></p>
-                    </div>
-                </div>
+    <div class="container-fluid d-none flex-column gap-5 py-5 mb-5" id="dataGrid">
+        <div class="d-flex gap-2">
+            <button class="btn btn-success" onclick="printDiv('printableArea')">Print</button>
+        </div>
+        <div id="printableArea">
+            <table class="table table-responsive table-bordered table-striped">
+                <thead class="bg-dark text-white">
+                    <th>S.No.</th>
+                    <th>Application Number</th>
+                    <th>Applicant Name</th>
+                    <th>Application Status</th>
+                    <th>Applied District</th>
+                    <th>Applied Service</th>
+                    <th>Application Currently With Officer</th>
+                </thead>
+                <tbody id="applicationListContainer">
 
-                <div class="col-md-4">
-                    <div class="custom-card flex-column">
-                        <canvas id="allDistrict" height="500" width="500"></canvas>
-                    </div>
-                    <p class="custom-card text-center fw-bold mt-2">All District Data</p>
-                </div>
-            </div>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

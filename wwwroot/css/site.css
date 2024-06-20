@@ -119,6 +119,7 @@ p{
     justify-content: space-between;
     align-items: center;
     background-color: white;
+    width: 100%;
 }
 
 .hover-card:hover{

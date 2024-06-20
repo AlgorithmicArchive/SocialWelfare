@@ -177,7 +177,7 @@ namespace SocialWelfare.Controllers.Officer
             }
         }
 
-        public int GetCount(string type, Dictionary<string, string> conditions)
+        public List<dynamic> GetCount(string type, Dictionary<string, string> conditions)
         {
             StringBuilder Condition1 = new StringBuilder();
             StringBuilder Condition2 = new StringBuilder();
@@ -217,12 +217,58 @@ namespace SocialWelfare.Controllers.Officer
                 Condition2.Append($" AND JSON_VALUE(app.value, '$.ActionTaken') != ''");
             }
 
-            int count = dbcontext.Applications.FromSqlRaw("EXEC GetApplications @Condition1, @Condition2",
-        new SqlParameter("@Condition1", Condition1.ToString()),
-        new SqlParameter("@Condition2", Condition2.ToString())).ToList().Count;
+            var applications = dbcontext.Applications.FromSqlRaw("EXEC GetApplications @Condition1, @Condition2",
+            new SqlParameter("@Condition1", Condition1.ToString()),
+           new SqlParameter("@Condition2", Condition2.ToString())).ToList();
 
-            return count;
+            var list = new List<dynamic>();
+
+            foreach (var application in applications)
+            {
+                int districtCode = Convert.ToInt32(JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific)!["District"]);
+                _logger.LogInformation($"District Code: {districtCode}");
+                string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.Uuid == districtCode)!.DistrictName;
+                string AppliedService = dbcontext.Services.FirstOrDefault(s => s.ServiceId == application.ServiceId)!.ServiceName;
+                string ApplicationWithOfficer = "";
+                var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
+                foreach (var phase in phases!)
+                {
+                    if (phase["ActionTaken"] == "Pending" || phase["ActionTaken"] == "Sanction")
+                    {
+                        ApplicationWithOfficer = phase["Officer"];
+                        break;
+                    }
+                }
+
+                var obj = new
+                {
+                    ApplicationNo = application.ApplicationId,
+                    application.ApplicantName,
+                    application.ApplicationStatus,
+                    AppliedDistrict,
+                    AppliedService,
+                    ApplicationWithOfficer
+                };
+                list.Add(obj);
+            }
+
+
+            return list;
+
         }
+
+        public IActionResult GetFilteredCount(string? conditions)
+        {
+            var Conditions = JsonConvert.DeserializeObject<Dictionary<string, string>>(conditions!);
+            var TotalCount = GetCount("Total", Conditions!);
+            var PendingCount = GetCount("Pending", Conditions!);
+            var RejectCount = GetCount("Reject", Conditions!);
+            var SanctionCount = GetCount("Sanction", Conditions!);
+
+            return Json(new { status = true, TotalCount, PendingCount, RejectCount, SanctionCount });
+        }
+
+
 
     }
 }

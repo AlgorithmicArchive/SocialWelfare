@@ -9,8 +9,8 @@ function createChart(labels, data) {
       {
         label: "Applications",
         data: data,
-        backgroundColor: ["orange", "red", "darkgreen"],
-        borderColor: ["orange", "red", "darkgreen"],
+        backgroundColor: ["blue", "orange", "red", "darkgreen"],
+        borderColor: ["blue", "orange", "red", "darkgreen"],
         borderWidth: 1,
       },
     ],
@@ -34,7 +34,7 @@ function createChart(labels, data) {
           align: "top",
           backgroundColor: (context) => {
             const index = context.dataIndex;
-            const backgroundColors = ["orange", "red", "darkgreen"];
+            const backgroundColors = ["blue", "orange", "red", "darkgreen"];
             return backgroundColors[index];
           },
           borderRadius: 4,

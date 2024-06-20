@@ -32,8 +32,9 @@ $(document).ready(function () {
   });
 
   createChart(
-    ["Pending", "Rejected", "Sanctioned"],
+    ["Total", "Pending", "Rejected", "Sanctioned"],
     [
+      count.totalCount.length,
       count.pendingCount.length,
       count.rejectCount.length,
       count.sanctionCount.length,

@@ -74,16 +74,15 @@ namespace SocialWelfare.Controllers
             int? divisionCode = null;
             int? districtCode = null;
             int? tehsilCode = null;
+            var UserSpecificDetails = new Dictionary<string, dynamic>();
 
             if (!string.IsNullOrEmpty(form["Division"]))
             {
                 divisionCode = Convert.ToInt32(form["Division"].ToString());
-                var UserSpecificDetails = new
-                {
-                    Profile = "",
-                    Designation = designation,
-                    DivisionCode = divisionCode
-                };
+                UserSpecificDetails.Add("Profile", "");
+                UserSpecificDetails.Add("Designation", designation);
+                UserSpecificDetails.Add("DivisionCode", divisionCode);
+                UserSpecificDetails.Add("valid", false);
 
                 var UserType = new SqlParameter("@UserType", designation.Contains("Admin") ? "Admin" : "Officer");
                 var UserSpecificParam = new SqlParameter("@UserSpecificDetails", JsonConvert.SerializeObject(UserSpecificDetails));
@@ -117,14 +116,12 @@ namespace SocialWelfare.Controllers
                     divisionCode = _dbContext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.Division;
                 }
 
-                var UserSpecificDetails = new
-                {
-                    Profile = "",
-                    Designation = designation,
-                    DivisionCode = divisionCode,
-                    DistrictCode = districtCode,
-                    TehsilCode = tehsilCode
-                };
+                UserSpecificDetails.Add("Profile", "");
+                UserSpecificDetails.Add("Designation", designation);
+                UserSpecificDetails.Add("DivisionCode", divisionCode!);
+                UserSpecificDetails.Add("DistrictCode", districtCode!);
+                UserSpecificDetails.Add("TehsilCode", tehsilCode!);
+                UserSpecificDetails.Add("valid", false);
 
                 var UserType = new SqlParameter("@UserType", designation.Contains("Admin") ? "Admin" : "Officer");
                 var UserSpecificParam = new SqlParameter("@UserSpecificDetails", JsonConvert.SerializeObject(UserSpecificDetails));
