@@ -1,5 +1,6 @@
 $(document).ready(function () {
   const count = countList;
+  console.log(count);
   const divisionCode = count.divisionCode;
   const conditions = {};
   const mappings = [
@@ -57,11 +58,20 @@ $(document).ready(function () {
     if (card == "Total") applicationList = count.totalCount;
     else if (card == "Pending") applicationList = count.pendingCount;
     else if (card == "Sanctioned") applicationList = count.sanctionCount;
-    else if (card == "With Citizen")
+    else if (card == "Pending With Citizen")
       applicationList = count.pendingWithCitizenCount;
     else if (card == "Rejected") applicationList = count.rejectCount;
 
     setApplicationList(applicationList);
-    $("#applicationList").modal("show");
+    var $anchor = $("<a/>", {
+      href: "#dataGrid",
+      id: "tempAnchor",
+    }).appendTo("body");
+
+    // Trigger the click event on the anchor tag
+    $anchor[0].click();
+
+    // Clean up by removing the anchor tag after clicking
+    $anchor.remove();
   });
 });

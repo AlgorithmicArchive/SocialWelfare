@@ -76,7 +76,13 @@ namespace SocialWelfare.Controllers.Admin
             return View(countList);
         }
 
-        public IActionResult Reports()
+        [HttpGet("Admin/Reports/History")]
+        public IActionResult History()
+        {
+            return View();
+        }
+        [HttpGet("Admin/Reports/Individual")]
+        public IActionResult Individual()
         {
             return View();
         }

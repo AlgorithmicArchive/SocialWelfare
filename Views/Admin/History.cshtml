@@ -1,0 +1,53 @@
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "History";
+}
+
+<div class="container-fluid center-align flex-column gap-5 p-5">
+    <div class="row">
+        <div class="col-sm-4 d-flex flex-column">
+            <label for="Start Date">Start Date</label>
+            <input class="form-control" type="text" name="StartDate" id="StartDate" placeholder="dd/mm/yyy">
+        </div>
+        <div class="col-sm-4 d-flex flex-column">
+            <label for="End Date">End Date</label>
+            <input class="form-control" type="text" name="EndDate" id="EndDate" placeholder="dd/mm/yyy">
+        </div>
+        <div class="col-sm-4 d-flex flex-column">
+            <label for="Application Status">Application Status</label>
+            <select class="form-select" name="status" id="status">
+                <option value="">Select Application Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Sanctioned">Sanctioned</option>
+            </select>
+        </div>
+    </div>
+    <button id="getRecords" class="btn btn-dark d-flex mx-auto mt-2">Get Records</button>
+
+    <div id="HistoryContainer" class="container-fluid mt-5" style="display: none;">
+        <div class="d-flex gap-2 mb-3">
+            <button class="btn btn-success" onclick="printDiv('printableArea')">Print</button>
+        </div>
+        <div id="printableArea">
+
+            <table id="historyTable" class="table table-responsive table-bordered table-striped">
+                <thead class="bg-dark text-white">
+                    <th>S.No.</th>
+                    <th>Application Number</th>
+                    <th>Applicant Name</th>
+                    <th>Date Time</th>
+                    <th>Previously With</th>
+                    <th>Previous Status</th>
+                    <th>Applied District</th>
+                    <th>Applied Service</th>
+                    <th>Currently With</th>
+                    <th>Current Status</th>
+                </thead>
+                <tbody id="historyList"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="/js/Admin/history.js"></script>

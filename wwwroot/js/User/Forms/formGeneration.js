@@ -154,7 +154,6 @@ function createInput(obj, columSize, formNo) {
   `;
 }
 
-
 function appendFormFields(container, fields, columSize, formNo) {
   const isForm1or2 = formNo === 1 || formNo === 2;
   if (isForm1or2) {

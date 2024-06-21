@@ -93,7 +93,7 @@ function createPieChart(labels, values) {
           align: "center",
           backgroundColor: (context) => {
             const index = context.dataIndex;
-            const backgroundColors = ["maroon", "red", "purple"];
+            const backgroundColors = ["blac", "black", "black"];
             return backgroundColors[index];
           },
           borderRadius: 4,
@@ -146,13 +146,18 @@ function updateConditions(conditions) {
       .then((res) => res.json())
       .then((data) => {
         if (data.status) {
-          $("#total").text(data.totalCount);
-          $("#pending").text(data.pendingCount);
-          $("#rejected").text(data.rejectCount);
-          $("#sanction").text(data.sanctionCount);
+          $("#total").text(data.totalCount.length);
+          $("#pending").text(data.pendingCount.length);
+          $("#rejected").text(data.rejectCount.length);
+          $("#sanction").text(data.sanctionCount.length);
           createChart(
-            ["Pending", "Rejected", "Sanctioned"],
-            [data.pendingCount, data.rejectCount, data.sanctionCount]
+            ["Total", "Pending", "Rejected", "Sanctioned"],
+            [
+              data.totalCount.length,
+              data.pendingCount.length,
+              data.rejectCount.length,
+              data.sanctionCount.length,
+            ]
           );
           $("#chartService").text($("#service option:selected").text());
           $("#chartOfficer").text(officerValue);
@@ -210,13 +215,57 @@ function SetServices() {
 function setApplicationList(applicationList) {
   const container = $("#applicationListContainer");
   container.empty();
-  applicationList.map((item) => {
+  applicationList.map((item, index) => {
     container.append(`
       <tr>
-        <td>${item.applicationId}</td>
+        <td>${index + 1}</td>
+        <td>${item.applicationNo}</td>
         <td>${item.applicantName}</td>
         <td>${item.applicationStatus}</td>
+        <td>${item.appliedDistrict}</td>
+        <td>${item.appliedService}</td>
+        <td>${item.applicationWithOfficer}</td>
       </tr>
     `);
   });
+
+  console.log("This one only");
+  $("#dataGrid").removeClass("d-none").addClass("d-flex");
+}
+
+function printDiv(divId) {
+  var content = $("#" + divId).html();
+
+  // Desired window size
+  var width = 1080;
+  var height = 600;
+
+  // Calculate the position for centering the window
+  var left = (screen.width - width) / 2;
+  var top = (screen.height - height) / 2;
+
+  var myWindow = window.open(
+    "",
+    "",
+    `width=${width},height=${height},top=${top},left=${left}`
+  );
+  myWindow.document.write("<html><head><title>Print</title>");
+  myWindow.document.write(`<style>
+        table { border-collapse: collapse; }
+        th, td { border: 2px solid black; padding: 8px; text-align: left; }
+        thead { background-color: #f2f2f2; }
+        th { border: 1px solid black; }
+        @media print {
+            @page {
+                size: landscape;
+            }
+        }
+    </style>`);
+  myWindow.document.write("</head><body>");
+  myWindow.document.write(content);
+  myWindow.document.write("</body></html>");
+  myWindow.document.close();
+  myWindow.focus();
+  myWindow.print();
+  myWindow.close();
 }
