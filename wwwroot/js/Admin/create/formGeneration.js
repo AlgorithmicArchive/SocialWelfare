@@ -5,7 +5,7 @@ function GetDistricts() {
       if (data.status) {
         let list = ``;
         data.districts.map((item) => {
-          list += `<option value="${item.uuid}">${item.districtName}</option>`;
+          list += `<option value="${item.districtId}">${item.districtName}</option>`;
         });
 
         $(`select[name*="District"`).each(function () {
@@ -23,7 +23,7 @@ function GetTehsil(value) {
       if (data.status) {
         let list = ``;
         data.tehsils.map((item) => {
-          list += `<option value="${item.uuid}">${item.tehsilName}</option>`;
+          list += `<option value="${item.tehsilId}">${item.tehsilName}</option>`;
         });
 
         $(`select[name*="Tehsil"`).each(function () {
@@ -40,7 +40,7 @@ function GetBlock(value) {
       if (data.status) {
         let list = ``;
         data.blocks.map((item) => {
-          list += `<option value="${item.uuid}">${item.blockName}</option>`;
+          list += `<option value="${item.blockId}">${item.blockName}</option>`;
         });
 
         $(`select[name*="Block"`).each(function () {

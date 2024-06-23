@@ -44,6 +44,7 @@ namespace SocialWelfare.Controllers.Officer
                 var Phases = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(application.Phase);
                 foreach (var phase in Phases!)
                 {
+                    _logger.LogInformation($"Officer: {officerDesignation == phase["Officer"]}");
                     if (officerDesignation == phase["Officer"])
                     {
                         switch (phase["ActionTaken"])
@@ -188,7 +189,6 @@ namespace SocialWelfare.Controllers.Officer
             };
             return View(ApplicationDetails);
         }
-
         public IActionResult Reports()
         {
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -199,11 +199,11 @@ namespace SocialWelfare.Controllers.Officer
             int ApplicationCount = dbcontext.Applications.ToList().Count;
             var conditions = new Dictionary<string, string>();
 
-            string districtCode = JsonConvert.DeserializeObject<dynamic>(dbcontext.Users.FirstOrDefault(u => u.UserId == UserId)!.UserSpecificDetails)!["DistrictCode"];
-
-
-            if (districtCode != null)
-                conditions.Add("specific.District", districtCode);
+            var officerDetails = JsonConvert.DeserializeObject<dynamic>(dbcontext.Users.FirstOrDefault(u => u.UserId == UserId)!.UserSpecificDetails);
+            string districtCode = officerDetails!["DistrictCode"];
+            string designation = officerDetails["Designation"];
+            conditions.Add("JSON_VALUE(a.ServiceSpecific, '$.District')", districtCode);
+            conditions.Add("JSON_VALUE(app.value, '$.Officer')",designation);
 
             var TotalCount = GetCount("Total", conditions.Count != 0 ? conditions : null!);
             var PendingCount = GetCount("Pending", conditions.Count != 0 ? conditions : null!);
@@ -236,7 +236,6 @@ namespace SocialWelfare.Controllers.Officer
             };
             return View(countList);
         }
-
         public IActionResult PullApplication([FromForm] IFormCollection form)
         {
             string? ApplicationId = form["ApplicationId"].ToString();

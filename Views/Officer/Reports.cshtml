@@ -1,15 +1,16 @@
 <div class="full-screen-section py-5 mb-5">
     <div class="container-fluid d-flex flex-column gap-4 py-5 mt-5 mb-5">
-        <div class="container  d-flex gap-3 justify-content-center align-items-center fs-4">
-            <div class="d-flex gap-2">
-                <p class="fw-bold">District</p>
-                <p id="district"></p>
+        <div class="container d-flex gap-3 justify-content-center align-items-center fs-4">
+            <div class="row w-100  d-flex">
+                <div class="col-sm-6 d-flex gap-2">
+                    <p class="fw-bold">District:</p>
+                    <p id="district"></p>
+                </div>
+                <div class="col-sm-6 d-flex gap-2">
+                    <p class="fw-bold">Officer:</p>
+                    <p id="officer"></p>
+                </div>
             </div>
-            <div class="d-flex gap-2">
-                <p class="fw-bold">Officer</p>
-                <p id="officer"></p>
-            </div>
-
         </div>
 
         <div class="row w-100 mx-auto">
@@ -23,7 +24,7 @@
 
         <div class="container-fluid d-flex justify-content-center">
             <div class="row w-100  justify-content-between">
-                <div class="col-md-2 p-0">
+                <div class="col-md-2 p-0 mt-2">
                     <div class="custom-card count-card flex-column py-5 bg-primary text-white fs-3"
                         style="cursor:pointer">
                         <span class="d-flex gap-2 justify-content-between">
@@ -33,7 +34,7 @@
                         <p class="value fs-2 fw-bold d-flex justify-content-center" id="total">20</p>
                     </div>
                 </div>
-                <div class="col-md-2 p-0 ">
+                <div class="col-md-2 p-0 mt-2 ">
                     <div class="custom-card count-card flex-column py-5 bg-success text-white fs-3"
                         style="cursor:pointer">
                         <span class="d-flex gap-2 justify-content-between">
@@ -43,7 +44,7 @@
                         <p class="value fs-2 fw-bold d-flex justify-content-center" id="sanction">20</p>
                     </div>
                 </div>
-                <div class="col-md-2 p-0">
+                <div class="col-md-2 p-0 mt-2">
                     <div class="custom-card count-card flex-column fs-3 py-5 bg-warning text-dark"
                         style="cursor:pointer">
                         <span class="d-flex gap-2 justify-content-between">
@@ -53,17 +54,16 @@
                         <p class="value fs-2 fw-bold  d-flex justify-content-center" id="pending">20</p>
                     </div>
                 </div>
-                <div class="col-md-2 p-0 width-25">
-                    <div class="custom-card count-card flex-column fs-3 py-5 bg-info text-white h-100"
+                <div class="col-md-2 p-0 mt-2">
+                    <div class="custom-card count-card flex-column fs-3 py-4 bg-info text-white gap-0"
                         style="cursor:pointer">
-                        <span class="d-flex gap-1 justify-content-between">
-                            <p class="icon"><i class="fa-solid fa-hourglass-half"></i></p>
-                            <p class="text">Pending With Citizen</p>
-                        </span>
+                        <i class="fa-solid fa-user-clock"></i>
+                        <span>Pending With Citizen</span>
+                        <span>For Editing</span>
                         <p class="value fs-2 fw-bold d-flex justify-content-center" id="pendingWithCitizen">20</p>
                     </div>
                 </div>
-                <div class="col-md-2 p-0">
+                <div class="col-md-2 p-0 mt-2">
                     <div class="custom-card count-card flex-column fs-3 py-5 bg-danger text-white"
                         style="cursor:pointer">
                         <span class="d-flex gap-2 justify-content-between">

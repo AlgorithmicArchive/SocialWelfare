@@ -99,7 +99,7 @@ namespace SocialWelfare.Controllers.Admin
         public IActionResult GetFilteredCount(string? conditions)
         {
             var Conditions = JsonConvert.DeserializeObject<Dictionary<string, string>>(conditions!);
-            var TotalCount = GetCount("Total", Conditions!, null);
+            var TotalCount = GetCount("Total", Conditions!, null) ;
             var PendingCount = GetCount("Pending", Conditions!, null);
             var RejectCount = GetCount("Reject", Conditions!, null);
             var SanctionCount = GetCount("Sanction", Conditions!, null);

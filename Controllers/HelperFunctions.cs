@@ -64,20 +64,36 @@ public class UserHelperFunctions
     }
 
     public string GenerateApplicationId(int districtId, SocialWelfareDepartmentContext dbcontext, ILogger<UserController> _logger)
-    {
-        string? districtShort = dbcontext.Districts.FirstOrDefault(u => u.Uuid == districtId)!.DistrictShort;
+{
+    string? districtShort = dbcontext.Districts.FirstOrDefault(u => u.DistrictId == districtId)?.DistrictShort;
 
-        string financialYear = GetCurrentFinancialYear();
+    string financialYear = GetCurrentFinancialYear();
 
-        int countPerDistrict = dbcontext.ApplicationPerDistricts.FromSqlRaw("EXEC CountPerDistrict @DistrictId,@FinancialYear", new SqlParameter("@DistrictId", districtId), new SqlParameter("@FinancialYear", financialYear)).ToList()[0].CountValue;
+    var result = dbcontext.ApplicationPerDistricts
+                  .FromSqlRaw("EXEC CountPerDistrict @DistrictId, @FinancialYear", 
+                              new SqlParameter("@DistrictId", districtId), 
+                              new SqlParameter("@FinancialYear", financialYear))
+                  .ToList();
 
+    int countPerDistrict = result.FirstOrDefault()?.CountValue ?? 0;
 
-        var sql = "UPDATE ApplicationPerDistrict SET CountValue = CountValue + 1 WHERE DistrictId = @districtId AND FinancialYear = @financialYear";
+    string sql = "";
 
-        dbcontext.Database.ExecuteSqlRaw(sql, new SqlParameter("@districtId", districtId), new SqlParameter("@financialYear", financialYear));
+    if (countPerDistrict != 0)
+        sql = "UPDATE ApplicationPerDistrict SET CountValue = @CountValue WHERE DistrictId = @districtId AND FinancialYear = @financialyear";
+    else
+        sql = "INSERT INTO ApplicationPerDistrict (DistrictId, FinancialYear, CountValue) VALUES (@districtId, @financialyear, @CountValue)";
 
-        return districtShort + "/" + financialYear + "/" + countPerDistrict;
-    }
+    countPerDistrict++; // Increment before using in SqlParameter
+
+    dbcontext.Database.ExecuteSqlRaw(sql,
+        new SqlParameter("@districtId", districtId),
+        new SqlParameter("@financialyear", financialYear),
+        new SqlParameter("@CountValue", countPerDistrict));
+
+    return $"{districtShort}/{financialYear}/{countPerDistrict}";
+}
+
 
     public SqlParameter[]? GetAddressParameters(IFormCollection form, string prefix)
     {

@@ -180,7 +180,7 @@ function SetDistricts(districtCode) {
         const districts = data.districts;
         let districtName = "";
         districts.map((item) => {
-          if (item.uuid == districtCode) districtName = item.districtName;
+          if (item.districtId == districtCode) districtName = item.districtName;
         });
         $("#district").text(districtName);
       }
@@ -282,6 +282,7 @@ function printDiv(divId) {
 
 $(document).ready(function () {
   const count = countList;
+  console.log(count);
   const districtCode = count.districtCode;
   const officer = count.officer;
   const conditions = {};

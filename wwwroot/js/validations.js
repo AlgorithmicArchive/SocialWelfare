@@ -1,5 +1,4 @@
 function AddErrorSpan(id, errorList) {
-  console.log(errorList);
   if (!$("#" + id + "Msg").length && errorList.length != 0) {
     let msgs = ``;
     errorList.map((item) => {

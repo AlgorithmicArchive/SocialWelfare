@@ -1,5 +1,5 @@
 const generalDummyData = {
-  District: 15,
+  District: 5,
   ApplicantName: "MOMIN HUSSAIN RATHER",
   DateOfBirth: "2000-05-23",
   RelationName: "MUZAFFAR RATHER",
@@ -12,9 +12,9 @@ const generalDummyData = {
 };
 const addressDummyData = {
   PresentAddress: "161 GUJJAR NAGAR",
-  PresentDistrict: 15,
-  PresentTehsil: 150,
-  PresentBlock: 56,
+  PresentDistrict: 5,
+  PresentTehsil: 79,
+  PresentBlock: 57,
   PresentPanchayatMuncipality: "PANCHAYAT",
   PresentVillage: "VILLAGE",
   PresentWard: "WARD",

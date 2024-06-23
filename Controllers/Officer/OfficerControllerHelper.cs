@@ -177,19 +177,19 @@ namespace SocialWelfare.Controllers.Officer
             }
         }
 
-        public List<dynamic> GetCount(string type, Dictionary<string, string> conditions)
+        public List<dynamic> GetCount(string type, Dictionary<string, string> conditions)   
         {
             StringBuilder Condition1 = new StringBuilder();
             StringBuilder Condition2 = new StringBuilder();
 
             if (type == "Pending")
-                Condition1.Append("AND application.ApplicationStatus='Initiated'");
+                Condition1.Append("AND a.ApplicationStatus='Initiated'");
             else if (type == "Sanction")
-                Condition1.Append("AND application.ApplicationStatus='Sanctioned'");
+                Condition1.Append("AND a.ApplicationStatus='Sanctioned'");
             else if (type == "Reject")
-                Condition1.Append("AND application.ApplicationStatus='Rejected'");
+                Condition1.Append("AND a.ApplicationStatus='Rejected'");
             else if (type == "PendingWithCitizen")
-                Condition1.Append("AND Application.ApplicationStatus='Initiated' AND JSON_VALUE(app.value, '$.ActionTaken')='ReturnToEdit'");
+                Condition1.Append("AND a.ApplicationStatus='Initiated' AND JSON_VALUE(app.value, '$.ActionTaken')='ReturnToEdit'");
 
             int conditionCount = 0;
             int splitPoint = conditions != null ? conditions.Count / 2 : 0;
@@ -217,6 +217,7 @@ namespace SocialWelfare.Controllers.Officer
                 Condition2.Append($" AND JSON_VALUE(app.value, '$.ActionTaken') != ''");
             }
 
+            _logger.LogInformation($"Condition1: {Condition1} Condition2: {Condition2}");
             var applications = dbcontext.Applications.FromSqlRaw("EXEC GetApplications @Condition1, @Condition2",
             new SqlParameter("@Condition1", Condition1.ToString()),
            new SqlParameter("@Condition2", Condition2.ToString())).ToList();

@@ -90,7 +90,6 @@ function appendDocuments(documents) {
     $("#documents").append(inputElement);
   }
 }
-
 function appendPerviousActions(previousActions) {
   previousActions.map((item) => {
     $("#previousActions").append(`
@@ -102,7 +101,6 @@ function appendPerviousActions(previousActions) {
     `);
   });
 }
-
 function getFormattedDateTime() {
   const now = new Date();
   const options = {
@@ -169,6 +167,8 @@ function getWorkForceOfficer(serviceContent, currentOfficer, applicationId) {
       officer = item;
     }
   });
+
+  console.log(officer);
 
   const options = [
     officer.canForward

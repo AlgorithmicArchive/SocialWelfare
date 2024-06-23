@@ -45,18 +45,18 @@ namespace SocialWelfare.Controllers.Admin
             if (districtCode != null)
                 conditions.Add("specific.District", districtCode);
 
-            var TotalCount = GetCount("Total", conditions.Count != 0 ? conditions : null!, divisionCode);
-            var PendingCount = GetCount("Pending", conditions.Count != 0 ? conditions : null!, divisionCode);
-            var RejectCount = GetCount("Reject", conditions.Count != 0 ? conditions : null!, divisionCode);
-            var SanctionCount = GetCount("Sanction", conditions.Count != 0 ? conditions : null!, divisionCode);
-            var PendingWithCitizenCount = GetCount("PendingWithCitizen", conditions.Count != 0 ? conditions : null!, divisionCode);
+            // var TotalCount = GetCount("Total", conditions.Count != 0 ? conditions : null!, divisionCode);
+            // var PendingCount = GetCount("Pending", conditions.Count != 0 ? conditions : null!, divisionCode);
+            // var RejectCount = GetCount("Reject", conditions.Count != 0 ? conditions : null!, divisionCode);
+            // var SanctionCount = GetCount("Sanction", conditions.Count != 0 ? conditions : null!, divisionCode);
+            // var PendingWithCitizenCount = GetCount("PendingWithCitizen", conditions.Count != 0 ? conditions : null!, divisionCode);
 
-            var AllDistrictCount = new
-            {
-                Pending = GetCount("Pending", null!, null),
-                Rejected = GetCount("Reject", null!, null),
-                Sanctioned = GetCount("Sanction", null!, null),
-            };
+            // var AllDistrictCount = new
+            // {
+            //     Pending = GetCount("Pending", null!, null),
+            //     Rejected = GetCount("Reject", null!, null),
+            //     Sanctioned = GetCount("Sanction", null!, null),
+            // };
 
 
             var countList = new
@@ -65,12 +65,12 @@ namespace SocialWelfare.Controllers.Admin
                 OfficerCount,
                 CitizenCount,
                 ApplicationCount,
-                TotalCount,
-                PendingCount,
-                RejectCount,
-                SanctionCount,
-                PendingWithCitizenCount,
-                AllDistrictCount,
+                TotalCount=0,
+                PendingCount=0,
+                RejectCount=0,
+                SanctionCount=0,
+                PendingWithCitizenCount=0,
+                AllDistrictCount=0,
                 divisionCode
             };
             return View(countList);

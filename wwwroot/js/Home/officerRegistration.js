@@ -5,7 +5,7 @@ async function getDistricts() {
     const data = await res.json();
     if (data.status) {
       data.districts.forEach((item) => {
-        options += `<option value="${item.uuid}">${item.districtName}</option>`;
+        options += `<option value="${item.districtId}">${item.districtName}</option>`;
       });
     }
   } catch (error) {

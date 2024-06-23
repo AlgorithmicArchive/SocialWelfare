@@ -4,8 +4,9 @@ async function getDistricts() {
     const res = await fetch("/User/GetDistricts", { method: "get" });
     const data = await res.json();
     if (data.status) {
+      console.log(data);
       data.districts.forEach((item) => {
-        options.push(`<option value="${item.uuid}">${item.districtName}</option>`);
+        options.push(`<option value="${item.districtId}">${item.districtName}</option>`);
       });
     }
   } catch (error) {
@@ -22,7 +23,7 @@ async function getTehsils(id) {
     const data = await res.json();
     if (data.status) {
       data.tehsils.forEach((item) => {
-        options += `<option value="${item.uuid}">${item.tehsilName}</option>`;
+        options += `<option value="${item.tehsilId}">${item.tehsilName}</option>`;
       });
     }
   } catch (error) {
@@ -39,7 +40,7 @@ async function getBlocks(id) {
     const data = await res.json();
     if (data.status) {
       data.blocks.forEach((item) => {
-        options += `<option value="${item.uuid}">${item.blockName}</option>`;
+        options += `<option value="${item.blockId}">${item.blockName}</option>`;
       });
     }
   } catch (error) {

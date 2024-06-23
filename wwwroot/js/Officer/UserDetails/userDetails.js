@@ -18,6 +18,8 @@ $(document).ready(function () {
     "applicationStatus",
     "updateRequest",
     "editList",
+    "applicationsHistories",
+    "service"
   ];
 
   // Set user image
