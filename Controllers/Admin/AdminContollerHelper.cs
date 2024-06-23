@@ -95,7 +95,6 @@ namespace SocialWelfare.Controllers.Admin
 
             return list;
         }
-
         public IActionResult GetFilteredCount(string? conditions)
         {
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -112,9 +111,8 @@ namespace SocialWelfare.Controllers.Admin
             var SanctionCount = GetCount("Sanction", Conditions.Count != 0 ? Conditions : null!, divisionCode);
             var PendingWithCitizenCount = GetCount("PendingWithCitizen", Conditions.Count != 0 ? Conditions : null!, divisionCode);
 
-            return Json(new { status = true, TotalCount, PendingCount, RejectCount, SanctionCount,PendingWithCitizenCount });
+            return Json(new { status = true, TotalCount, PendingCount, RejectCount, SanctionCount, PendingWithCitizenCount });
         }
-
         [HttpGet]
         public IActionResult GetDistricts(string? division)
         {
@@ -136,11 +134,10 @@ namespace SocialWelfare.Controllers.Admin
             var districtList = districts.ToList();
             return Json(new { status = true, districts = districtList });
         }
-
         [HttpGet]
         public IActionResult GetDesignations()
         {
-            var designations = dbcontext.OfficersDesignations.ToList();
+            var designations = dbcontext.OfficersDesignations.Where(des => !des.Designation.Contains("Admin")).ToList();
             return Json(new { status = true, designations });
         }
         [HttpGet]
@@ -149,7 +146,6 @@ namespace SocialWelfare.Controllers.Admin
             var services = dbcontext.Services.ToList();
             return Json(new { status = true, services });
         }
-
         [HttpGet]
         public IActionResult GetTeshilForDistrict(string districtId)
         {
@@ -157,7 +153,6 @@ namespace SocialWelfare.Controllers.Admin
             var tehsils = dbcontext.Tehsils.Where(u => u.DistrictId == DistrictId).ToList();
             return Json(new { status = true, tehsils });
         }
-
         [HttpGet]
         public IActionResult GetBlockForDistrict(string districtId)
         {
@@ -165,7 +160,6 @@ namespace SocialWelfare.Controllers.Admin
             var blocks = dbcontext.Blocks.Where(u => u.DistrictId == DistrictId).ToList();
             return Json(new { status = true, blocks });
         }
-
         public List<string> GetDateList(string StartDate, string EndDate)
         {
             List<string> dateList = [];
@@ -177,14 +171,12 @@ namespace SocialWelfare.Controllers.Admin
             }
             return dateList;
         }
-
         public string GetFormatedDate(string date)
         {
             DateTime checkDate = DateTime.ParseExact(date, "dd MMM yyyy hh:mm tt", CultureInfo.InvariantCulture);
             string formatDate = checkDate.ToString("dd MMM yyyy");
             return formatDate;
         }
-
         public bool CheckIfInDivision(string Division, string District)
         {
             int division = Convert.ToInt32(Division);
@@ -197,7 +189,6 @@ namespace SocialWelfare.Controllers.Admin
 
             return false;
         }
-
         public List<dynamic> GetFormatedObject(List<Application> applications)
         {
             var list = new List<dynamic>();
@@ -234,7 +225,6 @@ namespace SocialWelfare.Controllers.Admin
 
             return list;
         }
-
         public dynamic GetFormattedApplication(Application application, string actionTaken, string actionTaker, string dateTime)
         {
             dynamic obj = new ExpandoObject();
@@ -266,7 +256,6 @@ namespace SocialWelfare.Controllers.Admin
 
             return obj;
         }
-
         [HttpGet]
         public IActionResult GetHistories(string StartDate, string EndDate, string Status)
         {
@@ -325,7 +314,6 @@ namespace SocialWelfare.Controllers.Admin
 
             return Json(new { status = true, applications = resultApplications });
         }
-
         [HttpGet]
         public IActionResult GetHistory(string applicationId)
         {

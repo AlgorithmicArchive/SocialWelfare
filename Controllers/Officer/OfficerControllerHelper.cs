@@ -123,7 +123,6 @@ namespace SocialWelfare.Controllers.Officer
 
             return obj;
         }
-
         public dynamic SentApplications(Models.Entities.User Officer)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
@@ -211,7 +210,6 @@ namespace SocialWelfare.Controllers.Officer
             obj.Type = "Reject";
             return obj;
         }
-
         public bool IsMoreThanSpecifiedDays(string dateString, int value)
         {
             if (DateTime.TryParse(dateString, out DateTime parsedDate))
@@ -225,7 +223,6 @@ namespace SocialWelfare.Controllers.Officer
                 throw new ArgumentException("Invalid date format.");
             }
         }
-
         public List<dynamic> GetCount(string type, Dictionary<string, string> conditions)
         {
             StringBuilder Condition1 = new StringBuilder();
@@ -304,7 +301,6 @@ namespace SocialWelfare.Controllers.Officer
             return list;
 
         }
-
         public IActionResult GetFilteredCount(string? conditions)
         {
             var Conditions = JsonConvert.DeserializeObject<Dictionary<string, string>>(conditions!);
@@ -315,8 +311,5 @@ namespace SocialWelfare.Controllers.Officer
 
             return Json(new { status = true, TotalCount, PendingCount, RejectCount, SanctionCount });
         }
-
-
-
     }
 }
