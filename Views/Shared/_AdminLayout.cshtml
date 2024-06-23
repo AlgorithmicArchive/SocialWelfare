@@ -24,6 +24,12 @@
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.4/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.21/jspdf.plugin.autotable.min.js"></script>
+
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </head>
@@ -32,13 +38,13 @@
     <div id="loadingSpinner">
         <img src="~/resources/spinner.gif" alt="Loading..." />
     </div>
-    <partial name="AdminNavbar" />
     <partial name="Sidebar" />
     <div class="full-screen-section d-flex mt-0">
         <div class="sidebar-admin-section">
 
         </div>
         <div class="main-admin-body" style="background-color: #F4F3EF;max-height:100vh;overflow-y: auto;">
+            <partial name="AdminNavbar" />
             @RenderBody()
         </div>
     </div>

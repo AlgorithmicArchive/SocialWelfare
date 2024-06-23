@@ -203,7 +203,7 @@ namespace SocialWelfare.Controllers.Officer
             string districtCode = officerDetails!["DistrictCode"];
             string designation = officerDetails["Designation"];
             conditions.Add("JSON_VALUE(a.ServiceSpecific, '$.District')", districtCode);
-            conditions.Add("JSON_VALUE(app.value, '$.Officer')",designation);
+            conditions.Add("JSON_VALUE(app.value, '$.Officer')", designation);
 
             var TotalCount = GetCount("Total", conditions.Count != 0 ? conditions : null!);
             var PendingCount = GetCount("Pending", conditions.Count != 0 ? conditions : null!);
@@ -249,7 +249,6 @@ namespace SocialWelfare.Controllers.Officer
             var generalDetails = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == ApplicationId);
             var phases = JsonConvert.DeserializeObject<List<dynamic>>(generalDetails!.Phase);
 
-            _logger.LogInformation($"PHASES: {generalDetails.Phase}");
             for (var i = 0; i < phases!.Count; i++)
             {
                 if (phases[i]["Officer"] == officerDesignation)

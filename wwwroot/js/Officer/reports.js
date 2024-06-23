@@ -9,8 +9,8 @@ function createChart(labels, data) {
       {
         label: "Applications",
         data: data,
-        backgroundColor: ["blue", "orange", "red", "darkgreen"],
-        borderColor: ["blue", "orange", "red", "darkgreen"],
+        backgroundColor: ["blue","darkgreen", "orange","lightblue", "red"],
+        borderColor: ["blue","darkgreen", "orange","lightblue", "red"],
         borderWidth: 1,
       },
     ],
@@ -34,7 +34,7 @@ function createChart(labels, data) {
           align: "top",
           backgroundColor: (context) => {
             const index = context.dataIndex;
-            const backgroundColors = ["blue", "orange", "red", "darkgreen"];
+            const backgroundColors = ["blue","darkgreen", "orange","lightblue", "red"];
             return backgroundColors[index];
           },
           borderRadius: 4,
@@ -60,7 +60,6 @@ function createChart(labels, data) {
   // Create new chart instance
   myChart = new Chart(document.getElementById("myChart"), config);
 }
-
 function createPieChart(labels, values) {
   const data = {
     labels: labels,
@@ -117,7 +116,6 @@ function createPieChart(labels, values) {
     config
   );
 }
-
 function updateConditions(conditions, count) {
   const districtValue = $("#district").val();
   const officerValue = $("#officer").val();
@@ -155,12 +153,13 @@ function updateConditions(conditions, count) {
           count.rejectCount = data.rejectCount;
           count.sanctionCount = data.sanctionCount;
           createChart(
-            ["Total", "Pending", "Rejected", "Sanctioned"],
+            ["Total", "Sanctioned","Pending","Pending With Citizen", "Rejected"],
             [
-              data.totalCount.length,
-              data.pendingCount.length,
-              data.rejectCount.length,
-              data.sanctionCount.length,
+              count.totalCount.length,
+              count.sanctionCount.length,
+              count.pendingCount.length,
+              count.pendingWithCitizenCount.length,
+              count.rejectCount.length,
             ]
           );
           $("#chartService").text($("#service option:selected").text());
@@ -170,7 +169,6 @@ function updateConditions(conditions, count) {
       });
   }
 }
-
 function SetDistricts(districtCode) {
   fetch("/Base/GetDistricts")
     .then((res) => res.json())
@@ -186,7 +184,6 @@ function SetDistricts(districtCode) {
       }
     });
 }
-
 function SetDesinations(officer) {
   fetch("/Base/GetDesignations")
     .then((res) => res.json())
@@ -201,7 +198,6 @@ function SetDesinations(officer) {
       }
     });
 }
-
 function SetServices() {
   fetch("/Base/GetServices")
     .then((res) => res.json())
@@ -216,25 +212,12 @@ function SetServices() {
       }
     });
 }
-
 function setApplicationList(applicationList) {
   const container = $("#applicationListContainer");
   container.empty();
-  applicationList.map((item, index) => {
-    container.append(`
-      <tr>
-        <td>${index + 1}</td>
-        <td>${item.applicationNo}</td>
-        <td>${item.applicantName}</td>
-        <td>${item.applicationStatus}</td>
-        <td>${item.appliedDistrict}</td>
-        <td>${item.appliedService}</td>
-        <td>${item.applicationWithOfficer}</td>
-      </tr>
-    `);
-  });
-
   $("#dataGrid").removeClass("d-none").addClass("d-flex");
+  initializeDataTable('applicationListTable', "applicationListContainer", applicationList);
+
   $("html, body").animate(
     {
       scrollTop: $("#dataGrid").offset().top,
@@ -242,7 +225,6 @@ function setApplicationList(applicationList) {
     "slow"
   );
 }
-
 function printDiv(divId) {
   var content = $("#" + divId).html();
 
@@ -279,10 +261,8 @@ function printDiv(divId) {
   myWindow.print();
   myWindow.close();
 }
-
 $(document).ready(function () {
   const count = countList;
-  console.log(count);
   const districtCode = count.districtCode;
   const officer = count.officer;
   const conditions = {};
@@ -298,6 +278,17 @@ $(document).ready(function () {
     { id: "#sanction", value: count.sanctionCount.length },
   ];
   const AllDistrictCount = count.allDistrictCount;
+  
+  createChart(
+    ["Total", "Sanctioned","Pending","Pending With Citizen", "Rejected"],
+    [
+      count.totalCount.length,
+      count.sanctionCount.length,
+      count.pendingCount.length,
+      count.pendingWithCitizenCount.length,
+      count.rejectCount.length,
+    ]
+  );
   createPieChart(
     ["Pending", "Rejected", "Sanctioned"],
     [
@@ -316,12 +307,13 @@ $(document).ready(function () {
   });
 
   createChart(
-    ["Total", "Pending", "Rejected", "Sanctioned"],
+    ["Total", "Sanctioned","Pending","Pending With Citizen", "Rejected"],
     [
       count.totalCount.length,
-      count.pendingCount.length,
-      count.rejectCount.length,
       count.sanctionCount.length,
+      count.pendingCount.length,
+      count.pendingWithCitizenCount.length,
+      count.rejectCount.length,
     ]
   );
 

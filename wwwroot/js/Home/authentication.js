@@ -31,14 +31,12 @@ const formUI = {
           <input type="text" name="Username" id="Username" placeholder="Username"
               class="form-control border-0 border-bottom rounded-0 mb-2">
           ${additionalFields}
-          <div class="d-flex justify-content-between border rounded-pill mb-2">
-              <span id="captchaCanvas"
-                  class="captchaCanvas d-flex justify-content-center align-items-center w-75 p-0"></span>
-              <i id="refreshCaptcha" class="btn bi bi-arrow-clockwise fs-4"></i>
+           <div class="d-flex justify-content-between align-items-center px-3 border rounded-pill mb-2">
+           <span id="captchaCanvas" class="captchaCanvas d-flex justify-content-center align-items-center w-75 p-0"></span>
+           <i id="refreshCaptcha" class="fa-solid fa-rotate fs-4"></i>
           </div>
           <label for="Captcha">Captcha</label>
-          <input type="text" class="form-control border-0 border-bottom rounded-0 mb-2" id="captchaInput"
-              placeholder="Captcha">
+          <input type="text" class="form-control border-0 border-bottom rounded-0 mb-2" id="captchaInput" placeholder="Captcha">
           <p id="captchaError" class="fs-6 text-danger text-center"></p>
           <button class="btn btn-dark w-25 mx-auto">${buttonLabel}</button>
       </div>

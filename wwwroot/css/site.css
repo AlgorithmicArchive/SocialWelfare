@@ -126,6 +126,14 @@ p{
     background-color: rgb(156, 156, 156);
 }
 
+.dataTables_filter{
+    margin-bottom: 10px;
+}
+
+th{
+    vertical-align: top;
+}
+
 @media only screen and (max-width: 600px) {
     .sm-hidden{
         display: none;

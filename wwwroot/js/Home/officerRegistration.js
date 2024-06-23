@@ -4,6 +4,7 @@ async function getDistricts() {
     const res = await fetch("/Home/GetDistricts", { method: "get" });
     const data = await res.json();
     if (data.status) {
+      console.log(data);
       data.districts.forEach((item) => {
         options += `<option value="${item.districtId}">${item.districtName}</option>`;
       });
@@ -52,8 +53,6 @@ async function getDesignations() {
 function handleDistrictChange(districtSelector, tehsilSelector) {
   $(districtSelector).on("change", function () {
     const id = $(this).val();
-
-    // Update the Tehsil select element
     getTehsils(id).then((option) => {
       $(tehsilSelector).empty().append(option); // Clear existing options and append new ones
     });
@@ -122,6 +121,11 @@ $(document).ready(function () {
           <select class="form-select mb-2 border-0 border-bottom rounded-0" name="Tehsil" id="Tehsil">
           </select>
       `);
+      getDistricts().then((options) => {
+        $("[id*='district'], [id*='District']").append(options);
+        $("#District").trigger("change");
+      });
+      handleDistrictChange("#District", "#Tehsil");
     }
   });
 });

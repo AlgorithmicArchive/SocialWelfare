@@ -4,6 +4,7 @@
 }
 
 <div class="container-fluid center-align flex-column gap-5 p-5">
+    <p class="fs-4 text-center">Get Applications Histories</p>
     <div class="row">
         <div class="col-sm-4 d-flex flex-column">
             <label for="Start Date">Start Date</label>
@@ -27,7 +28,9 @@
 
     <div id="HistoryContainer" class="container-fluid mt-5" style="display: none;">
         <div class="d-flex gap-2 mb-3">
-            <button class="btn btn-success" onclick="printDiv('printableArea')">Print</button>
+            <button class="btn btn-info" onclick="printTable('printableArea')">Print</button>
+            <button class="btn btn-success" onclick="exportTableToExcel('historyTable')">EXCEL</button>
+            <button class="btn btn-danger" onclick="SaveAsPdf('printableArea','historyTable')">PDF</button>
         </div>
         <div id="printableArea">
 
@@ -49,5 +52,5 @@
         </div>
     </div>
 </div>
-
+<script src="/js/tableUtilities.js"></script>
 <script src="/js/Admin/history.js"></script>

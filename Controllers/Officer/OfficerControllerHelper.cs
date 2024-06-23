@@ -12,55 +12,103 @@ namespace SocialWelfare.Controllers.Officer
     {
         public dynamic PendingApplications(Models.Entities.User Officer)
         {
-            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
-            string officerDesignation = UserSpecificDetails!["Designation"];
-            string districtCode = UserSpecificDetails["DistrictCode"];
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer?.UserSpecificDetails!);
+            if (UserSpecificDetails == null)
+            {
+                _logger.LogError("UserSpecificDetails is null for the provided Officer.");
+                return null!;
+            }
 
+            string officerDesignation = UserSpecificDetails?["Designation"]!;
+            string districtCode = UserSpecificDetails?["DistrictCode"]!;
+            if (officerDesignation == null || districtCode == null)
+            {
+                _logger.LogError("Officer designation or district code is null.");
+                return null!;
+            }
 
-            var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationsForOfficer @OfficerDesignation,@ActionTaken,@District,@ServiceId", new SqlParameter("@OfficerDesignation", officerDesignation), new SqlParameter("@ActionTaken", "Pending"), new SqlParameter("@District", districtCode), new SqlParameter("@ServiceId", 1)).ToList();
+            var applicationList = dbcontext.Applications.FromSqlRaw(
+                "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @District, @ServiceId",
+                new SqlParameter("@OfficerDesignation", officerDesignation),
+                new SqlParameter("@ActionTaken", "Pending"),
+                new SqlParameter("@District", districtCode),
+                new SqlParameter("@ServiceId", 1)).ToList();
 
             bool canSanction = false;
             bool canUpdate = false;
-            List<Application> UpdateList = [];
-            List<Application> PoolList = [];
-            List<Application> PendingList = [];
-            JArray pool = [];
+            List<Application> UpdateList = new List<Application>();
+            List<Application> PoolList = new List<Application>();
+            List<Application> PendingList = new List<Application>();
+            JArray pool = new JArray();
+
             foreach (var application in applicationList)
             {
-                var updateRequest = JsonConvert.DeserializeObject<dynamic>(application.UpdateRequest!);
-                var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(dbcontext.Services.FirstOrDefault(u => u.ServiceId == application.ServiceId)!.WorkForceOfficers!);
+                _logger.LogInformation($"Application: {application.ApplicationId}");
 
-                var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
-                canSanction = officer!["canSanction"];
+                var updateRequest = JsonConvert.DeserializeObject<dynamic>(application.UpdateRequest!);
+                if (updateRequest == null)
+                {
+                    _logger.LogError($"UpdateRequest is null for application {application.ApplicationId}");
+                    continue;
+                }
+
+                var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == application.ServiceId);
+                if (service == null)
+                {
+                    _logger.LogError($"Service not found for ServiceId {application.ServiceId}");
+                    continue;
+                }
+
+                var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service.WorkForceOfficers!);
+                if (workForceOfficers == null)
+                {
+                    _logger.LogError($"WorkForceOfficers is null for service {service.ServiceId}");
+                    continue;
+                }
+
+                var officer = workForceOfficers.FirstOrDefault(o => o["Designation"] == officerDesignation);
+                if (officer == null)
+                {
+                    _logger.LogError($"No matching officer found in WorkForceOfficers for designation {officerDesignation}");
+                    continue;
+                }
+
+                canSanction = officer["canSanction"];
                 canUpdate = officer["canUpdate"];
-                int requested = updateRequest!["requested"];
-                int updated = updateRequest!["updated"];
+                int requested = updateRequest["requested"];
+                int updated = updateRequest["updated"];
 
                 if (officerDesignation == "Director Finance" && canSanction)
+                {
                     pool = JArray.Parse(officer["pool"].ToString());
+                }
                 else if (canSanction)
                 {
-                    var DistrictCode = districtCode.ToString();
                     var poolElement = officer["pool"][districtCode];
                     if (poolElement != null)
                         pool = JArray.Parse(poolElement.ToString());
                     else
                     {
-                        pool = [];
-                        officer["pool"][DistrictCode] = pool;
+                        pool = new JArray();
+                        officer["pool"][districtCode] = pool;
                     }
                 }
 
                 if (requested == 1 && updated == 0)
+                {
                     UpdateList.Add(application);
+                }
                 else if (pool.Count == 0)
+                {
                     PendingList.Add(application);
+                }
                 else
                 {
                     bool inPool = pool.Any(item => item.ToString() == application.ApplicationId);
                     if (inPool)
                         PoolList.Add(application);
-                    else PendingList.Add(application);
+                    else
+                        PendingList.Add(application);
                 }
             }
 
@@ -75,6 +123,7 @@ namespace SocialWelfare.Controllers.Officer
 
             return obj;
         }
+
         public dynamic SentApplications(Models.Entities.User Officer)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
@@ -177,11 +226,10 @@ namespace SocialWelfare.Controllers.Officer
             }
         }
 
-        public List<dynamic> GetCount(string type, Dictionary<string, string> conditions)   
+        public List<dynamic> GetCount(string type, Dictionary<string, string> conditions)
         {
             StringBuilder Condition1 = new StringBuilder();
             StringBuilder Condition2 = new StringBuilder();
-
             if (type == "Pending")
                 Condition1.Append("AND a.ApplicationStatus='Initiated'");
             else if (type == "Sanction")
@@ -227,8 +275,7 @@ namespace SocialWelfare.Controllers.Officer
             foreach (var application in applications)
             {
                 int districtCode = Convert.ToInt32(JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific)!["District"]);
-                _logger.LogInformation($"District Code: {districtCode}");
-                string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.Uuid == districtCode)!.DistrictName;
+                string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)!.DistrictName;
                 string AppliedService = dbcontext.Services.FirstOrDefault(s => s.ServiceId == application.ServiceId)!.ServiceName;
                 string ApplicationWithOfficer = "";
                 var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);

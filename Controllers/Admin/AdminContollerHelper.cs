@@ -21,16 +21,16 @@ namespace SocialWelfare.Controllers.Admin
             switch (type)
             {
                 case "Pending":
-                    Condition1.Append("AND application.ApplicationStatus='Initiated'");
+                    Condition1.Append("AND a.ApplicationStatus='Initiated'");
                     break;
                 case "Sanction":
-                    Condition1.Append("AND application.ApplicationStatus='Sanctioned'");
+                    Condition1.Append("AND a.ApplicationStatus='Sanctioned'");
                     break;
                 case "Reject":
-                    Condition1.Append("AND application.ApplicationStatus='Rejected'");
+                    Condition1.Append("AND a.ApplicationStatus='Rejected'");
                     break;
                 case "PendingWithCitizen":
-                    Condition1.Append("AND Application.ApplicationStatus='Initiated' AND JSON_VALUE(app.value, '$.ActionTaken')='ReturnToEdit'");
+                    Condition1.Append("AND a.ApplicationStatus='Initiated' AND JSON_VALUE(app.value, '$.ActionTaken')='ReturnToEdit'");
                     break;
             }
 
@@ -64,7 +64,7 @@ namespace SocialWelfare.Controllers.Admin
             {
                 var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific);
                 int districtCode = Convert.ToInt32(serviceSpecific!["District"]);
-                string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.Uuid == districtCode)?.DistrictName!;
+                string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.DistrictName!;
                 string AppliedService = dbcontext.Services.FirstOrDefault(s => s.ServiceId == application.ServiceId)?.ServiceName!;
                 string ApplicationWithOfficer = "";
                 var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
@@ -98,13 +98,21 @@ namespace SocialWelfare.Controllers.Admin
 
         public IActionResult GetFilteredCount(string? conditions)
         {
-            var Conditions = JsonConvert.DeserializeObject<Dictionary<string, string>>(conditions!);
-            var TotalCount = GetCount("Total", Conditions!, null) ;
-            var PendingCount = GetCount("Pending", Conditions!, null);
-            var RejectCount = GetCount("Reject", Conditions!, null);
-            var SanctionCount = GetCount("Sanction", Conditions!, null);
+            int? UserId = HttpContext.Session.GetInt32("UserId");
+            int? divisionCode = null;
+            var user = dbcontext.Users.FirstOrDefault(u => u.UserId == UserId);
+            var userSpecificDetails = JsonConvert.DeserializeObject<dynamic>(user!.UserSpecificDetails);
+            if (userSpecificDetails!["DivisionCode"] != null)
+                divisionCode = Convert.ToInt32(userSpecificDetails["DivisionCode"]);
 
-            return Json(new { status = true, TotalCount, PendingCount, RejectCount, SanctionCount });
+            var Conditions = JsonConvert.DeserializeObject<Dictionary<string, string>>(conditions!);
+            var TotalCount = GetCount("Total", Conditions!.Count != 0 ? Conditions : null!, divisionCode);
+            var PendingCount = GetCount("Pending", Conditions.Count != 0 ? Conditions : null!, divisionCode);
+            var RejectCount = GetCount("Reject", Conditions.Count != 0 ? Conditions : null!, divisionCode);
+            var SanctionCount = GetCount("Sanction", Conditions.Count != 0 ? Conditions : null!, divisionCode);
+            var PendingWithCitizenCount = GetCount("PendingWithCitizen", Conditions.Count != 0 ? Conditions : null!, divisionCode);
+
+            return Json(new { status = true, TotalCount, PendingCount, RejectCount, SanctionCount,PendingWithCitizenCount });
         }
 
         [HttpGet]

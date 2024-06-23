@@ -33,12 +33,13 @@ $(document).ready(function () {
   });
 
   createChart(
-    ["Total", "Pending", "Rejected", "Sanctioned"],
+    ["Total", "Sanctioned","Pending","Pending With Citizen", "Rejected"],
     [
       count.totalCount.length,
-      count.pendingCount.length,
-      count.rejectCount.length,
       count.sanctionCount.length,
+      count.pendingCount.length,
+      count.pendingWithCitizenCount.length,
+      count.rejectCount.length,
     ]
   );
 

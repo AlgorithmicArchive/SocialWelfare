@@ -21,15 +21,7 @@
                         <label for="Password">Password</label>
                         <input type="password" name="Password" id="Password" placeholder="Password"
                             class="form-control border-0 border-bottom rounded-0 mb-3">
-                        <div class="d-flex justify-content-between border rounded-pill mb-3">
-                            <span id="captchaCanvas"
-                                class="captchaCanvas d-flex justify-content-center align-items-center w-75 p-0"></span>
-                            <i id="refreshCaptcha" class="btn bi bi-arrow-clockwise fs-4"></i>
-                        </div>
-                        <label for="Captcha">Captcha</label>
-                        <input type="text" class="form-control border-0 border-bottom rounded-0 mb-3" id="captchaInput"
-                            placeholder="Captcha">
-                        <p id="captchaError" class="fs-6 text-danger text-center"></p>
+                        <partial name="Captcha" />
                         <button id="loginButton" class="btn btn-dark w-25 mx-auto">Login</button>
                     </div>
                     <p class="fs-5 text-center mt-4">OR</p>
@@ -53,15 +45,7 @@
                         <label for="Confirm Password">ConfirmPassword</label>
                         <input type="password" name="ConfirmPassword" id="ConfirmPassword"
                             placeholder="Confirm Password" class="form-control border-0 border-bottom rounded-0 mb-2">
-                        <div class="d-flex justify-content-between border rounded-pill mb-2">
-                            <span id="captchaCanvas"
-                                class="captchaCanvas d-flex justify-content-center align-items-center w-75 p-0"></span>
-                            <i id="refreshCaptcha" class="btn bi bi-arrow-clockwise fs-4"></i>
-                        </div>
-                        <label for="Captcha">Captcha</label>
-                        <input type="text" class="form-control border-0 border-bottom rounded-0 mb-2" id="captchaInput"
-                            placeholder="Captcha">
-                        <p id="captchaError" class="fs-6 text-danger text-center"></p>
+                        <partial name="Captcha" />
                         <button id="registerButton" class="btn btn-dark w-25 mx-auto d-flex align-items-center">Register
                             <div class="spinner-border text-muted"></div>
                         </button>

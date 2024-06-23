@@ -25,32 +25,26 @@
         <div class="container-fluid d-flex justify-content-center">
             <div class="row w-100  justify-content-between">
                 <div class="col-md-2 p-0 mt-2">
-                    <div class="custom-card count-card flex-column py-5 bg-primary text-white fs-3"
+                    <div class="custom-card count-card flex-column py-5 bg-primary text-white fs-3 gap-0"
                         style="cursor:pointer">
-                        <span class="d-flex gap-2 justify-content-between">
-                            <p class="icon"><i class="fa-solid fa-file-pen"></i></p>
-                            <p class="text">Total</p>
-                        </span>
+                        <i class="fa-solid fa-file-pen"></i>
+                        <span class="text">Total</span>
                         <p class="value fs-2 fw-bold d-flex justify-content-center" id="total">20</p>
                     </div>
                 </div>
                 <div class="col-md-2 p-0 mt-2 ">
-                    <div class="custom-card count-card flex-column py-5 bg-success text-white fs-3"
+                    <div class="custom-card count-card flex-column py-5 bg-success text-white fs-3 gap-0"
                         style="cursor:pointer">
-                        <span class="d-flex gap-2 justify-content-between">
-                            <p class="icon"><i class="fa-solid fa-flag-checkered"></i></p>
-                            <p class="text">Sanctioned</p>
-                        </span>
+                        <i class="fa-solid fa-flag-checkered"></i>
+                        <span class="text">Sanctioned</span>
                         <p class="value fs-2 fw-bold d-flex justify-content-center" id="sanction">20</p>
                     </div>
                 </div>
                 <div class="col-md-2 p-0 mt-2">
-                    <div class="custom-card count-card flex-column fs-3 py-5 bg-warning text-dark"
+                    <div class="custom-card count-card flex-column fs-3 py-5 bg-warning text-dark gap-0"
                         style="cursor:pointer">
-                        <span class="d-flex gap-2 justify-content-between">
-                            <p class="icon"><i class="fa-solid fa-hourglass-half"></i></p>
-                            <p class="text">Pending</p>
-                        </span>
+                        <i class="fa-solid fa-hourglass-half"></i>
+                        <span class="text">Pending</span>
                         <p class="value fs-2 fw-bold  d-flex justify-content-center" id="pending">20</p>
                     </div>
                 </div>
@@ -64,12 +58,10 @@
                     </div>
                 </div>
                 <div class="col-md-2 p-0 mt-2">
-                    <div class="custom-card count-card flex-column fs-3 py-5 bg-danger text-white"
+                    <div class="custom-card count-card flex-column fs-3 py-5 bg-danger text-white gap-0"
                         style="cursor:pointer">
-                        <span class="d-flex gap-2 justify-content-between">
-                            <p class="icon"><i class="fa-solid fa-ban"></i></p>
-                            <p class="text">Rejected</p>
-                        </span>
+                        <i class="fa-solid fa-ban"></i>
+                        <span class="text">Rejected</span>
                         <p class="value fs-2 fw-bold  d-flex justify-content-center" id="rejected">20</p>
                     </div>
                 </div>
@@ -103,10 +95,12 @@
 
     <div class="container-fluid d-none flex-column gap-5 py-5 mb-5" id="dataGrid">
         <div class="d-flex gap-2">
-            <button class="btn btn-success" onclick="printDiv('printableArea')">Print</button>
+            <button class="btn btn-info" onclick="printTable('printableArea')">Print</button>
+            <button class="btn btn-success" onclick="exportTableToExcel('applicationListTable')">EXCEL</button>
+            <button class="btn btn-danger" onclick="SaveAsPdf('printableArea','applicationListTable')">PDF</button>
         </div>
         <div id="printableArea">
-            <table class="table table-responsive table-bordered table-striped">
+            <table class="table table-responsive table-bordered table-striped" id="applicationListTable">
                 <thead class="bg-dark text-white">
                     <th>S.No.</th>
                     <th>Application Number</th>
@@ -128,4 +122,5 @@
     const countList = @Html.Raw(Json.Serialize(Model));
     let myChart;
 </script>
+<script src="/js/tableUtilities.js"></script>
 <script src="/js/Officer/reports.js"></script>

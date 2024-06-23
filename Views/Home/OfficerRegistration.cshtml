@@ -33,15 +33,7 @@
                             <select class="form-select mb-2 border-0 border-bottom rounded-0" name="Tehsil" id="Tehsil">
                             </select>
                         </div>
-                        <div class="d-flex justify-content-between border rounded-pill mb-2">
-                            <span id="captchaCanvas"
-                                class="captchaCanvas d-flex justify-content-center align-items-center w-75 p-0"></span>
-                            <i id="refreshCaptcha" class="btn bi bi-arrow-clockwise fs-4"></i>
-                        </div>
-                        <label for="Captcha">Captcha</label>
-                        <input type="text" class="form-control border-0 border-bottom rounded-0 mb-2" id="captchaInput"
-                            placeholder="Captcha">
-                        <p id="captchaError" class="fs-6 text-danger text-center"></p>
+                        <partial name="Captcha" />
                         <button id="registerButton" class="btn btn-dark w-25 mx-auto">Register
                         </button>
                     </div>

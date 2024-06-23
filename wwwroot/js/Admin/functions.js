@@ -9,8 +9,8 @@ function createChart(labels, data) {
       {
         label: "Applications",
         data: data,
-        backgroundColor: ["blue", "orange", "red", "darkgreen"],
-        borderColor: ["blue", "orange", "red", "darkgreen"],
+        backgroundColor: ["blue","darkgreen", "orange","lightblue", "red"],
+        borderColor: ["blue","darkgreen", "orange","lightblue", "red"],
         borderWidth: 1,
       },
     ],
@@ -34,7 +34,7 @@ function createChart(labels, data) {
           align: "top",
           backgroundColor: (context) => {
             const index = context.dataIndex;
-            const backgroundColors = ["blue", "orange", "red", "darkgreen"];
+            const backgroundColors = ["blue","darkgreen", "orange","lightblue", "red"];
             return backgroundColors[index];
           },
           borderRadius: 4,
@@ -124,9 +124,9 @@ function updateConditions(conditions) {
   const serviceValue = $("#service").val();
 
   if (districtValue != "") {
-    conditions["specific.District"] = districtValue;
+    conditions["JSON_VALUE(a.ServiceSpecific, '$.District')"] = districtValue;
   } else {
-    delete conditions["specific.District"];
+    delete conditions["JSON_VALUE(a.ServiceSpecific, '$.District')"];
   }
 
   if (officerValue != "") {
@@ -136,9 +136,9 @@ function updateConditions(conditions) {
   }
 
   if (serviceValue != "") {
-    conditions["application.ServiceId"] = serviceValue;
+    conditions["a.ServiceId"] = serviceValue;
   } else {
-    delete conditions["application.ServiceId"];
+    delete conditions["a.ServiceId"];
   }
 
   if (!isEmpty(conditions)) {
@@ -146,17 +146,19 @@ function updateConditions(conditions) {
       .then((res) => res.json())
       .then((data) => {
         if (data.status) {
+          console.log(data);
           $("#total").text(data.totalCount.length);
           $("#pending").text(data.pendingCount.length);
           $("#rejected").text(data.rejectCount.length);
           $("#sanction").text(data.sanctionCount.length);
           createChart(
-            ["Total", "Pending", "Rejected", "Sanctioned"],
+            ["Total", "Sanctioned","Pending","Pending With Citizen", "Rejected"],
             [
               data.totalCount.length,
-              data.pendingCount.length,
-              data.rejectCount.length,
               data.sanctionCount.length,
+              data.pendingCount.length,
+              data.pendingWithCitizenCount.length,
+              data.rejectCount.length,
             ]
           );
           $("#chartService").text($("#service option:selected").text());
@@ -175,7 +177,7 @@ function SetDistricts(divisionCode) {
         const districts = data.districts;
         let list = ``;
         districts.map((item) => {
-          list += `<option value="${item.uuid}">${item.districtName}</option>`;
+          list += `<option value="${item.districtId}">${item.districtName}</option>`;
         });
         $("#district").append(list);
       }
