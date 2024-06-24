@@ -12,16 +12,6 @@ function OpenForm(serviceId) {
 }
 
 $(document).ready(function () {
-  serviceList.map((item, index) => {
-    $("#tableBody").append(`
-        <tr>
-            <th scope="row">${index + 1}</th>
-            <td>${item.serviceName}</td>
-            <td>${item.department}</td>
-            <td><button class="btn btn-dark w-100" onclick='OpenForm(${
-              item.serviceId
-            })'>View</button></td>
-        </tr>
-    `);
-  });
+  const list = serviceList.map(({serviceName,department,serviceId})=>({serviceName,department,button:`<button class="btn btn-dark w-100" onclick='OpenForm(${serviceId})'>View</button>`}));
+  initializeDataTable('serviceList', "tableBody", list);
 });

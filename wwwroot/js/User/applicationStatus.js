@@ -1,32 +1,3 @@
-function InsertDetailRow(
-  ApplicationId,
-  ApplicantName,
-  Index,
-  Incomplete,
-  phase,
-  updateRequest
-) {
-  const container = $("#userDetails");
-  const tr = $("<tr/>");
-  tr.append(`
-        <th scope="row">${Index}</th>
-        <td>${ApplicationId}</td>
-        <td>${ApplicantName}</td>
-          ${
-            Incomplete &&
-            `<td><button class="btn btn-dark w-100" onclick='EditForm("${ApplicationId}")'>Edit Form</button></td>`
-          }
-          ${
-            !Incomplete &&
-            `<td><button class="btn btn-dark w-100" data-bs-toggle="modal"
-                data-bs-target="#exampleModal" onclick='CreateTimeline(${JSON.stringify(
-                  phase
-                )},${updateRequest},"${ApplicationId}")'>View</button></td>`
-          }
-          
-  `);
-  container.append(tr);
-}
 
 function EditForm(ApplicationId, returnedToEdit = false) {
   let url = "/User/ServiceForm?ApplicationId=" + ApplicationId;
@@ -144,20 +115,22 @@ function UpdateRequest(updateRequest, ApplicationId) {
 }
 
 $(document).ready(function () {
-  const incompleteApplication =
+  const Incomplete =
     window.location.pathname == "/User/IncompleteApplications" ? true : false;
 
-  applications.map((item, index) => {
-    const applicationId = item.applicationId;
-    const applicantName = item.applicantName;
-    const phase = item.phase != "" ? JSON.parse(item.phase) : "";
-    InsertDetailRow(
+
+   let list  = [];
+   list = applications.map(({ applicationId, applicantName, updateRequest, phase }) => {
+    const Phase = phase !== "" ? JSON.parse(phase) : "";
+    return {
       applicationId,
       applicantName,
-      index + 1,
-      incompleteApplication,
-      phase,
-      item.updateRequest
-    );
+      button: Incomplete
+        ? `<button class="btn btn-dark w-100" onclick='EditForm("${applicationId}")'>Edit Form</button>`
+        : `<button class="btn btn-dark w-100" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick='CreateTimeline(${JSON.stringify(Phase)},${updateRequest},"${applicationId}")'>View</button>`
+    };
   });
+  
+  initializeDataTable('statusTable', "userDetails", list);
+
 });
