@@ -30,13 +30,15 @@ jobs:
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
-        github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}  # Use the default GitHub token
         publish_dir: ./out
         publish_branch: gh-pages
         allow_empty_commit: false
         keep_files: false
         force_orphan: false
         enable_jekyll: false
-        disable_nojekyll: false
+        disable_nojekyll: true  # Disable Jekyll
         exclude_assets: .github
+      env:
+        DOTNET_ROOT: /home/runner/.dotnet
 
