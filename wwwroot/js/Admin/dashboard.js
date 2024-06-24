@@ -1,5 +1,6 @@
 $(document).ready(function () {
   const count = countList;
+  console.log(count);
   const divisionCode = count.divisionCode;
   const conditions = {};
   const mappings = [
@@ -54,12 +55,13 @@ $(document).ready(function () {
   });
 
   $(".count-card").on("click", function () {
-    const card = $(this).find(".text").text();
+    const card = $(this).attr("id");
+    console.log(card);
     let applicationList;
     if (card == "Total") applicationList = count.totalCount;
     else if (card == "Pending") applicationList = count.pendingCount;
     else if (card == "Sanctioned") applicationList = count.sanctionCount;
-    else if (card == "Pending With Citizen")
+    else if (card == "PendingWithCitizen")
       applicationList = count.pendingWithCitizenCount;
     else if (card == "Rejected") applicationList = count.rejectCount;
 

@@ -8,8 +8,8 @@ function createChart(labels, data) {
       {
         label: "Applications",
         data: data,
-        backgroundColor: ["blue","darkgreen", "orange","lightblue", "red"],
-        borderColor: ["blue","darkgreen", "orange","lightblue", "red"],
+        backgroundColor: ["blue","darkgreen", "orange","#0DCAF0", "red"],
+        borderColor: ["blue","darkgreen", "orange","#0DCAF0", "red"],
         borderWidth: 1,
       },
     ],
@@ -33,7 +33,7 @@ function createChart(labels, data) {
           align: "top",
           backgroundColor: (context) => {
             const index = context.dataIndex;
-            const backgroundColors = ["blue","darkgreen", "orange","lightblue", "red"];
+            const backgroundColors = ["blue","darkgreen", "orange","#0DCAF0", "red"];
             return backgroundColors[index];
           },
           borderRadius: 4,
@@ -66,8 +66,8 @@ function createPieChart(labels, values) {
       {
         label: "All Districts",
         data: values,
-        backgroundColor: ["darkgreen", "orange","lightblue", "maroon"],
-        borderColor: ["darkgreen", "orange","lightblue", "maroon"],
+        backgroundColor: ["darkgreen", "orange","#0DCAF0", "maroon"],
+        borderColor: ["darkgreen", "orange","#0DCAF0", "maroon"],
         borderWidth: 1,
       },
     ],
@@ -91,7 +91,7 @@ function createPieChart(labels, values) {
           align: "center",
           backgroundColor: (context) => {
             const index = context.dataIndex;
-            const backgroundColors = ["blac", "black", "black"];
+            const backgroundColors = ["black", "black", "black"];
             return backgroundColors[index];
           },
           borderRadius: 4,
