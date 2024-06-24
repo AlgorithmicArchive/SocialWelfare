@@ -51,9 +51,11 @@ namespace SocialWelfare.Controllers.Admin
 
             var AllDistrictCount = new
             {
-                Pending = GetCount("Pending", null!, null),
-                Rejected = GetCount("Reject", null!, null),
                 Sanctioned = GetCount("Sanction", null!, null),
+                Pending = GetCount("Pending", null!, null),
+                PendingWithCitizen = GetCount("PendingWithCitizen", null!, null),
+                Rejected = GetCount("Reject", null!, null),
+
             };
 
 

@@ -16,6 +16,9 @@ $(document).ready(function () {
             <p class="text-white w-100 text-center fs-6 fw-bold">${
               item.actionTaken
             }</p>
+           <p class="text-white w-100 text-center fs-6 fw-bold">${
+              item.dateTime
+            }</p>
         </div>
         ${
           index !== visible.length - 1
@@ -75,9 +78,6 @@ $(document).ready(function () {
     $("#displayDetails").show();
     $("#displayDetails").empty();
     $("#displayDetails").append(`
-        <div class="w-100 justify-content-start"><label class="fs-3" for="Action Taker">Action Taken By</label>: <span id="ActionTaker"></span></div>
-        <div class="w-100 justify-content-start"><label class="fs-3" for="Action Taken">Action Taken</label>: <span id="ActionTaken"></span></div>
-        <div class="w-100 justify-content-start"><label class="fs-3" for="Action Taken On">Action Taken On</label>: <span id="DateTime"></span></div>
         <div class="w-100 justify-content-start"><label class="fs-3" for="Remarks">Remarks</label>: <span id="remarks"></span></div>
     `);
     $("#ActionTaker").text(item.actionTaker);

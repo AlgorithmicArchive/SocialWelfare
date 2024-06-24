@@ -1,6 +1,5 @@
 $(document).ready(function () {
   const count = countList;
-  console.log(count);
   const divisionCode = count.divisionCode;
   const conditions = {};
   const mappings = [
@@ -16,11 +15,12 @@ $(document).ready(function () {
   ];
   const AllDistrictCount = count.allDistrictCount;
   createPieChart(
-    ["Pending", "Rejected", "Sanctioned"],
+    ["Sanctioned","Pending","Pending With Citizen","Rejected"],
     [
-      AllDistrictCount.pending.length,
-      AllDistrictCount.rejected.length,
       AllDistrictCount.sanctioned.length,
+      AllDistrictCount.pending.length,
+      AllDistrictCount.pendingWithCitizen.length,
+      AllDistrictCount.rejected.length,
     ]
   );
 

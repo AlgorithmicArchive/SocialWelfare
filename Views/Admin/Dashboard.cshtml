@@ -99,10 +99,12 @@
 
     <div class="container-fluid d-none flex-column gap-5 py-5 mb-5" id="dataGrid">
         <div class="d-flex gap-2">
-            <button class="btn btn-success" onclick="printDiv('printableArea')">Print</button>
+            <button class="btn btn-info" onclick="printDiv('printableArea')">Print</button>
+            <button class="btn btn-success" onclick="exportTableToExcel('applicationListTable')">EXCEL</button>
+            <button class="btn btn-danger" onclick="SaveAsPdf('printableArea','applicationListTable')">PDF</button>
         </div>
         <div id="printableArea">
-            <table class="table table-responsive table-bordered table-striped">
+            <table class="table table-responsive table-bordered table-striped" id="applicationListTable">
                 <thead class="bg-dark text-white">
                     <th>S.No.</th>
                     <th>Application Number</th>

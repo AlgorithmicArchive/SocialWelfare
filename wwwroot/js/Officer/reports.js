@@ -1,7 +1,6 @@
 const isEmpty = (obj) => {
   return Object.keys(obj).length === 0;
 };
-
 function createChart(labels, data) {
   const options = {
     labels: labels,
@@ -67,8 +66,8 @@ function createPieChart(labels, values) {
       {
         label: "All Districts",
         data: values,
-        backgroundColor: ["orange", "red", "darkgreen"],
-        borderColor: ["orange", "red", "darkgreen"],
+        backgroundColor: ["darkgreen", "orange","lightblue", "maroon"],
+        borderColor: ["darkgreen", "orange","lightblue", "maroon"],
         borderWidth: 1,
       },
     ],
@@ -92,7 +91,7 @@ function createPieChart(labels, values) {
           align: "center",
           backgroundColor: (context) => {
             const index = context.dataIndex;
-            const backgroundColors = ["maroon", "red", "purple"];
+            const backgroundColors = ["blac", "black", "black"];
             return backgroundColors[index];
           },
           borderRadius: 4,
@@ -225,42 +224,7 @@ function setApplicationList(applicationList) {
     "slow"
   );
 }
-function printDiv(divId) {
-  var content = $("#" + divId).html();
 
-  // Desired window size
-  var width = 1080;
-  var height = 600;
-
-  // Calculate the position for centering the window
-  var left = (screen.width - width) / 2;
-  var top = (screen.height - height) / 2;
-
-  var myWindow = window.open(
-    "",
-    "",
-    `width=${width},height=${height},top=${top},left=${left}`
-  );
-  myWindow.document.write("<html><head><title>Print</title>");
-  myWindow.document.write(`<style>
-        table { border-collapse: collapse; }
-        th, td { border: 2px solid black; padding: 8px; text-align: left; }
-        thead { background-color: #f2f2f2; }
-        th { border: 1px solid black; }
-        @media print {
-            @page {
-                size: landscape;
-            }
-        }
-    </style>`);
-  myWindow.document.write("</head><body>");
-  myWindow.document.write(content);
-  myWindow.document.write("</body></html>");
-  myWindow.document.close();
-  myWindow.focus();
-  myWindow.print();
-  myWindow.close();
-}
 $(document).ready(function () {
   const count = countList;
   const districtCode = count.districtCode;
@@ -290,11 +254,12 @@ $(document).ready(function () {
     ]
   );
   createPieChart(
-    ["Pending", "Rejected", "Sanctioned"],
+    ["Sanctioned","Pending","Pending With Citizen","Rejected"],
     [
-      AllDistrictCount.pending.length,
-      AllDistrictCount.rejected.length,
       AllDistrictCount.sanctioned.length,
+      AllDistrictCount.pending.length,
+      AllDistrictCount.pendingWithCitizen.length,
+      AllDistrictCount.rejected.length,
     ]
   );
 

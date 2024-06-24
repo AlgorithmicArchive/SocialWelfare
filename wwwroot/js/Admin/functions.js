@@ -68,8 +68,8 @@ function createPieChart(labels, values) {
       {
         label: "All Districts",
         data: values,
-        backgroundColor: ["orange", "red", "darkgreen"],
-        borderColor: ["orange", "red", "darkgreen"],
+        backgroundColor: ["darkgreen", "orange","lightblue", "maroon"],
+        borderColor: ["darkgreen", "orange","lightblue", "maroon"],
         borderWidth: 1,
       },
     ],
@@ -217,57 +217,9 @@ function SetServices() {
 function setApplicationList(applicationList) {
   const container = $("#applicationListContainer");
   container.empty();
-  applicationList.map((item, index) => {
-    container.append(`
-      <tr>
-        <td>${index + 1}</td>
-        <td>${item.applicationNo}</td>
-        <td>${item.applicantName}</td>
-        <td>${item.applicationStatus}</td>
-        <td>${item.appliedDistrict}</td>
-        <td>${item.appliedService}</td>
-        <td>${item.applicationWithOfficer}</td>
-      </tr>
-    `);
-  });
-
-  console.log("This one only");
   $("#dataGrid").removeClass("d-none").addClass("d-flex");
+  initializeDataTable('applicationListTable', "applicationListContainer", applicationList);
+
 }
 
-function printDiv(divId) {
-  var content = $("#" + divId).html();
 
-  // Desired window size
-  var width = 1080;
-  var height = 600;
-
-  // Calculate the position for centering the window
-  var left = (screen.width - width) / 2;
-  var top = (screen.height - height) / 2;
-
-  var myWindow = window.open(
-    "",
-    "",
-    `width=${width},height=${height},top=${top},left=${left}`
-  );
-  myWindow.document.write("<html><head><title>Print</title>");
-  myWindow.document.write(`<style>
-        table { border-collapse: collapse; }
-        th, td { border: 2px solid black; padding: 8px; text-align: left; }
-        thead { background-color: #f2f2f2; }
-        th { border: 1px solid black; }
-        @media print {
-            @page {
-                size: landscape;
-            }
-        }
-    </style>`);
-  myWindow.document.write("</head><body>");
-  myWindow.document.write(content);
-  myWindow.document.write("</body></html>");
-  myWindow.document.close();
-  myWindow.focus();
-  myWindow.print();
-  myWindow.close();
-}
