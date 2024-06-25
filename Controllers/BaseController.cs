@@ -130,6 +130,7 @@ namespace SocialWelfare.Controllers
         [HttpGet]
         public IActionResult GetDesignations()
         {
+            // JsonConvert.DeserializeObject
             var designations = dbcontext.OfficersDesignations.Where(des => !des.Designation.Contains("Admin")).ToList();
             return Json(new { status = true, designations });
         }
