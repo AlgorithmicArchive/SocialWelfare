@@ -20,7 +20,7 @@ function createChart(labels, data) {
     type: "bar",
     data: options,
     options: {
-      responsive: true,
+      responsive: false,
       plugins: {
         legend: {
           position: "top",
@@ -79,7 +79,7 @@ function createPieChart(labels, values) {
     type: "doughnut",
     data: data,
     options: {
-      responsive: true,
+      responsive: false,
       plugins: {
         legend: {
           position: "top",
@@ -227,7 +227,6 @@ function setApplicationList(applicationList) {
   container.empty();
   $("#dataGrid").removeClass("d-none").addClass("d-flex");
   initializeDataTable('applicationListTable', "applicationListContainer", applicationList);
-
 }
 
 

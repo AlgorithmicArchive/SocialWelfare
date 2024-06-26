@@ -30,4 +30,6 @@ $(document).ready(function () {
       $(".fixed-top").removeClass("scrolled");
     }
   });
+
+  
 });

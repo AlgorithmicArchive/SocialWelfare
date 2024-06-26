@@ -1,4 +1,5 @@
 function initializeDataTable(tableId, containerId, data) {
+    console.log("make");
     // Destroy existing DataTable if it exists
     if ($.fn.DataTable.isDataTable(`#${tableId}`)) {
       $(`#${tableId}`).DataTable().destroy();
@@ -6,29 +7,53 @@ function initializeDataTable(tableId, containerId, data) {
     const container = $(`#${containerId}`);
     container.empty();
   
-    data.map((item, index) => {
-      let row = `<tr><td>${index + 1}</td>`; // First column for index
-  
-      // Loop through each property in the item object and create a table cell for it
-      for (const key in item) {
-        if (item.hasOwnProperty(key)) {
-          row += `<td>${item[key]}</td>`;
-        }
-      }
-  
-      row += `</tr>`;
-      container.append(row);
-    });
+        data.map((item, index) => {
+            let row = `<tr><td>${index + 1}</td>`; // First column for index
+        
+            for (const key in item) {
+                if (item.hasOwnProperty(key)) {
+                    row += `<td>${item[key]}</td>`;
+                }
+            }
+        
+            row += `</tr>`;
+            container.append(row); // Append each row to the container
+        });
   
     // Reinitialize the DataTable
-    $(`#${tableId}`).DataTable({
+   const dataTable = $(`#${tableId}`).DataTable({
+      responsive:true,
       paging: true,
       searching: true,
       info: true,
       lengthChange: true,
       pageLength: 10, // Default number of entries to display
       lengthMenu: [5, 10, 25, 50, 100], // Options for the user to select from
+      pagingType: 'full_numbers', // Use full pagination control
+
+    // Customizing pagination text
+    language: {
+        paginate: {
+            first: 'First',
+            previous: 'Previous',
+            next: 'Next',
+            last: 'Last'
+        }
+    },
     });
+
+    // if(dataTable.page.info().pages>10)
+    //     $(".paginate_button.last").after(`<div class="border border-secondary d-flex align-items-center mt-2 px-2" style="width:max-content"><input class="border-0 p-1 ms-3 rounded-3 bg-transparent rounded-0 shadow-0 paginate_jump_to" type="text" placeholder="Jump To Page" /><i class="fs-4 fa-solid fa-circle-right paginate_jump_btn" style="cursor:pointer"></i></div>`)
+   
+    $(document).on('click','.paginate_jump_btn',function(){
+        const pageNumber = $(".paginate_jump_to").val();
+        if (!isNaN(pageNumber) && pageNumber > 0 && pageNumber <= dataTable.page.info().pages) {
+            dataTable.page(pageNumber - 1).draw('page');
+            console.log(dataTable.page.info().pages);
+        } else {
+            alert(`Please enter a valid page number between 1 and ${dataTable.page.info().pages}.`);
+        }
+    })
   }
   
 function printTable(divId) {

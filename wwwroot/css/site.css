@@ -134,6 +134,11 @@ th{
     vertical-align: top;
 }
 
+input:focus{
+    outline: none;
+}
+
+
 @media only screen and (max-width: 600px) {
     .sm-hidden{
         display: none;
@@ -176,7 +181,12 @@ th{
 }
   
 @media only screen and (min-width: 601px) and (max-width: 1024px) {
-
+    .main-admin-body {
+        width: 100%;
+    }
+    .sidebar-admin-section {
+        width: 0;
+    }
   .margin-center{
     margin-top: 20%;
   }

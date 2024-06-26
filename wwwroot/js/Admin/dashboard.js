@@ -54,7 +54,7 @@ $(document).ready(function () {
     updateConditions(conditions);
   });
 
-  $(".count-card").on("click", function () {
+  $(".dashboard-card").on("click", function () {
     const card = $(this).attr("id");
     console.log(card);
     let applicationList;
@@ -66,6 +66,7 @@ $(document).ready(function () {
     else if (card == "Rejected") applicationList = count.rejectCount;
 
     setApplicationList(applicationList);
+    
     var $anchor = $("<a/>", {
       href: "#dataGrid",
       id: "tempAnchor",

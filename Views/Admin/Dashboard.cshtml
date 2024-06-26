@@ -4,7 +4,7 @@
 }
 
 
-<div class="container-fluid d-flex flex-column gap-5 py-4" id="dashboard">
+<div class="container-fluid d-flex flex-column gap-5 py-4 ps-0" id="dashboard">
 
     <div class="row w-100 mx-auto">
         <div class="col-sm-4">
@@ -27,72 +27,67 @@
         </div>
     </div>
 
-    <div class="container-fluid d-flex justify-content-center">
-        <div class="row w-100  justify-content-between">
-            <div class="col-md-2 p-0 mt-2">
-                <div class="custom-card count-card flex-column py-5 bg-primary text-white fs-3 gap-0"
-                    style="cursor:pointer" id="Total">
+    <div class="container-fluid d-flex justify-content-center ps-0">
+        <div class="row w-100 justify-content-around">
+            <div class="col-lg-2 p-0 mt-2">
+                <div class="dashboard-card bg-primary text-white" style="cursor:pointer" id="Total">
                     <i class="fa-solid fa-file-pen"></i>
                     <span class="text">Total</span>
-                    <p class="value fs-2 fw-bold d-flex justify-content-center" id="total">20</p>
+                    <span class="value" id="total">20</span>
                 </div>
             </div>
-            <div class="col-md-2 p-0 mt-2 ">
-                <div class="custom-card count-card flex-column py-5 bg-success text-white fs-3 gap-0"
-                    style="cursor:pointer" id="Sanctioned">
+            <div class="col-lg-2 p-0 mt-2">
+                <div class="dashboard-card bg-success text-white" style="cursor:pointer" id="Sanctioned">
                     <i class="fa-solid fa-flag-checkered"></i>
                     <span class="text">Sanctioned</span>
-                    <p class="value fs-2 fw-bold d-flex justify-content-center" id="sanction">20</p>
+                    <p class="value" id="sanction">20</p>
                 </div>
             </div>
-            <div class="col-md-2 p-0 mt-2">
-                <div class="custom-card count-card flex-column fs-3 py-5 bg-warning text-dark gap-0"
-                    style="cursor:pointer" id="Pending">
+            <div class="col-lg-2 p-0 mt-2">
+                <div class="dashboard-card bg-warning text-dark" style="cursor:pointer" id="Pending">
                     <i class="fa-solid fa-hourglass-half"></i>
                     <span class="text">Pending</span>
-                    <p class="value fs-2 fw-bold  d-flex justify-content-center" id="pending">20</p>
+                    <p class="value" id="pending">20</p>
                 </div>
             </div>
-            <div class="col-md-2 p-0 mt-2">
-                <div class="custom-card count-card flex-column fs-3 py-4 bg-info text-white gap-2"
-                    style="cursor:pointer" id="PendingWithCitizen">
+            <div class="col-lg-2 p-0 mt-2">
+                <div class="dashboard-card bg-info text-white" style="cursor:pointer" id="PendingWithCitizen">
                     <i class="fa-solid fa-user-clock"></i>
                     <span class="text fs-5">Pending With Citizen</span>
-                    <span class="text fs-4">For Editing</span>
-                    <p class="value fs-2 fw-bold d-flex justify-content-center" id="pendingWithCitizen">20</p>
+                    <span class="text fs-5">For Editing</span>
+                    <p class="value" id="pendingWithCitizen">20</p>
                 </div>
             </div>
-            <div class="col-md-2 p-0 mt-2">
-                <div class="custom-card count-card flex-column fs-3 py-5 bg-danger text-white gap-0"
-                    style="cursor:pointer" id="Rejected">
+            <div class="col-lg-2 p-0 mt-2">
+                <div class="dashboard-card bg-danger text-white" style="cursor:pointer" id="Rejected">
                     <i class="fa-solid fa-ban"></i>
                     <span class="text">Rejected</span>
-                    <p class="value fs-2 fw-bold  d-flex justify-content-center" id="rejected">20</p>
+                    <p class="value" id="rejected">20</p>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row w-100">
-        <div class="col-md-4 offset-md-2">
-            <div class="custom-card d-flex flex-column mb-2" style="height: 10vh;">
+        <div class="col-lg-4 offset-lg-2 mb-2">
+            <div class="custom-card d-flex flex-column mb-2 p-2" style="height: 10vh;">
                 <div class="d-flex gap-3">
                     <p>District: <span class="fw-bold" id="chartDistirct"></span></p>
                     <p>Officer: <span class="fw-bold" id="chartOfficer">All</span></p>
                 </div>
                 <p>Service: <span class="fw-bold" id="chartService">All</span></p>
             </div>
-            <div class="custom-card flex-column bg-white text-dark">
-                <canvas id="myChart" height="500" width="500"></canvas>
+            <div class="custom-card flex-column bg-white text-dark mx-auto">
+                <canvas id="myChart" height="350" width="350"></canvas>
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-lg-4 mx-auto">
             <div class="custom-card d-flex flex-column mb-2" style="height: 10vh;">
                 <p class="fw-bold">All District Data</p>
             </div>
             <div class="custom-card flex-column">
-                <canvas id="allDistrict" height="500" width="500"></canvas>
+                <canvas id="allDistrict" height="350" width="350"></canvas>
             </div>
         </div>
     </div>
