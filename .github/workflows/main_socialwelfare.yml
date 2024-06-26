@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy ASP.Net Core app to Azure Web App - SocialWelfare
+name: Build and deploy ASP.Net Core app to Azure Web App - socialwelfare
 
 on:
   push:
@@ -40,18 +40,27 @@ jobs:
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    permissions:
+      id-token: write #This is required for requesting the JWT
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v3
         with:
           name: .net-app
+      
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_952ECD5A1A02431A9BE756F22B3D096E }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_6EC601AC50C34164B903F69E0A7CFEC4 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_05A95FE3C6BC4BB19624AE53290DA93F }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'SocialWelfare'
+          app-name: 'socialwelfare'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_71B08AE959F64E69B4AC787EB3D48250 }}
           package: .
+          
