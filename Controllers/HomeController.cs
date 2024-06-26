@@ -76,12 +76,29 @@ namespace SocialWelfare.Controllers
             int? tehsilCode = null;
             var UserSpecificDetails = new Dictionary<string, dynamic>();
 
+            string AccessLevel = "";
+            switch (designation)
+            {
+                case "Tehsil Social Welfare Officer":
+                    AccessLevel = "Tehsil";
+                    break;
+                case "District Social Welfare Officer":
+                    AccessLevel = "District";
+                    break;
+                case "Director Finance":
+                    AccessLevel = "State Level";
+                    break;
+            }
+
+
+
             if (!string.IsNullOrEmpty(form["Division"]))
             {
                 divisionCode = Convert.ToInt32(form["Division"].ToString());
                 UserSpecificDetails.Add("Profile", "");
                 UserSpecificDetails.Add("Designation", designation);
                 UserSpecificDetails.Add("DivisionCode", divisionCode);
+                UserSpecificDetails.Add("AccessLevel", AccessLevel);
                 UserSpecificDetails.Add("valid", false);
 
                 var UserType = new SqlParameter("@UserType", designation.Contains("Admin") ? "Admin" : "Officer");
@@ -121,6 +138,7 @@ namespace SocialWelfare.Controllers
                 UserSpecificDetails.Add("DivisionCode", divisionCode!);
                 UserSpecificDetails.Add("DistrictCode", districtCode!);
                 UserSpecificDetails.Add("TehsilCode", tehsilCode!);
+                UserSpecificDetails.Add("AccessLevel", AccessLevel);
                 UserSpecificDetails.Add("valid", false);
 
                 var UserType = new SqlParameter("@UserType", designation.Contains("Admin") ? "Admin" : "Officer");

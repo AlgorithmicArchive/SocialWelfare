@@ -13,25 +13,33 @@ namespace SocialWelfare.Controllers.Officer
         public dynamic PendingApplications(Models.Entities.User Officer)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer?.UserSpecificDetails!);
-            if (UserSpecificDetails == null)
-            {
-                _logger.LogError("UserSpecificDetails is null for the provided Officer.");
-                return null!;
-            }
 
-            string officerDesignation = UserSpecificDetails?["Designation"]!;
-            string districtCode = UserSpecificDetails?["DistrictCode"]!;
-            if (officerDesignation == null || districtCode == null)
+            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
+            string districtCode = UserSpecificDetails?["DistrictCode"]?.ToString() ?? string.Empty;
+            string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
+
+
+            SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
+
+            switch (accessLevel)
             {
-                _logger.LogError("Officer designation or district code is null.");
-                return null!;
+                case "Tehsil":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["TehsilCode"]?.ToString() ?? string.Empty);
+                    break;
+                case "District":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DistrictCode"]?.ToString() ?? string.Empty);
+                    break;
+                case "Division":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DivisionCode"]?.ToString() ?? string.Empty);
+                    break;
             }
 
             var applicationList = dbcontext.Applications.FromSqlRaw(
-                "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @District, @ServiceId",
+                "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @AccessLevel, @AccessLevelCode, @ServiceId",
                 new SqlParameter("@OfficerDesignation", officerDesignation),
                 new SqlParameter("@ActionTaken", "Pending"),
-                new SqlParameter("@District", districtCode),
+                new SqlParameter("@AccessLevel", accessLevel),
+                AccessLevelCode,
                 new SqlParameter("@ServiceId", 1)).ToList();
 
             bool canSanction = false;
@@ -84,12 +92,10 @@ namespace SocialWelfare.Controllers.Officer
                 }
                 else if (canSanction)
                 {
-                    var poolElement = officer["pool"][districtCode];
-                    if (poolElement != null)
-                        pool = JArray.Parse(poolElement.ToString());
-                    else
+                    var poolElement = officer["pool"]?[districtCode];
+                    pool = poolElement != null ? JArray.Parse(poolElement.ToString()) : new JArray();
+                    if (poolElement == null)
                     {
-                        pool = new JArray();
                         officer["pool"][districtCode] = pool;
                     }
                 }
@@ -106,9 +112,13 @@ namespace SocialWelfare.Controllers.Officer
                 {
                     bool inPool = pool.Any(item => item.ToString() == application.ApplicationId);
                     if (inPool)
+                    {
                         PoolList.Add(application);
+                    }
                     else
+                    {
                         PendingList.Add(application);
+                    }
                 }
             }
 
@@ -126,12 +136,31 @@ namespace SocialWelfare.Controllers.Officer
         public dynamic SentApplications(Models.Entities.User Officer)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
-            string officerDesignation = UserSpecificDetails!["Designation"];
-            string districtCode = UserSpecificDetails["DistrictCode"];
+            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
+            string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
 
+            SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
 
-            var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationsForOfficer @OfficerDesignation,@ActionTaken,@District,@ServiceId", new SqlParameter("@OfficerDesignation", officerDesignation), new SqlParameter("@ActionTaken", "Forward,Return"), new SqlParameter("@District", districtCode), new SqlParameter("@ServiceId", 1)).ToList();
+            switch (accessLevel)
+            {
+                case "Tehsil":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["TehsilCode"]?.ToString() ?? string.Empty);
+                    break;
+                case "District":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DistrictCode"]?.ToString() ?? string.Empty);
+                    break;
+                case "Division":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DivisionCode"]?.ToString() ?? string.Empty);
+                    break;
+            }
 
+            var applicationList = dbcontext.Applications.FromSqlRaw(
+                "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @AccessLevel, @AccessLevelCode, @ServiceId",
+                new SqlParameter("@OfficerDesignation", officerDesignation),
+                new SqlParameter("@ActionTaken", "Forward,Return"),
+                new SqlParameter("@AccessLevel", accessLevel),
+                AccessLevelCode,
+                new SqlParameter("@ServiceId", 1)).ToList();
 
             var SentApplications = new List<dynamic>();
 
@@ -161,10 +190,31 @@ namespace SocialWelfare.Controllers.Officer
         public dynamic SanctionApplications(Models.Entities.User Officer)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
-            string officerDesignation = UserSpecificDetails!["Designation"];
-            string districtCode = UserSpecificDetails["DistrictCode"];
+            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
+            string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
 
-            var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationsForOfficer @OfficerDesignation,@ActionTaken,@District,@ServiceId", new SqlParameter("@OfficerDesignation", officerDesignation), new SqlParameter("@ActionTaken", "Sanction"), new SqlParameter("@District", districtCode), new SqlParameter("@ServiceId", 1)).ToList();
+            SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
+
+            switch (accessLevel)
+            {
+                case "Tehsil":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["TehsilCode"]?.ToString() ?? string.Empty);
+                    break;
+                case "District":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DistrictCode"]?.ToString() ?? string.Empty);
+                    break;
+                case "Division":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DivisionCode"]?.ToString() ?? string.Empty);
+                    break;
+            }
+
+            var applicationList = dbcontext.Applications.FromSqlRaw(
+                "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @AccessLevel, @AccessLevelCode, @ServiceId",
+                new SqlParameter("@OfficerDesignation", officerDesignation),
+                new SqlParameter("@ActionTaken", "Sanction"),
+                new SqlParameter("@AccessLevel", accessLevel),
+                AccessLevelCode,
+                new SqlParameter("@ServiceId", 1)).ToList();
 
             var SantionApplications = new List<dynamic>();
 
@@ -177,7 +227,6 @@ namespace SocialWelfare.Controllers.Officer
                 };
                 SantionApplications.Add(data);
             }
-
 
             dynamic obj = new System.Dynamic.ExpandoObject();
             obj.MiscellaneousList = SantionApplications;
@@ -187,12 +236,33 @@ namespace SocialWelfare.Controllers.Officer
         public dynamic RejectApplications(Models.Entities.User Officer)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
-            string officerDesignation = UserSpecificDetails!["Designation"];
-            string districtCode = UserSpecificDetails["DistrictCode"];
+            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
+            string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
 
-            var applicationList = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationsForOfficer @OfficerDesignation,@ActionTaken,@District,@ServiceId", new SqlParameter("@OfficerDesignation", officerDesignation), new SqlParameter("@ActionTaken", "Reject"), new SqlParameter("@District", districtCode), new SqlParameter("@ServiceId", 1)).ToList();
+            SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
 
-            var SantionApplications = new List<dynamic>();
+            switch (accessLevel)
+            {
+                case "Tehsil":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["TehsilCode"]?.ToString() ?? string.Empty);
+                    break;
+                case "District":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DistrictCode"]?.ToString() ?? string.Empty);
+                    break;
+                case "Division":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DivisionCode"]?.ToString() ?? string.Empty);
+                    break;
+            }
+
+            var applicationList = dbcontext.Applications.FromSqlRaw(
+                "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @AccessLevel, @AccessLevelCode, @ServiceId",
+                new SqlParameter("@OfficerDesignation", officerDesignation),
+                new SqlParameter("@ActionTaken", "Reject"),
+                new SqlParameter("@AccessLevel", accessLevel),
+                AccessLevelCode,
+                new SqlParameter("@ServiceId", 1)).ToList();
+
+            var RejectApplications = new List<dynamic>();
 
             foreach (var application in applicationList)
             {
@@ -201,12 +271,11 @@ namespace SocialWelfare.Controllers.Officer
                     application.ApplicationId,
                     application.ApplicantName,
                 };
-                SantionApplications.Add(data);
+                RejectApplications.Add(data);
             }
 
-
             dynamic obj = new System.Dynamic.ExpandoObject();
-            obj.MiscellaneousList = SantionApplications;
+            obj.MiscellaneousList = RejectApplications;
             obj.Type = "Reject";
             return obj;
         }

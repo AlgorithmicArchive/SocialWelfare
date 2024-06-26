@@ -31,13 +31,36 @@ namespace SocialWelfare.Controllers.Officer
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
             var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+
+
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
 
-            string officerDesignation = UserSpecificDetails!["Designation"];
-            string districtCode = UserSpecificDetails["DistrictCode"];
+
+            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
+            string accessLevel = UserSpecificDetails["AccessLevel"]?.ToString() ?? string.Empty;
+
+            SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
+            switch (accessLevel)
+            {
+                case "Tehsil":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails["TehsilCode"]?.ToString() ?? string.Empty);
+                    break;
+                case "District":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails["DistrictCode"]?.ToString() ?? string.Empty);
+                    break;
+                case "Division":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails["DivisionCode"]?.ToString() ?? string.Empty);
+                    break;
+            }
+
             int PendingCount = 0, ForwardCount = 0, SanctionCount = 0, RejectCount = 0, ReturnCount = 0;
 
-            var applications = dbcontext.Applications.FromSqlRaw("EXEC GetApplicationCountForOfficer @OfficerDesignation, @District", new SqlParameter("@OfficerDesignation", officerDesignation), new SqlParameter("@District", districtCode)).ToList();
+            var applications = dbcontext.Applications.FromSqlRaw(
+                "EXEC GetApplicationCountForOfficer @OfficerDesignation, @AccessLevel, @AccessLevelCode",
+                new SqlParameter("@OfficerDesignation", officerDesignation),
+                new SqlParameter("@AccessLevel", accessLevel),
+                AccessLevelCode
+            ).ToList();
 
             foreach (var application in applications)
             {
@@ -81,6 +104,7 @@ namespace SocialWelfare.Controllers.Officer
 
             return View(countList);
         }
+
 
         public IActionResult Applications(string? type)
         {
@@ -213,9 +237,10 @@ namespace SocialWelfare.Controllers.Officer
 
             var AllDistrictCount = new
             {
-                Pending = GetCount("Pending", null!),
-                Rejected = GetCount("Reject", null!),
                 Sanctioned = GetCount("Sanction", null!),
+                Pending = GetCount("Pending", null!),
+                PendingWithCitizen = GetCount("PendingWithCitizen", null!),
+                Rejected = GetCount("Reject", null!),
             };
 
 

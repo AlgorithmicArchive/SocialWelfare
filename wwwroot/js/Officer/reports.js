@@ -19,7 +19,7 @@ function createChart(labels, data) {
     type: "bar",
     data: options,
     options: {
-      responsive: true,
+      responsive: false,
       plugins: {
         legend: {
           position: "top",
@@ -77,7 +77,7 @@ function createPieChart(labels, values) {
     type: "doughnut",
     data: data,
     options: {
-      responsive: true,
+      responsive: false,
       plugins: {
         legend: {
           position: "top",
@@ -227,6 +227,7 @@ function setApplicationList(applicationList) {
 
 $(document).ready(function () {
   const count = countList;
+  console.log(count);
   const districtCode = count.districtCode;
   const officer = count.officer;
   const conditions = {};
@@ -292,13 +293,13 @@ $(document).ready(function () {
     updateConditions(conditions);
   });
 
-  $(".count-card").on("click", function () {
-    const card = $(this).find(".text").text();
+  $(".dashboard-card").on("click", function () {
+    const card = $(this).attr("id");
     let applicationList;
     if (card == "Total") applicationList = count.totalCount;
     else if (card == "Pending") applicationList = count.pendingCount;
     else if (card == "Sanctioned") applicationList = count.sanctionCount;
-    else if (card == "Pending With Citizen")
+    else if (card == "PendingWithCitizen")
       applicationList = count.pendingWithCitizenCount;
     else if (card == "Rejected") applicationList = count.rejectCount;
 

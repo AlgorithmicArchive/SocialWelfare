@@ -63,9 +63,11 @@ $(document).ready(function () {
   $("#registration").on("submit", function (e) {
     e.preventDefault();
     const formdata = new FormData(this);
+    showSpinner();
     fetch("/Home/OfficerRegistration", { method: "post", body: formdata })
       .then((res) => res.json())
       .then((data) => {
+        hideSpinner();
         if (data.status) {
           window.location.href = "/Home/Authentication";
         }
