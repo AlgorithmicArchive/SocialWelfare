@@ -7,17 +7,22 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SendEmails;
 using SocialWelfare.Models.Entities;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace SocialWelfare.Controllers.Officer
 {
     [Authorize(Roles = "Officer")]
-    public partial class OfficerController(SocialWelfareDepartmentContext dbcontext, ILogger<OfficerController> logger, UserHelperFunctions _helper, EmailSender _emailSender, PdfService pdfService) : Controller
+    public partial class OfficerController(SocialWelfareDepartmentContext dbcontext, ILogger<OfficerController> logger, UserHelperFunctions _helper, EmailSender _emailSender, PdfService pdfService, IConfiguration configuration) : Controller
     {
         protected readonly SocialWelfareDepartmentContext dbcontext = dbcontext;
         protected readonly ILogger<OfficerController> _logger = logger;
         protected readonly EmailSender emailSender = _emailSender;
         protected readonly UserHelperFunctions helper = _helper;
         protected readonly PdfService _pdfService = pdfService;
+
+        private readonly IConfiguration _configuration = configuration;
 
         public override void OnActionExecuted(ActionExecutedContext context)
         {
@@ -395,5 +400,71 @@ namespace SocialWelfare.Controllers.Officer
 
             return Json(new { status = true });
         }
+
+        [HttpGet("Officer/DSC/RegisterDsc")]
+        public IActionResult RegisterDsc()
+        {
+            return View();
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> UploadCertificate([FromForm] IFormCollection form)
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+
+            _logger.LogInformation($"OFFICER ID: {userId}");
+
+            if (ModelState.IsValid)
+            {
+                if (form.Files["CertificateFile"] == null || string.IsNullOrEmpty(form["Password"]))
+                {
+                    ModelState.AddModelError("", "Certificate file and password are required.");
+                    return RedirectToAction("Index", "Officer");
+                }
+
+                var file = form.Files["CertificateFile"];
+                var password = form["Password"];
+
+                using (var memoryStream = new MemoryStream())
+                {
+                    await file!.CopyToAsync(memoryStream);
+                    var certificateData = memoryStream.ToArray();
+
+                    if (!ValidateCertificate(certificateData, password!))
+                    {
+                        ModelState.AddModelError("", "Invalid certificate.");
+                        return View(form);
+                    }
+
+                    var encryptedCertificateData = EncryptData(certificateData);
+                    var encryptedPassword = EncryptData(Encoding.UTF8.GetBytes(password!));
+
+                    var certificateModel = new Certificate
+                    {
+                        OfficerId = userId,
+                        CertificateName = file.FileName,
+                        EncryptedCertificateData = encryptedCertificateData,
+                        EncryptedPassword = encryptedPassword
+                    };
+
+                    dbcontext.Certificates.Add(certificateModel);
+                    await dbcontext.SaveChangesAsync();
+
+                    return RedirectToAction("Index", "Officer");
+                }
+            }
+
+            return RedirectToAction("Index", "Officer");
+        }
+
+        [HttpGet("Officer/DSC/UnregisterDsc")]
+        public IActionResult UnregisterDsc()
+        {
+            return View();
+        }
+
+
+
     }
 }

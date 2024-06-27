@@ -56,7 +56,19 @@ $(document).ready(function () {
         },
       ],
       right: [
-        { label: "DSC Management", link: "/Officer/DSCManagement" },
+        {
+          label: "DSC Management",
+          dropdown: [
+            {
+              label: "Register DSC",
+              link: "/Officer/DSC/RegisterDsc",
+            },
+            {
+              label: "Unregister DSC",
+              link: "/Officer/DSC/UnregisterDsc",
+            },
+          ],
+        },
         { label: "Reports", link: "/Officer/Reports" },
       ],
       profile: [

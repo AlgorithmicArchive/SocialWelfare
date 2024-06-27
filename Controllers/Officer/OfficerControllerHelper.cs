@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SocialWelfare.Models.Entities;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace SocialWelfare.Controllers.Officer
 {
@@ -379,6 +381,114 @@ namespace SocialWelfare.Controllers.Officer
             var SanctionCount = GetCount("Sanction", Conditions!);
 
             return Json(new { status = true, TotalCount, PendingCount, RejectCount, SanctionCount });
+        }
+
+        private static bool ValidateCertificate(byte[] certificateData, string password)
+        {
+            try
+            {
+                // Attempt to load the certificate with the provided password
+                using (var cert = new X509Certificate2(certificateData, password))
+                {
+                    // Check if the certificate is expired
+                    if (DateTime.Now > cert.NotAfter || DateTime.Now < cert.NotBefore)
+                    {
+                        return false;
+                    }
+
+                    // Check the certificate chain
+                    using (var chain = new X509Chain())
+                    {
+                        chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
+                        chain.ChainPolicy.RevocationFlag = X509RevocationFlag.EntireChain;
+                        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
+                        chain.ChainPolicy.VerificationTime = DateTime.Now;
+                        chain.ChainPolicy.UrlRetrievalTimeout = new TimeSpan(0, 0, 30);
+
+                        if (!chain.Build(cert))
+                        {
+                            return false;
+                        }
+
+                        // Ensure the certificate is issued by a trusted root CA
+                        foreach (var chainElement in chain.ChainElements)
+                        {
+                            if (chainElement.Certificate.Thumbprint == cert.Thumbprint)
+                            {
+                                continue;
+                            }
+
+                            if (chainElement.Certificate.Subject == chainElement.Certificate.Issuer)
+                            {
+                                // This is the root certificate, ensure it's trusted
+                                if (!IsTrustedRoot(chainElement.Certificate))
+                                {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+
+                    // Additional validation checks can be added here
+                    // For example, check the subject name, key usage, etc.
+
+                    return true;
+                }
+            }
+            catch (CryptographicException)
+            {
+                // Handle cryptographic exceptions (e.g., incorrect password, corrupted certificate)
+                return false;
+            }
+            catch (Exception)
+            {
+                // Handle any other exceptions
+                return false;
+            }
+        }
+
+        private static bool IsTrustedRoot(X509Certificate2 rootCertificate)
+        {
+            using (var chain = new X509Chain())
+            {
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
+                chain.ChainPolicy.RevocationFlag = X509RevocationFlag.EntireChain;
+                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                chain.ChainPolicy.VerificationTime = DateTime.Now;
+                chain.ChainPolicy.UrlRetrievalTimeout = new TimeSpan(0, 0, 30);
+
+                if (chain.Build(rootCertificate))
+                {
+                    // Check if the root certificate is in the trusted root CA store
+                    foreach (var chainElement in chain.ChainElements)
+                    {
+                        if (chainElement.Certificate.Subject == chainElement.Certificate.Issuer)
+                        {
+                            return chainElement.Certificate.Verify();
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private byte[] EncryptData(byte[] data)
+        {
+            using (var aes = Aes.Create())
+            {
+                aes.Key = Convert.FromBase64String(_configuration["EncryptionKey"]!);
+                aes.IV = Convert.FromBase64String(_configuration["EncryptionIV"]!);
+
+                using (var encryptor = aes.CreateEncryptor(aes.Key, aes.IV))
+                using (var ms = new MemoryStream())
+                using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+                {
+                    cs.Write(data, 0, data.Length);
+                    cs.Close();
+                    return ms.ToArray();
+                }
+            }
         }
     }
 }
