@@ -65,7 +65,13 @@
         </div>
     </div>
 
+    <form action="/Officer/SignPdf" method="post" enctype="multipart/form-data">
+        <input type="file" name="pdfFile" id="pdfFile">
+        <button type="submit">Submit</button>
+    </form>
 </div>
+
+
 
 <script>
     const countList = @Html.Raw(Json.Serialize(Model));

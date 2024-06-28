@@ -404,7 +404,10 @@ namespace SocialWelfare.Controllers.Officer
         [HttpGet("Officer/DSC/RegisterDsc")]
         public IActionResult RegisterDsc()
         {
-            return View();
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            bool haveCertificate = false;
+            haveCertificate = dbcontext.Certificates.Where(cer => cer.OfficerId == userId).ToList().Count != 0;
+            return View(haveCertificate);
         }
 
 
@@ -413,55 +416,54 @@ namespace SocialWelfare.Controllers.Officer
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
 
-            _logger.LogInformation($"OFFICER ID: {userId}");
-
-            if (ModelState.IsValid)
+            if (form.Files["CertificateFile"] == null || string.IsNullOrEmpty(form["Password"]))
             {
-                if (form.Files["CertificateFile"] == null || string.IsNullOrEmpty(form["Password"]))
-                {
-                    ModelState.AddModelError("", "Certificate file and password are required.");
-                    return RedirectToAction("Index", "Officer");
-                }
-
-                var file = form.Files["CertificateFile"];
-                var password = form["Password"];
-
-                using (var memoryStream = new MemoryStream())
-                {
-                    await file!.CopyToAsync(memoryStream);
-                    var certificateData = memoryStream.ToArray();
-
-                    if (!ValidateCertificate(certificateData, password!))
-                    {
-                        ModelState.AddModelError("", "Invalid certificate.");
-                        return View(form);
-                    }
-
-                    var encryptedCertificateData = EncryptData(certificateData);
-                    var encryptedPassword = EncryptData(Encoding.UTF8.GetBytes(password!));
-
-                    var certificateModel = new Certificate
-                    {
-                        OfficerId = userId,
-                        CertificateName = file.FileName,
-                        EncryptedCertificateData = encryptedCertificateData,
-                        EncryptedPassword = encryptedPassword
-                    };
-
-                    dbcontext.Certificates.Add(certificateModel);
-                    await dbcontext.SaveChangesAsync();
-
-                    return RedirectToAction("Index", "Officer");
-                }
+                return Json(new { status = false, response = "Certificate and password are required." });
             }
 
-            return RedirectToAction("Index", "Officer");
+            var file = form.Files["CertificateFile"];
+            var password = form["Password"];
+
+            using (var memoryStream = new MemoryStream())
+            {
+                await file!.CopyToAsync(memoryStream);
+                var certificateData = memoryStream.ToArray();
+
+                if (!ValidateCertificate(certificateData, password!))
+                {
+                    return Json(new { status = false, response = "Invalid Certificate or Password." });
+                }
+
+                var encryptedCertificateData = EncryptData(certificateData);
+                var encryptedPassword = EncryptData(Encoding.UTF8.GetBytes(password!));
+
+                var certificateModel = new Certificate
+                {
+                    OfficerId = userId,
+                    CertificateName = file.FileName,
+                    EncryptedCertificateData = encryptedCertificateData,
+                    EncryptedPassword = encryptedPassword
+                };
+
+                dbcontext.Certificates.Add(certificateModel);
+                await dbcontext.SaveChangesAsync();
+
+                return RedirectToAction("UnregisterDsc", "Officer");
+            }
         }
+
 
         [HttpGet("Officer/DSC/UnregisterDsc")]
         public IActionResult UnregisterDsc()
         {
-            return View();
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            var certificateDetails = dbcontext.Certificates.FirstOrDefault(cer => cer.OfficerId == userId);
+            var details = new
+            {
+                fileName = certificateDetails!.CertificateName,
+                registerDate = certificateDetails.RegisteredDate,
+            };
+            return View(details);
         }
 
 

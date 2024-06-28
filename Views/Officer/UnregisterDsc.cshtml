@@ -1,0 +1,24 @@
+<div class="full-screen-section center-align">
+    <div class="container">
+        <p class="fs-3 fw-bold text-center">Digital Certificate</p>
+        <table class="table table-responsive table-bordered">
+            <thead class="bg-dark text-white text-center">
+                <th>File Name</th>
+                <th>Registeration Date</th>
+                <th>Action</th>
+            </thead>
+            <tbody class="text-center">
+                <td id="fileName"></td>
+                <td id="registerDate"></td>
+                <td id="action"></td>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    const certificateDetails = @Html.Raw(Json.Serialize(Model));
+    console.log(certificateDetails)
+    $("#fileName").text(certificateDetails.fileName)
+    $("#registerDate").text(certificateDetails.registerDate.split("T")[0])
+    $("#action").html(`<button class="btn btn-danger">Unregister</button>`);
+</script>

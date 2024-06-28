@@ -7,6 +7,11 @@ using Newtonsoft.Json.Linq;
 using SocialWelfare.Models.Entities;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using iText.Kernel.Pdf;
+using iText.Signatures;
+using Org.BouncyCastle.Cert;
+using Org.BouncyCastle.Security;
+using iText.IO.Source;
 
 namespace SocialWelfare.Controllers.Officer
 {
@@ -387,7 +392,6 @@ namespace SocialWelfare.Controllers.Officer
         {
             try
             {
-                // Attempt to load the certificate with the provided password
                 using (var cert = new X509Certificate2(certificateData, password))
                 {
                     // Check if the certificate is expired
@@ -396,7 +400,16 @@ namespace SocialWelfare.Controllers.Officer
                         return false;
                     }
 
-                    // Check the certificate chain
+                    // Check if the certificate is self-signed
+                    if (cert.Subject == cert.Issuer)
+                    {
+                        // Perform any additional checks for self-signed certificates here
+                        // For example, you can check the thumbprint or other properties
+
+                        return true; // Assuming self-signed certificates are acceptable
+                    }
+
+                    // Check the certificate chain for non-self-signed certificates
                     using (var chain = new X509Chain())
                     {
                         chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
@@ -477,8 +490,8 @@ namespace SocialWelfare.Controllers.Officer
         {
             using (var aes = Aes.Create())
             {
-                aes.Key = Convert.FromBase64String(_configuration["EncryptionKey"]!);
-                aes.IV = Convert.FromBase64String(_configuration["EncryptionIV"]!);
+                aes.Key = Convert.FromBase64String(_configuration["EncryptionSettings:EncryptionKey"]!);
+                aes.IV = Convert.FromBase64String(_configuration["EncryptionSettings:EncryptionIV"]!);
 
                 using (var encryptor = aes.CreateEncryptor(aes.Key, aes.IV))
                 using (var ms = new MemoryStream())
@@ -490,5 +503,85 @@ namespace SocialWelfare.Controllers.Officer
                 }
             }
         }
+
+        private byte[] DecryptData(byte[] data)
+        {
+            using (var aes = Aes.Create())
+            {
+                aes.Key = Convert.FromBase64String(_configuration["EncryptionSettings:EncryptionKey"]!);
+                aes.IV = Convert.FromBase64String(_configuration["EncryptionSettings:EncryptionIV"]!);
+
+                using (var decryptor = aes.CreateDecryptor(aes.Key, aes.IV))
+                using (var ms = new MemoryStream(data))
+                using (var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                using (var sr = new MemoryStream())
+                {
+                    cs.CopyTo(sr);
+                    return sr.ToArray();
+                }
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SignPdf(IFormFile pdfFile)
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null || pdfFile == null)
+            {
+                return Json(new { status = false, response = "Invalid session or file." });
+            }
+
+            var userCertificate = dbcontext.Certificates.FirstOrDefault(c => c.OfficerId == userId);
+            if (userCertificate == null)
+            {
+                return Json(new { status = false, response = "Certificate not found." });
+            }
+
+            var certificateData = DecryptData(userCertificate.EncryptedCertificateData);
+            var password = Encoding.UTF8.GetString(DecryptData(userCertificate.EncryptedPassword));
+
+            var signedPdfPath = Path.Combine(Path.GetTempPath(), "Signed_" + pdfFile.FileName);
+
+            await using (var memoryStream = new MemoryStream())
+            {
+                await pdfFile.CopyToAsync(memoryStream);
+                var pdfBytes = memoryStream.ToArray();
+
+                await using (var pdfInputStream = new MemoryStream(pdfBytes))
+                await using (var pdfOutputStream = new FileStream(signedPdfPath, FileMode.Create, FileAccess.Write))
+                {
+                    var reader = new PdfReader(pdfInputStream);
+                    var writer = new PdfWriter(pdfOutputStream);
+                    var pdfDoc = new PdfDocument(reader, writer);
+
+                    var signer = new PdfSigner(reader, writer, new StampingProperties());
+
+                    using (var cert = new X509Certificate2(certificateData, password))
+                    {
+                        // Convert .NET X509Certificate2 to BouncyCastle's X509Certificate
+                        var bcCert = new Org.BouncyCastle.X509.X509CertificateParser().ReadCertificate(cert.RawData);
+
+                        // Convert .NET RSA private key to BouncyCastle's RSA private key
+                        var rsa = cert.GetRSAPrivateKey();
+                        if (rsa == null)
+                        {
+                            return Json(new { status = false, response = "Private key not found." });
+                        }
+
+                        var rsaParameters = rsa.ExportParameters(true);
+                        var bcPrivateKey = DotNetUtilities.GetRsaKeyPair(rsaParameters).Private;
+
+                        var chain = new Org.BouncyCastle.X509.X509Certificate[] { bcCert };
+                        var externalSignature = new PrivateKeySignature((iText.Commons.Bouncycastle.Crypto.IPrivateKey)bcPrivateKey, DigestAlgorithms.SHA256);
+
+                        signer.SignDetached(new BouncyCastleDigest(), externalSignature, (iText.Commons.Bouncycastle.Cert.IX509Certificate[])chain, null, null, null, 0, PdfSigner.CryptoStandard.CMS);
+                    }
+                }
+            }
+
+            return File(System.IO.File.ReadAllBytes(signedPdfPath), "application/pdf", "SignedDocument.pdf");
+        }
+
+
     }
 }

@@ -1,15 +1,22 @@
-<form action="/Officer/UploadCertificate" method="post">
+<form action="/Officer/UploadCertificate" method="post" enctype="multipart/form-data">
     <div class="full-screen-section center-align">
         <div class="container">
             <p class="fs-3 fw-bold text-center">Register Digital Certificate</p>
             <div class="custom-card flex-column gap-3 border-top border-start border-dark p-3">
                 <label for="CertificateFile">Certificate File</label>
-                <input class="form-control" type="file" name="certificate" id="certificate" accept=".crt,.pfx"
+                <input class="form-control" type="file" name="CertificateFile" id="CertificateFile" accept=".crt,.pfx"
                     required />
                 <label for="Password">Password</label>
-                <input class="form-control" type="password" name="password" id="password" required />
-                <button class="btn btn-dark">Register Certificate</button>
+                <input class="form-control" type="password" name="Password" id="Password" required />
+                <button id="registerCertificate" class="btn btn-dark">Register Certificate</button>
             </div>
         </div>
     </div>
 </form>
+<script>
+    const haveCertificate = @Html.Raw(Json.Serialize(Model));
+    if (haveCertificate) {
+        $("#registerCertificate").attr("disabled", true);
+        $("#registerCertificate").after(`<p class="text-center fs-6 text-danger">You already have a registered certificate.</p>`);
+    }
+</script>
