@@ -103,6 +103,8 @@ $(document).ready(function () {
     });
   });
 
+  
+
   handleDistrictChange("#PresentDistrict", "#PresentTehsil", "#PresentBlock");
   handleDistrictChange(
     "#PermanentDistrict",

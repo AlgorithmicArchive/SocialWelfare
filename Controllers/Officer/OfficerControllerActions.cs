@@ -44,6 +44,7 @@ namespace SocialWelfare.Controllers.Officer
             string districtCode = userSpecificDetails.DistrictCode;
 
             string applicationId = form["ApplicationId"].ToString();
+            var applicationIdParam = new SqlParameter("@ApplicationId", applicationId);
             string action = form["Action"].ToString();
             string remarks = form["Remarks"].ToString();
 
@@ -63,7 +64,7 @@ namespace SocialWelfare.Controllers.Officer
                 if (phases[i].Officer == officerDesignation)
                 {
                     phases[i].HasApplication = false;
-                    phases[i].ActionTaken = action;
+                    phases[i].ActionTaken = action == "Update" ? "Forward" : action;
                     phases[i].Remarks = remarks;
                     phases[i].CanPull = action == "ReturnToEdit";
 
@@ -77,6 +78,18 @@ namespace SocialWelfare.Controllers.Officer
                             phases[i + 1].ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt");
                             nextOfficer = phases[i + 1].Officer;
                         }
+                    }
+                    else if (action == "Update")
+                    {
+                        phases[i].CanPull = true;
+                        if (i + 1 < phases.Count)
+                        {
+                            phases[i + 1].HasApplication = true;
+                            phases[i + 1].ActionTaken = "Pending";
+                            phases[i + 1].ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt");
+                            nextOfficer = phases[i + 1].Officer;
+                        }
+                        helper.UpdateApplication(form["UpdateColumn"].ToString(), form["UpdateColumnValue"].ToString(), applicationIdParam);
                     }
                     else if (action == "Return" && i - 1 >= 0)
                     {
@@ -95,7 +108,6 @@ namespace SocialWelfare.Controllers.Officer
                 $" at {DateTime.Now:dd MMM yyyy hh:mm tt}"
             );
 
-            var applicationIdParam = new SqlParameter("@ApplicationId", applicationId);
             helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), applicationIdParam);
             helper.UpdateApplication("EditList", form["editList"].ToString(), applicationIdParam);
             helper.UpdateApplicationHistory(applicationId, officerDesignation, action, remarks);

@@ -33,7 +33,7 @@ function GetTehsil(value) {
       }
     });
 }
-function GetBlock(value) {
+function GetBlock(value) {  
   fetch("/Admin/GetBlockForDistrict?districtId=" + value)
     .then((res) => res.json())
     .then((data) => {

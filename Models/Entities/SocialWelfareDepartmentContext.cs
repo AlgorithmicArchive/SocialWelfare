@@ -25,6 +25,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<Block> Blocks { get; set; }
 
+    public virtual DbSet<Certificate> Certificates { get; set; }
+
     public virtual DbSet<District> Districts { get; set; }
 
     public virtual DbSet<Feedback> Feedbacks { get; set; }
@@ -44,7 +46,9 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Village> Villages { get; set; }
 
     public virtual DbSet<Ward> Wards { get; set; }
+
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("name=DefaultConnection");
@@ -63,6 +67,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
         modelBuilder.Entity<Application>(entity =>
         {
             entity.HasKey(e => e.ApplicationId).HasName("PK__tmp_ms_x__C93A4C99B10E9956");
+
+            entity.HasIndex(e => e.ServiceId, "IX_Applications_ServiceId");
 
             entity.Property(e => e.ApplicationId)
                 .HasMaxLength(50)
@@ -124,6 +130,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
             entity.ToTable("ApplicationsHistory");
 
+            entity.HasIndex(e => e.ApplicationId, "IX_ApplicationsHistory_ApplicationId");
+
             entity.Property(e => e.Uuid).HasColumnName("UUID");
             entity.Property(e => e.ApplicationId)
                 .HasMaxLength(50)
@@ -147,6 +155,17 @@ public partial class SocialWelfareDepartmentContext : DbContext
                 .HasMaxLength(255)
                 .IsUnicode(false);
             entity.Property(e => e.DistrictId).HasColumnName("DistrictID");
+        });
+
+        modelBuilder.Entity<Certificate>(entity =>
+        {
+            entity.HasKey(e => e.Uuid);
+
+            entity.Property(e => e.Uuid).HasColumnName("UUID");
+            entity.Property(e => e.CertificateName).HasMaxLength(50);
+            entity.Property(e => e.RegisteredDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
         });
 
         modelBuilder.Entity<District>(entity =>

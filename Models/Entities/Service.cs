@@ -15,6 +15,8 @@ public partial class Service
 
     public string? WorkForceOfficers { get; set; }
 
+    public string? UpdateColumn { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public bool Active { get; set; }

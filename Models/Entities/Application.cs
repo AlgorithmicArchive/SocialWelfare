@@ -37,8 +37,6 @@ public partial class Application
 
     public string Documents { get; set; } = null!;
 
-    public string? UpdateRequest { get; set; }
-
     public string? EditList { get; set; }
 
     public string Phase { get; set; } = null!;

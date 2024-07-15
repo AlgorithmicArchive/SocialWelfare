@@ -1,4 +1,3 @@
-
 function EditForm(ApplicationId, returnedToEdit = false) {
   let url = "/User/ServiceForm?ApplicationId=" + ApplicationId;
   if (returnedToEdit) url += "&returnToEdit=" + returnedToEdit;
@@ -23,7 +22,7 @@ function downloadFile(ApplicationId) {
     .catch((error) => console.error("Error downloading file:", error));
 }
 
-function CreateTimeline(phase, updateRequest, ApplicationId) {
+function CreateTimeline(phase, ApplicationId) {
   let sanctioned = false;
   let returnedToEdit = false;
   $("#timeline").empty();
@@ -51,15 +50,7 @@ function CreateTimeline(phase, updateRequest, ApplicationId) {
       break;
     }
   }
-  if (!sanctioned && updateRequest.requested == 0) {
-    $("#statusButtons").find("#updateRequestButton").remove();
-    $("#statusButtons").prepend(
-      `<button class="btn btn-light"  data-bs-toggle="modal" id="updateRequestButton"
-                data-bs-target="#updateRequest" onclick='UpdateRequest(${JSON.stringify(
-                  updateRequest
-                )},"${ApplicationId}")'>Request Update</button>`
-    );
-  }
+
   if (returnedToEdit) {
     $("#statusButtons").find("editFormButton").remove();
     $("#statusButtons").prepend(
@@ -118,19 +109,19 @@ $(document).ready(function () {
   const Incomplete =
     window.location.pathname == "/User/IncompleteApplications" ? true : false;
 
-
-   let list  = [];
-   list = applications.map(({ applicationId, applicantName, updateRequest, phase }) => {
+  let list = [];
+  list = applications.map(({ applicationId, applicantName, phase }) => {
     const Phase = phase !== "" ? JSON.parse(phase) : "";
     return {
       applicationId,
       applicantName,
       button: Incomplete
         ? `<button class="btn btn-dark w-100" onclick='EditForm("${applicationId}")'>Edit Form</button>`
-        : `<button class="btn btn-dark w-100" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick='CreateTimeline(${JSON.stringify(Phase)},${updateRequest},"${applicationId}")'>View</button>`
+        : `<button class="btn btn-dark w-100" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick='CreateTimeline(${JSON.stringify(
+            Phase
+          )},"${applicationId}")'>View</button>`,
     };
   });
-  
-  initializeDataTable('statusTable', "userDetails", list);
 
+  initializeDataTable("statusTable", "userDetails", list);
 });

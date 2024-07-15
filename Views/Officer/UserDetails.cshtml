@@ -27,7 +27,7 @@
                         <p class="font-heading">Documents</p>
                     </div>
                 </div>
-                <div class="row mt-2">
+                <div class="row mt-2" id="showPreviousActions" style="display: none;">
                     <div class="col-sm-12">
                         <p class="font-heading">
                             Previous Actions
@@ -120,7 +120,11 @@
 
 <script>
     const ApplicationDetails = @Html.Raw(Json.Serialize(Model));
+    const updateColumn = JSON.parse(
+        ApplicationDetails.serviceContent.updateColumn
+    );
 </script>
 
 <script src="/js/Officer/UserDetails/userDetailsHelper.js"></script>
 <script src="/js/Officer/UserDetails/userDetails.js"></script>
+<script src="/js/formvalidations.js"></script>

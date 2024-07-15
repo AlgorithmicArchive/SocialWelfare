@@ -66,8 +66,6 @@ namespace SocialWelfare.Controllers.User
                 updated = 0
             };
 
-            helper.UpdateApplication("UpdateRequest", JsonConvert.SerializeObject(updateRequest), new SqlParameter("@ApplicationId", ApplicationId));
-
             return Json(new
             {
                 status = true,

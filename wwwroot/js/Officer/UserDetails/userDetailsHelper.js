@@ -14,10 +14,11 @@ function isDigit(input) {
   return /^\d+$/.test(input.toString().replace(/\s/g, ""));
 }
 function createInputElement(label, id, value) {
+  if (updateColumn.name == id) updateColumn.value = value;
   return `
         <div class="col-sm-6 d-flex flex-column">
             <label for="${id}">${label}</label>
-            <input class="form-control mb-2" type="text" name="${id}" id="${id}" value="${value}" readonly />
+            <input class="form-control mb-2" type="text"  value="${value}" readonly />
         </div>`;
 }
 function createDocumentInput(label, enclosure, file) {
@@ -91,15 +92,18 @@ function appendDocuments(documents) {
   }
 }
 function appendPerviousActions(previousActions) {
-  previousActions.map((item) => {
-    $("#previousActions").append(`
+  if (previousActions.length > 0) {
+    $("showPreviousActions").show();
+    previousActions.map((item) => {
+      $("#previousActions").append(`
         <tr>
           <td>${item.officer}</td>
           <td>${item.actionTaken}</td>
           <td>${item.remarks}</td>
         </tr>
     `);
-  });
+    });
+  }
 }
 function getFormattedDateTime() {
   const now = new Date();
@@ -118,11 +122,11 @@ function getFormattedDateTime() {
 function ProceedAction(applicationId, officer) {
   const action = $("#action").val();
   const remarks = $("#remarks").val();
-  showSpinner();
   if (remarks.length == 0) {
     $("#remarks").after(`<span class="text-danger">This is required.</span>`);
     return;
   }
+  showSpinner();
   const formdata = new FormData();
   formdata.append("ApplicationId", applicationId);
   formdata.append("Officer", officer);
@@ -131,18 +135,33 @@ function ProceedAction(applicationId, officer) {
 
   const editList = [];
 
-  $(".editColumn:checked").each(function () {
-    editList.push($(this).val());
-  });
+  if (action == "ReturnToEdit") {
+    $(".editColumn:checked").each(function () {
+      editList.push($(this).val());
+    });
 
-  formdata.append("editList", JSON.stringify(editList));
+    formdata.append("editList", JSON.stringify(editList));
+  }
+  if (action == "Update") {
+    const updateColumn = {
+      name: $("#extra input").attr("name"),
+      value: $("#extra input").val(),
+    };
+    const serviceSpecific = JSON.parse(
+      ApplicationDetails.generalDetails.serviceSpecific
+    );
+    if (serviceSpecific.hasOwnProperty(updateColumn.name)) {
+      serviceSpecific[updateColumn.name] = updateColumn.value;
+    }
 
+    formdata.append("UpdateColumn", "ServiceSpecific");
+    formdata.append("UpdateColumnValue", JSON.stringify(serviceSpecific));
+  }
   fetch("/Officer/Action", { method: "post", body: formdata })
     .then((res) => res.json())
     .then((data) => {
       hideSpinner();
       if (data.status) {
-        console.log(data, action);
         if (action == "Sanction") {
           $("#closeExmpleModal").trigger("click");
           $(".full-screen-section").empty();
@@ -168,8 +187,6 @@ function getWorkForceOfficer(serviceContent, currentOfficer, applicationId) {
     }
   });
 
-  console.log(officer);
-
   const options = [
     officer.canForward
       ? `<option value="Forward">Forward To ${officer.nextOfficer}</option>`
@@ -180,10 +197,13 @@ function getWorkForceOfficer(serviceContent, currentOfficer, applicationId) {
     officer.canReturnToEdit
       ? `<option value="ReturnToEdit">Return To Edit</option>`
       : "",
-    `<option value="Reject">Reject</option>`,
     officer.canSanction
       ? `<option value="Sanction">Issue Sanction Letter</option>`
       : "",
+    officer.canUpdate
+      ? `<option value="Update">Update and Forward To ${officer.nextOfficer}</option>`
+      : "",
+    `<option value="Reject">Reject</option>`,
   ];
   const validOptions = options.filter((option) => option !== "").join("");
   $("#action").append(validOptions);

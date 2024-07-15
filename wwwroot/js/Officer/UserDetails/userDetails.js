@@ -4,6 +4,7 @@ $(document).ready(function () {
     ApplicationDetails.currentOfficer,
     ApplicationDetails.generalDetails.applicationId
   );
+
   const generalDetails = ApplicationDetails.generalDetails;
   const preAddressDetails = ApplicationDetails.preAddressDetails;
   const perAddressDetails = ApplicationDetails.perAddressDetails;
@@ -11,6 +12,7 @@ $(document).ready(function () {
   const documents = JSON.parse(generalDetails.documents);
   const previousActions = ApplicationDetails.previousActions;
   const canOfficerTakeAction = ApplicationDetails.canOfficerTakeAction;
+
   const excludedProperties = [
     "phase",
     "bankDetails",
@@ -19,7 +21,7 @@ $(document).ready(function () {
     "updateRequest",
     "editList",
     "applicationsHistories",
-    "service"
+    "service",
   ];
 
   // Set user image
@@ -35,13 +37,15 @@ $(document).ready(function () {
   appendPerviousActions(previousActions);
   if (!canOfficerTakeAction) {
     $("#takeAction").after(
-      `<p class="text-danger width-50 mt-2 custom-card">Cannot proceed with this application because it has been either more than 15 days since it was received by you or more than 45 days since it was submitted.</p>`
+      `<p class="text-danger width-50 mt-5">Cannot proceed with this application because it has been either more than 15 days since it was received by you or more than 45 days since it was submitted.</p>`
     );
     $("#takeAction").remove();
   }
 
   $("#action").on("change", function () {
     const value = $(this).val();
+    $("#extra").empty().removeClass("border border-dark p-3");
+
     if (value == "ReturnToEdit") {
       const formElements = JSON.parse(
         ApplicationDetails.serviceContent.formElement
@@ -69,8 +73,18 @@ $(document).ready(function () {
         $("#extra").append(ul);
         $("#extra").append(`<hr>`);
       });
-    } else {
-      $("#extra").empty();
+    } else if (value == "Update") {
+      $("#extra").append(
+        `<label>${updateColumn.label}</label><input type="${updateColumn.type}" class="form-control datepicker-input" id="${updateColumn.name}" name="${updateColumn.name}" value="${updateColumn.value}"/>`
+      );
+
+      const validationFunctions =
+        updateColumn.validationFunctions?.map(
+          (item) => validationFunctionsList[item]
+        ) || [];
+      if (validationFunctions.length) {
+        attachValidation(updateColumn, validationFunctions);
+      }
     }
   });
 

@@ -44,21 +44,13 @@ namespace SocialWelfare.Controllers.Officer
 
             bool canSanction = false;
             bool canUpdate = false;
-            List<Application> UpdateList = new List<Application>();
-            List<Application> PoolList = new List<Application>();
-            List<Application> PendingList = new List<Application>();
+            List<Application> UpdateList = [];
+            List<Application> PoolList = [];
+            List<Application> PendingList = [];
             JArray pool = new JArray();
 
             foreach (var application in applicationList)
             {
-                _logger.LogInformation($"Application: {application.ApplicationId}");
-
-                var updateRequest = JsonConvert.DeserializeObject<dynamic>(application.UpdateRequest!);
-                if (updateRequest == null)
-                {
-                    _logger.LogError($"UpdateRequest is null for application {application.ApplicationId}");
-                    continue;
-                }
 
                 var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == application.ServiceId);
                 if (service == null)
@@ -83,8 +75,7 @@ namespace SocialWelfare.Controllers.Officer
 
                 canSanction = officer["canSanction"];
                 canUpdate = officer["canUpdate"];
-                int requested = updateRequest["requested"];
-                int updated = updateRequest["updated"];
+
 
                 if (officerDesignation == "Director Finance" && canSanction)
                 {
@@ -100,10 +91,6 @@ namespace SocialWelfare.Controllers.Officer
                     }
                 }
 
-                if (requested == 1 && updated == 0)
-                {
-                    UpdateList.Add(application);
-                }
                 else if (pool.Count == 0)
                 {
                     PendingList.Add(application);
