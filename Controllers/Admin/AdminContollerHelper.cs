@@ -4,7 +4,6 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using SocialWelfare.Models.Entities;
 
@@ -14,23 +13,29 @@ namespace SocialWelfare.Controllers.Admin
     {
         public List<dynamic> GetCount(string type, Dictionary<string, string> conditions, int? divisionCode)
         {
-            var Condition1 = new StringBuilder();
-            var Condition2 = new StringBuilder();
-            var conditionsList = conditions?.ToList() ?? new List<KeyValuePair<string, string>>();
+            var condition1 = new StringBuilder();
+            var condition2 = new StringBuilder();
+            var conditionsList = conditions?.ToList() ?? [];
 
             switch (type)
             {
+                case "Total":
+                    condition1.Append(" AND JSON_VALUE(app.value, '$.ActionTaken') != ''");
+                    break;
                 case "Pending":
-                    Condition1.Append("AND a.ApplicationStatus='Initiated'");
+                    condition1.Append("AND a.ApplicationStatus='Initiated'  AND JSON_VALUE(app.value, '$.ActionTaken') = 'Pending'");
                     break;
                 case "Sanction":
-                    Condition1.Append("AND a.ApplicationStatus='Sanctioned'");
+                    condition1.Append("AND a.ApplicationStatus='Sanctioned'  AND JSON_VALUE(app.value, '$.ActionTaken') = 'Sanction'");
                     break;
                 case "Reject":
-                    Condition1.Append("AND a.ApplicationStatus='Rejected'");
+                    condition1.Append("AND a.ApplicationStatus='Rejected'  AND JSON_VALUE(app.value, '$.ActionTaken') = 'Reject'");
+                    break;
+                case "Forward":
+                    condition1.Append(" AND JSON_VALUE(app.value, '$.ActionTaken') = 'Forward'");
                     break;
                 case "PendingWithCitizen":
-                    Condition1.Append("AND a.ApplicationStatus='Initiated' AND JSON_VALUE(app.value, '$.ActionTaken')='ReturnToEdit'");
+                    condition1.Append("AND a.ApplicationStatus='Initiated' AND JSON_VALUE(app.value, '$.ActionTaken')='ReturnToEdit'");
                     break;
             }
 
@@ -40,23 +45,25 @@ namespace SocialWelfare.Controllers.Admin
             {
                 var condition = conditionsList[i];
                 if (i < splitPoint)
-                    Condition1.Append($" AND {condition.Key}='{condition.Value}'");
+                    condition1.Append($" AND {condition.Key}='{condition.Value}'");
                 else
-                    Condition2.Append($" AND {condition.Key}='{condition.Value}'");
+                    condition2.Append($" AND {condition.Key}='{condition.Value}'");
             }
 
-            if (conditions?.ContainsKey("JSON_VALUE(app.value, '$.Officer')") == true && type != "Total")
-            {
-                Condition2.Append($" AND JSON_VALUE(app.value, '$.ActionTaken') = '{type}'");
-            }
-            else if (type == "Total")
-            {
-                Condition2.Append(" AND JSON_VALUE(app.value, '$.ActionTaken') != ''");
-            }
+            // if (conditions?.ContainsKey("JSON_VALUE(app.value, '$.Officer')") == true && type != "Total" && type != "PendingWithCitizen")
+            // {
+            //     condition2.Append($" AND JSON_VALUE(app.value, '$.ActionTaken') = '{type}'");
+            // }
+            // else if (type == "Total")
+            // {
+            //     condition2.Append(" AND JSON_VALUE(app.value, '$.ActionTaken') != ''");
+            // }
 
             var applications = dbcontext.Applications.FromSqlRaw("EXEC GetApplications @Condition1, @Condition2",
-                new SqlParameter("@Condition1", Condition1.ToString()),
-                new SqlParameter("@Condition2", Condition2.ToString())).ToList();
+                new SqlParameter("@Condition1", condition1.ToString()),
+                new SqlParameter("@Condition2", condition2.ToString())).ToList();
+
+            _logger.LogInformation($"+++++{type} {condition1} {condition2}+++++");
 
             var list = new List<dynamic>();
 
@@ -64,30 +71,36 @@ namespace SocialWelfare.Controllers.Admin
             {
                 var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific);
                 int districtCode = Convert.ToInt32(serviceSpecific!["District"]);
-                string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.DistrictName!;
-                string AppliedService = dbcontext.Services.FirstOrDefault(s => s.ServiceId == application.ServiceId)?.ServiceName!;
-                string ApplicationWithOfficer = "";
+                string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.DistrictName!;
+                string appliedService = dbcontext.Services.FirstOrDefault(s => s.ServiceId == application.ServiceId)?.ServiceName!;
+                string applicationWithOfficer = "";
                 var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
 
                 foreach (var phase in phases!)
                 {
                     if (phase["ActionTaken"] == "Pending" || phase["ActionTaken"] == "Sanction")
                     {
-                        ApplicationWithOfficer = phase["Officer"];
+                        applicationWithOfficer = phase["Officer"];
+                        break;
+                    }
+                    else if (phase["ActionTaken"] == "ReturnToEdit")
+                    {
+                        applicationWithOfficer = "Citizen";
                         break;
                     }
                 }
 
-                if (divisionCode == null || dbcontext.Districts.FirstOrDefault(d => d.Uuid == districtCode)?.Division == divisionCode)
+                if (divisionCode == null || dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.Division == divisionCode)
                 {
                     var obj = new
                     {
                         ApplicationNo = application.ApplicationId,
                         application.ApplicantName,
                         application.ApplicationStatus,
-                        AppliedDistrict,
-                        AppliedService,
-                        ApplicationWithOfficer
+                        AppliedDistrict = appliedDistrict,
+                        AppliedService = appliedService,
+                        ApplicationWithOfficer = applicationWithOfficer,
+                        SubmissionDate = application.SubmissionDate.ToString().Split('T')[0]
                     };
                     list.Add(obj);
                 }
@@ -95,6 +108,7 @@ namespace SocialWelfare.Controllers.Admin
 
             return list;
         }
+
         public IActionResult GetFilteredCount(string? conditions)
         {
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -108,10 +122,11 @@ namespace SocialWelfare.Controllers.Admin
             var TotalCount = GetCount("Total", Conditions!.Count != 0 ? Conditions : null!, divisionCode);
             var PendingCount = GetCount("Pending", Conditions.Count != 0 ? Conditions : null!, divisionCode);
             var RejectCount = GetCount("Reject", Conditions.Count != 0 ? Conditions : null!, divisionCode);
+            var ForwardCount = GetCount("Forward", Conditions.Count != 0 ? Conditions : null!, divisionCode);
             var SanctionCount = GetCount("Sanction", Conditions.Count != 0 ? Conditions : null!, divisionCode);
             var PendingWithCitizenCount = GetCount("PendingWithCitizen", Conditions.Count != 0 ? Conditions : null!, divisionCode);
 
-            return Json(new { status = true, TotalCount, PendingCount, RejectCount, SanctionCount, PendingWithCitizenCount });
+            return Json(new { status = true, TotalCount, PendingCount, RejectCount, ForwardCount, SanctionCount, PendingWithCitizenCount });
         }
         [HttpGet]
         public IActionResult GetDistricts(string? division)

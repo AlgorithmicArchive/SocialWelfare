@@ -12,11 +12,11 @@ $(document).ready(function () {
     { id: "#pending", value: count.pendingCount.length },
     { id: "#pendingWithCitizen", value: count.pendingWithCitizenCount.length },
     { id: "#rejected", value: count.rejectCount.length },
-    { id: "#sanction", value: count.sanctionCount.length },
+    { id: "#approved", value: count.sanctionCount.length },
   ];
   const AllDistrictCount = count.allDistrictCount;
   createPieChart(
-    ["Sanctioned","Pending","Pending With Citizen","Rejected"],
+    ["Sanctioned", "Pending", "Pending With Citizen", "Rejected"],
     [
       AllDistrictCount.sanctioned.length,
       AllDistrictCount.pending.length,
@@ -34,7 +34,7 @@ $(document).ready(function () {
   });
 
   createChart(
-    ["Total", "Sanctioned","Pending","Pending With Citizen", "Rejected"],
+    ["Total", "Sanctioned", "Pending", "Pending With Citizen", "Rejected"],
     [
       count.totalCount.length,
       count.sanctionCount.length,
@@ -66,7 +66,7 @@ $(document).ready(function () {
     else if (card == "Rejected") applicationList = count.rejectCount;
 
     setApplicationList(applicationList);
-    
+
     var $anchor = $("<a/>", {
       href: "#dataGrid",
       id: "tempAnchor",

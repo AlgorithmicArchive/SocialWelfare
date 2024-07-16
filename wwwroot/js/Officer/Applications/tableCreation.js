@@ -1,17 +1,7 @@
 function Table(container, tbody) {
   $("#" + container).append(`<tr>${tbody}</tr>`);
 }
-function createUpdateListRow(element) {
-  const updateRequest = JSON.parse(element.updateRequest);
-  return `
-    <tr>
-      <td>${element.applicationId}</td>
-      <td>${element.applicantName}</td>
-      <td>${updateRequest.formElement.label}</td>
-      <td>${updateRequest.newValue}</td>
-    </tr>
-  `;
-}
+
 function PendingTable(Applications) {
   $("#tbody").empty();
   const canSanction = Applications.canSanction;
@@ -47,20 +37,6 @@ function PendingTable(Applications) {
       : `<tr><td colspan="4" class="fw-bold text-center">NO RECORD</td></tr>`;
 
   Table("tbody", tbody);
-
-  if (Applications.UpdateList.length > 0) {
-    $("#updateContainer").show();
-    const updateListTbody = Applications.UpdateList.map((element) =>
-      createUpdateListRow(element)
-    ).join("");
-    $("#updateListTbody")
-      .parent()
-      .parent()
-      .prepend(
-        `<p class="fs-4 fw-bold text-center">Applications yet to be updated</p>`
-      );
-    Table("updateListTbody", updateListTbody);
-  }
 }
 function SentTable(Applications) {
   const tbody =

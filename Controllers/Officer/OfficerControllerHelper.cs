@@ -34,6 +34,8 @@ namespace SocialWelfare.Controllers.Officer
                     break;
             }
 
+
+
             var applicationList = dbcontext.Applications.FromSqlRaw(
                 "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @AccessLevel, @AccessLevelCode, @ServiceId",
                 new SqlParameter("@OfficerDesignation", officerDesignation),
@@ -42,38 +44,25 @@ namespace SocialWelfare.Controllers.Officer
                 AccessLevelCode,
                 new SqlParameter("@ServiceId", 1)).ToList();
 
+
+
             bool canSanction = false;
             bool canUpdate = false;
-            List<Application> UpdateList = [];
+            int serviceId = 0;
             List<Application> PoolList = [];
             List<Application> PendingList = [];
-            JArray pool = new JArray();
+            JArray pool = [];
 
             foreach (var application in applicationList)
             {
 
                 var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == application.ServiceId);
-                if (service == null)
-                {
-                    _logger.LogError($"Service not found for ServiceId {application.ServiceId}");
-                    continue;
-                }
+                var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
+                var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
+                serviceId = service.ServiceId;
 
-                var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service.WorkForceOfficers!);
-                if (workForceOfficers == null)
-                {
-                    _logger.LogError($"WorkForceOfficers is null for service {service.ServiceId}");
-                    continue;
-                }
 
-                var officer = workForceOfficers.FirstOrDefault(o => o["Designation"] == officerDesignation);
-                if (officer == null)
-                {
-                    _logger.LogError($"No matching officer found in WorkForceOfficers for designation {officerDesignation}");
-                    continue;
-                }
-
-                canSanction = officer["canSanction"];
+                canSanction = officer!["canSanction"];
                 canUpdate = officer["canUpdate"];
 
 
@@ -91,7 +80,7 @@ namespace SocialWelfare.Controllers.Officer
                     }
                 }
 
-                else if (pool.Count == 0)
+                if (pool.Count == 0)
                 {
                     PendingList.Add(application);
                 }
@@ -107,16 +96,17 @@ namespace SocialWelfare.Controllers.Officer
                         PendingList.Add(application);
                     }
                 }
+
+
             }
 
             dynamic obj = new System.Dynamic.ExpandoObject();
             obj.PendingList = PendingList;
-            obj.UpdateList = UpdateList;
             obj.PoolList = PoolList;
             obj.canSanction = canSanction;
             obj.canUpdate = canUpdate;
             obj.Type = "Pending";
-            obj.ServiceId = 1;
+            obj.ServiceId = serviceId;
 
             return obj;
         }
@@ -339,6 +329,12 @@ namespace SocialWelfare.Controllers.Officer
                         ApplicationWithOfficer = phase["Officer"];
                         break;
                     }
+                    if (phase["ActionTaken"] == "ReturnToEdit")
+                    {
+                        ApplicationWithOfficer = "Citizen";
+                        break;
+                    }
+
                 }
 
                 var obj = new
@@ -348,7 +344,8 @@ namespace SocialWelfare.Controllers.Officer
                     application.ApplicationStatus,
                     AppliedDistrict,
                     AppliedService,
-                    ApplicationWithOfficer
+                    ApplicationWithOfficer,
+                    SubmissionDate = application.SubmissionDate.ToString().Split('T')[0]
                 };
                 list.Add(obj);
             }

@@ -100,10 +100,11 @@ namespace SocialWelfare.Controllers.Officer
                 }
             }
 
+            string emailAction = action == "Update" ? "Forwarded" : action + "ed";
             await emailSender.SendEmail(
                 email,
                 "Acknowledgement",
-                $"Your Application with Reference Number {applicationId} is {action} by {officerDesignation}" +
+                $"Your Application with Reference Number {applicationId} is {emailAction} by {officerDesignation}" +
                 (nextOfficer != null ? $" to {nextOfficer}" : "") +
                 $" at {DateTime.Now:dd MMM yyyy hh:mm tt}"
             );

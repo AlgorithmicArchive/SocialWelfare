@@ -175,6 +175,7 @@ namespace SocialWelfare.Controllers
 
             if (user.Count != 0)
             {
+                if (!user[0].EmailValid) return Json(new { status = false, response = "Email Not Verified." });
                 HttpContext.Session.SetInt32("UserId", user[0].UserId);
                 HttpContext.Session.SetString("UserType", user[0].UserType);
                 HttpContext.Session.SetString("Username", form["Username"].ToString());
@@ -364,7 +365,6 @@ namespace SocialWelfare.Controllers
             {
                 if (int.TryParse(form["CitizenId"].ToString(), out int parsedCitizenId))
                 {
-                    _logger.LogInformation($"CITIZEN ID : {parsedCitizenId}");
                     var citizenIdParam = new SqlParameter("@CitizenId", parsedCitizenId);
                     _dbContext.Database.ExecuteSqlRaw("EXEC ValidateUserEmail @CitizenId", citizenIdParam);
                     return Json(new { status = true, response = "Registration Successful." });

@@ -40,6 +40,7 @@ $(document).ready(function () {
         }
       }
     }
+    $("html, body").animate({ scrollTop: 0 }, "slow");
   });
 
   $("#previous").click(() => {
@@ -102,8 +103,6 @@ $(document).ready(function () {
       yearRange: "1990:" + currentYear,
     });
   });
-
-  
 
   handleDistrictChange("#PresentDistrict", "#PresentTehsil", "#PresentBlock");
   handleDistrictChange(

@@ -9,8 +9,8 @@ function createChart(labels, data) {
       {
         label: "Applications",
         data: data,
-        backgroundColor: ["blue","darkgreen", "orange","#0DCAF0", "red"],
-        borderColor: ["blue","darkgreen", "orange","#0DCAF0", "red"],
+        backgroundColor: ["blue", "darkgreen", "orange", "#0DCAF0", "red"],
+        borderColor: ["blue", "darkgreen", "orange", "#0DCAF0", "red"],
         borderWidth: 1,
       },
     ],
@@ -34,7 +34,13 @@ function createChart(labels, data) {
           align: "top",
           backgroundColor: (context) => {
             const index = context.dataIndex;
-            const backgroundColors = ["blue","darkgreen", "orange","#0DCAF0", "red"];
+            const backgroundColors = [
+              "blue",
+              "darkgreen",
+              "orange",
+              "#0DCAF0",
+              "red",
+            ];
             return backgroundColors[index];
           },
           borderRadius: 4,
@@ -68,8 +74,8 @@ function createPieChart(labels, values) {
       {
         label: "All Districts",
         data: values,
-        backgroundColor: ["darkgreen", "orange","#0DCAF0", "maroon"],
-        borderColor: ["darkgreen", "orange","#0DCAF0", "maroon"],
+        backgroundColor: ["darkgreen", "orange", "#0DCAF0", "red"],
+        borderColor: ["darkgreen", "orange", "#0DCAF0", "red"],
         borderWidth: 1,
       },
     ],
@@ -86,24 +92,32 @@ function createPieChart(labels, values) {
         },
         tooltip: {
           enabled: true,
+          backgroundColor: "#000", // Tooltip background color
+          titleColor: "#ffffff", // Tooltip title color
+          bodyColor: "#ffffff", // Tooltip body color
+          callbacks: {
+            label: function (tooltipItem) {
+              return tooltipItem.label + ": " + tooltipItem.raw;
+            },
+          },
         },
         datalabels: {
-          color: (context)=>{
+          color: (context) => {
             const index = context.dataIndex;
-            const colors = ["darkgreen", "orange","#0DCAF0", "maroon"];
+            const colors = ["darkgreen", "orange", "#0DCAF0", "maroon"];
             return colors[index];
           },
           anchor: "center",
           align: "center",
           backgroundColor: (context) => {
             const index = context.dataIndex;
-            const backgroundColors = ["white", "black", "black","white"];
+            const backgroundColors = ["white", "black", "black", "white"];
             return backgroundColors[index];
           },
           borderRadius: 4,
           padding: 5,
-          font:{
-            weight:'bold',
+          font: {
+            weight: "bold",
           },
           formatter: (value, ctx) => {
             let sum = 0;
@@ -148,32 +162,59 @@ function updateConditions(conditions) {
     delete conditions["a.ServiceId"];
   }
 
-  if (!isEmpty(conditions)) {
-    fetch("/Admin/GetFilteredCount?conditions=" + JSON.stringify(conditions))
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status) {
-          console.log(data);
-          $("#total").text(data.totalCount.length);
-          $("#pending").text(data.pendingCount.length);
-          $("#rejected").text(data.rejectCount.length);
-          $("#sanction").text(data.sanctionCount.length);
-          createChart(
-            ["Total", "Sanctioned","Pending","Pending With Citizen", "Rejected"],
-            [
-              data.totalCount.length,
-              data.sanctionCount.length,
-              data.pendingCount.length,
-              data.pendingWithCitizenCount.length,
-              data.rejectCount.length,
-            ]
-          );
-          $("#chartService").text($("#service option:selected").text());
-          $("#chartOfficer").text(officerValue);
-          $("#chartDistrict").text($("#district option:selected").text());
+  // if (!isEmpty(conditions)) {
+  fetch("/Admin/GetFilteredCount?conditions=" + JSON.stringify(conditions))
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.status) {
+        $("#total").text(data.totalCount.length);
+        $("#pending").text(data.pendingCount.length);
+        $("#pendingWithCitizen").text(data.pendingWithCitizenCount.length);
+        $("#rejected").text(data.rejectCount.length);
+        $("#approved").text(data.sanctionCount.length);
+
+        let isSanction = true;
+
+        if (
+          officerValue != "" &&
+          data.forwardCount.length > 0 &&
+          data.sanctionCount.length == 0
+        ) {
+          $("#approved").parent().find(".text").text("Forwarded");
+          $("#approved").text(data.forwardCount.length);
+          isSanction = false;
+        } else if (
+          officerValue != "" &&
+          data.forwardCount.length == 0 &&
+          data.sanctionCount.length > 0
+        ) {
+          $("#approved").parent().find(".text").text("Sanctioned");
+          $("#approved").text(data.sanctionCount.length);
+          isSanction = true;
         }
-      });
-  }
+
+        createChart(
+          [
+            "Total",
+            isSanction ? "Sanctioned" : "Forwarded",
+            "Pending",
+            "Pending With Citizen",
+            "Rejected",
+          ],
+          [
+            data.totalCount.length,
+            isSanction ? data.sanctionCount.length : data.forwardCount.length,
+            data.pendingCount.length,
+            data.pendingWithCitizenCount.length,
+            data.rejectCount.length,
+          ]
+        );
+        $("#chartService").text($("#service option:selected").text());
+        $("#chartOfficer").text(officerValue);
+        $("#chartDistrict").text($("#district option:selected").text());
+      }
+    });
+  // }
 }
 
 function SetDistricts(divisionCode) {
@@ -222,11 +263,12 @@ function SetServices() {
 }
 
 function setApplicationList(applicationList) {
-  console.log(applicationList);
   const container = $("#applicationListContainer");
   container.empty();
   $("#dataGrid").removeClass("d-none").addClass("d-flex");
-  initializeDataTable('applicationListTable', "applicationListContainer", applicationList);
+  initializeDataTable(
+    "applicationListTable",
+    "applicationListContainer",
+    applicationList
+  );
 }
-
-

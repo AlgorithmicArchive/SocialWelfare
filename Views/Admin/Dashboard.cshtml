@@ -40,7 +40,7 @@
                 <div class="dashboard-card bg-success text-white" style="cursor:pointer" id="Sanctioned">
                     <i class="fa-solid fa-flag-checkered"></i>
                     <span class="text">Sanctioned</span>
-                    <p class="value" id="sanction">20</p>
+                    <p class="value" id="approved">20</p>
                 </div>
             </div>
             <div class="col-lg-2 p-0 mt-2">
@@ -53,7 +53,7 @@
             <div class="col-lg-2 p-0 mt-2">
                 <div class="dashboard-card bg-info text-white" style="cursor:pointer" id="PendingWithCitizen">
                     <i class="fa-solid fa-user-clock"></i>
-                    <span class="text fs-5">Pending With Citizen</span>
+                    <span class="text fs-5">Sent To Citizen</span>
                     <span class="text fs-5">For Editing</span>
                     <p class="value" id="pendingWithCitizen">20</p>
                 </div>
@@ -94,7 +94,7 @@
 
     <div class="container-fluid d-none flex-column gap-5 py-5 mb-5" id="dataGrid">
         <div class="d-flex gap-2">
-            <button class="btn btn-info" onclick="printDiv('printableArea')">Print</button>
+            <button class="btn btn-info" onclick="printTable('printableArea')">Print</button>
             <button class="btn btn-success" onclick="exportTableToExcel('applicationListTable')">EXCEL</button>
             <button class="btn btn-danger" onclick="SaveAsPdf('printableArea','applicationListTable')">PDF</button>
         </div>
@@ -107,7 +107,8 @@
                     <th>Application Status</th>
                     <th>Applied District</th>
                     <th>Applied Service</th>
-                    <th>Application Currently With Officer</th>
+                    <th>Application Currently With</th>
+                    <th>Application Submission Date</th>
                 </thead>
                 <tbody id="applicationListContainer">
 

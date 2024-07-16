@@ -1,8 +1,13 @@
 $(document).ready(function () {
   const menus = {
     home: {
-      left: [{ label: "Home", link: "/" }],
-      right: [{ label: "Login/Register", link: "/Home/Authentication" }],
+      left: [
+        { label: "Home", link: "/" },
+        { label: "Login", link: "/Home/Authentication?action=Login" },
+      ],
+      right: [
+        { label: "Register", link: "/Home/Authentication?action=Register" },
+      ],
       profile: [],
     },
     user: {

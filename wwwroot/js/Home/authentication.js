@@ -72,15 +72,37 @@ const formUI = {
   },
 };
 
+function getQueryParams() {
+  const params = {};
+  window.location.search
+    .substring(1)
+    .split("&")
+    .forEach(function (param) {
+      const [key, value] = param.split("=");
+      params[key] = value;
+    });
+  return params;
+}
+
 $(document).ready(function () {
-  console.log(window.captchaText, $("#captchaInput").val());
-  $("#registerContainer").empty();
+  let userId = 0;
 
   $("form").attr("autocomplete", "off");
 
   const screenWidth = $(window).width();
   if (screenWidth < 768) {
     $("#registerContainer").hide();
+  }
+
+  const queryParams = getQueryParams();
+  console.log(queryParams);
+  if (queryParams.action === "Login") {
+    $("#registerContainer").empty();
+    $("#loginContainer").empty();
+    formUI.switchForm(screenWidth, "login");
+  } else if (queryParams.action === "Register") {
+    $("#registerContainer").empty();
+    formUI.switchForm(screenWidth, "register");
   }
 
   $(document).on("click", "#switchToLogin", function () {
@@ -128,9 +150,7 @@ $(document).ready(function () {
             if (data.status) {
               console.log(data);
               $("#otpButton").click();
-              $("#otpForm").append(
-                `<input type="hidden" id="CitizenId" name="CitizenId" value="${data.citizenId}"/>`
-              );
+              userId = data.userId;
             } else {
               $("#registerButton").after(
                 `<p class="fs-6 text-danger text-center p-2">${data.response}</p>`
@@ -158,11 +178,12 @@ $(document).ready(function () {
   $("#otpForm").on("submit", function (e) {
     e.preventDefault();
     const formdata = new FormData(this);
-    console.log(formdata);
+    formdata.append("CitizenId", userId);
     fetch("/Home/OTPValidation", { method: "post", body: formdata })
       .then((res) => res.json())
       .then((data) => {
         if (data.status) {
+          window.location.href = "/Home/Authentication?action=Login";
           $("#otpButton").click();
           $("#registerButton").after(
             `<p class="fs-6 text-success text-center p-2">${data.response}</p>`

@@ -46,6 +46,7 @@ namespace SocialWelfare.Controllers.Admin
             var TotalCount = GetCount("Total", conditions.Count != 0 ? conditions : null!, divisionCode);
             var PendingCount = GetCount("Pending", conditions.Count != 0 ? conditions : null!, divisionCode);
             var RejectCount = GetCount("Reject", conditions.Count != 0 ? conditions : null!, divisionCode);
+            var ForwardCount = GetCount("Forward", conditions.Count != 0 ? conditions : null!, divisionCode);
             var SanctionCount = GetCount("Sanction", conditions.Count != 0 ? conditions : null!, divisionCode);
             var PendingWithCitizenCount = GetCount("PendingWithCitizen", conditions.Count != 0 ? conditions : null!, divisionCode);
 
@@ -68,6 +69,7 @@ namespace SocialWelfare.Controllers.Admin
                 TotalCount,
                 PendingCount,
                 RejectCount,
+                ForwardCount,
                 SanctionCount,
                 PendingWithCitizenCount,
                 AllDistrictCount,

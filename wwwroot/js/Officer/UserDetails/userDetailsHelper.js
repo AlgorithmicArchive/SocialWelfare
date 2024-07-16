@@ -92,8 +92,9 @@ function appendDocuments(documents) {
   }
 }
 function appendPerviousActions(previousActions) {
+  console.log(previousActions.length);
   if (previousActions.length > 0) {
-    $("showPreviousActions").show();
+    $("#showPreviousActions").show();
     previousActions.map((item) => {
       $("#previousActions").append(`
         <tr>

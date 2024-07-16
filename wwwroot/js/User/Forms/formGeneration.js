@@ -3,7 +3,7 @@ function generateServiceForm(formData) {
   appendFormFields($("#form2 .row"), formData[1].fields, "col-sm-12", 1);
   appendFormFields($("#form2 .row"), formData[2].fields, "col-sm-12", 2);
   appendFormFields($("#form3 .row"), formData[3].fields, "col-sm-12", 3);
-  appendFormFields($("#form4 .row"), formData[4].fields, "col-sm-6", 4);
+  appendFormFields($("#form4 .row"), formData[4].fields, "col-sm-12", 4);
 
   getDistricts().then((options) => {
     options.forEach((option) => {
@@ -148,8 +148,12 @@ function createInput(obj, columSize, formNo) {
 
   return `
     <div class="${columSize} mb-2">
-      ${label}
-      <input class="${classType}${extraClasses}" type="${inputType}" name="${obj.name}" id="${obj.name}" placeholder="${obj.label}" maxlength="${maxLength}"${acceptAttribute} value="${value}"${readOnlyAttribute}>
+      ${formNo == 4 && obj.type == "file" ? "" : label}
+      <input class="${classType}${extraClasses}" type="${inputType}" name="${
+    obj.name
+  }" id="${obj.name}" placeholder="${
+    obj.label
+  }" maxlength="${maxLength}"${acceptAttribute} value="${value}"${readOnlyAttribute}>
     </div>
   `;
 }
@@ -173,6 +177,17 @@ function appendFormFields(container, fields, columSize, formNo) {
       column.append(createInput(item, columSize, formNo));
     });
     container.append(column);
+  } else if (formNo == 4) {
+    const totalDocs = fields.length;
+    const column1 = $(`<div class="col-md-6"></div>`);
+    const column2 = $(`<div class="col-md-6"></div>`);
+    fields.forEach((item, index) => {
+      if (index < totalDocs / 2)
+        column1.append(createInput(item, columSize, formNo));
+      else column2.append(createInput(item, columSize, formNo));
+    });
+    container.append(column1);
+    container.append(column2);
   } else {
     fields.forEach((item) => {
       container.append(createInput(item, columSize, formNo));

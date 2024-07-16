@@ -12,7 +12,6 @@ $(document).ready(function () {
   const documents = JSON.parse(generalDetails.documents);
   const previousActions = ApplicationDetails.previousActions;
   const canOfficerTakeAction = ApplicationDetails.canOfficerTakeAction;
-
   const excludedProperties = [
     "phase",
     "bankDetails",
