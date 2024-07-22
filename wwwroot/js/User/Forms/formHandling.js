@@ -143,6 +143,7 @@ function handleFormData(
     processApplication(originalForm, urlInsert);
   } else if (isEqual(currentForm, originalForm).length != 0) {
     const differingValues = arrayToFormData(isEqual(currentForm, originalForm));
+    console.log(differingValues);
     differingValues.append("ApplicationId", ApplicationId);
     copyFormData(currentForm, originalForm);
     processApplication(formNo == 4 ? originalForm : differingValues, urlUpdate);

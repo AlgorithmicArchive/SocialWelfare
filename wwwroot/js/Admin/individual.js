@@ -1,6 +1,6 @@
 $(document).ready(function () {
   function element(item, index, reverse) {
-    return `<div class="bg-primary flex-column w-25" id="${index}" style="cursor:pointer;${reverse ? "" : ""}">
+    return `<div class="bg-primary flex-column w-25 rounded-border" id="${index}" style="cursor:pointer;${reverse ? "" : ""}">
             <p class="text-white w-100 text-center fs-6 fw-bold py-2">${
               item.actionTaker
             }</p>
@@ -46,9 +46,9 @@ $(document).ready(function () {
       $container.append($row);
       if (i < rows - 1) {
         $container.append(
-          `<span style="${
-            arrowEnd ? "margin-left:auto" : ""
-          }"><i class="fa-solid fs-1 fa-arrow-down"></i></span>`
+          `<div class="row"><div class="${
+            arrowEnd ? "offset-md-9" : ""
+          } col-md-3  d-flex justify-content-center"><span ><i class="fa-solid fs-1 fa-arrow-down"></i></span></div></div>`
         );
         arrowEnd = !arrowEnd;
       }
@@ -63,14 +63,6 @@ $(document).ready(function () {
       .then((data) => {
         if (data.status) {
           const history = JSON.parse(data.result.history);
-          history.forEach((item) => {
-            arr.push({
-              actionTaker: item.ActionTaker,
-              actionTaken: item.ActionTaken,
-              dateTime: item.DateTime,
-              remarks: item.Remarks,
-            });
-          });
           history.forEach((item) => {
             arr.push({
               actionTaker: item.ActionTaker,

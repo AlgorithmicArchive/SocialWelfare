@@ -124,6 +124,10 @@
     const updateColumn = JSON.parse(
         ApplicationDetails.serviceContent.updateColumn
     );
+    const updateObject =
+        ApplicationDetails.updateObject != ""
+            ? JSON.parse(ApplicationDetails.updateObject)
+            : "";
 </script>
 
 <script src="/js/Officer/UserDetails/userDetailsHelper.js"></script>

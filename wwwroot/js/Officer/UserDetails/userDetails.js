@@ -12,17 +12,21 @@ $(document).ready(function () {
   const documents = JSON.parse(generalDetails.documents);
   const previousActions = ApplicationDetails.previousActions;
   const canOfficerTakeAction = ApplicationDetails.canOfficerTakeAction;
+  console.log(ApplicationDetails);
+
   const excludedProperties = [
     "phase",
     "bankDetails",
     "documents",
     "applicationStatus",
+    "applicantImage",
     "updateRequest",
     "editList",
     "applicationsHistories",
     "service",
   ];
 
+  console.log(updateObject);
   // Set user image
   $("#userImage").attr("src", generalDetails.applicantImage);
 
@@ -41,7 +45,7 @@ $(document).ready(function () {
     $("#takeAction").remove();
   }
 
-  $("#action").on("change", function () {
+$("#action").on("change", function () {
     const value = $(this).val();
     $("#extra").empty().removeClass("border border-dark p-3");
 
@@ -73,8 +77,13 @@ $(document).ready(function () {
         $("#extra").append(`<hr>`);
       });
     } else if (value == "Update") {
+      console.log(updateColumn);
       $("#extra").append(
-        `<label>${updateColumn.label}</label><input type="${updateColumn.type}" class="form-control datepicker-input" id="${updateColumn.name}" name="${updateColumn.name}" value="${updateColumn.value}"/>`
+        `<label>${updateColumn.label}</label><input type="${
+          updateColumn.type == "date" ? "text" : updateColumn.type
+        }" class="form-control datepicker-input" id="${
+          updateColumn.name
+        }" name="${updateColumn.name}" value="${updateColumn.value}"/>`
       );
 
       const validationFunctions =
@@ -87,6 +96,22 @@ $(document).ready(function () {
     }
   });
 
+  $(document).on("focus", "input[name*=Date]", function () {
+    if ($(this).attr("type") == "text") {
+      var currentYear = new Date().getFullYear();
+      $(this).prop("readonly", true); // Make the input readonly
+      $(this).datepicker({
+        dateFormat: "dd/M/yy",
+        changeMonth: true,
+        changeYear: true,
+        yearRange: "1990:" + currentYear,
+        onSelect: function (dateText) {
+          $(this).val(dateText);
+          $(this).blur();
+        },
+      });
+    }
+  });
   $(document).on("change", ".editColumn", function () {
     const value = $(this).val();
     if (value.toLowerCase().includes("district")) {

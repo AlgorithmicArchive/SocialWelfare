@@ -39,8 +39,8 @@ $(document).ready(function () {
           $("#submit").show();
         }
       }
+      $("html, body").animate({ scrollTop: 0 }, "slow");
     }
-    $("html, body").animate({ scrollTop: 0 }, "slow");
   });
 
   $("#previous").click(() => {
@@ -95,13 +95,20 @@ $(document).ready(function () {
   });
 
   $(document).on("focus", "input[name*=Date]", function () {
-    var currentYear = new Date().getFullYear();
-    $(this).datepicker({
-      dateFormat: "dd/M/yy",
-      changeMonth: true,
-      changeYear: true,
-      yearRange: "1990:" + currentYear,
-    });
+    if ($(this).attr("type") == "text") {
+      var currentYear = new Date().getFullYear();
+      $(this).prop("readonly", true); // Make the input readonly
+      $(this).datepicker({
+        dateFormat: "dd/M/yy",
+        changeMonth: true,
+        changeYear: true,
+        yearRange: "1990:" + currentYear,
+        onSelect: function (dateText) {
+          $(this).val(dateText);
+          $(this).blur();
+        },
+      });
+    }
   });
 
   handleDistrictChange("#PresentDistrict", "#PresentTehsil", "#PresentBlock");

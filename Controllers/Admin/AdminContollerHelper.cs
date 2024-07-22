@@ -63,8 +63,6 @@ namespace SocialWelfare.Controllers.Admin
                 new SqlParameter("@Condition1", condition1.ToString()),
                 new SqlParameter("@Condition2", condition2.ToString())).ToList();
 
-            _logger.LogInformation($"+++++{type} {condition1} {condition2}+++++");
-
             var list = new List<dynamic>();
 
             foreach (var application in applications)
@@ -74,6 +72,7 @@ namespace SocialWelfare.Controllers.Admin
                 string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.DistrictName!;
                 string appliedService = dbcontext.Services.FirstOrDefault(s => s.ServiceId == application.ServiceId)?.ServiceName!;
                 string applicationWithOfficer = "";
+                string receivedOn = "";
                 var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
 
                 foreach (var phase in phases!)
@@ -81,11 +80,13 @@ namespace SocialWelfare.Controllers.Admin
                     if (phase["ActionTaken"] == "Pending" || phase["ActionTaken"] == "Sanction")
                     {
                         applicationWithOfficer = phase["Officer"];
+                        receivedOn = phase["ReceivedOn"];
                         break;
                     }
                     else if (phase["ActionTaken"] == "ReturnToEdit")
                     {
                         applicationWithOfficer = "Citizen";
+                        receivedOn = phase["ReceivedOn"];
                         break;
                     }
                 }
@@ -100,7 +101,8 @@ namespace SocialWelfare.Controllers.Admin
                         AppliedDistrict = appliedDistrict,
                         AppliedService = appliedService,
                         ApplicationWithOfficer = applicationWithOfficer,
-                        SubmissionDate = application.SubmissionDate.ToString().Split('T')[0]
+                        ReceivedOn = receivedOn,
+                        SubmissionDate = application.SubmissionDate!.ToString().Split('T')[0]
                     };
                     list.Add(obj);
                 }

@@ -43,7 +43,7 @@ public partial class Application
 
     public string ApplicationStatus { get; set; } = null!;
 
-    public DateTime SubmissionDate { get; set; }
+    public string? SubmissionDate { get; set; }
 
     public virtual ICollection<ApplicationsHistory> ApplicationsHistories { get; set; } = new List<ApplicationsHistory>();
 

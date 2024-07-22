@@ -64,10 +64,12 @@ namespace SocialWelfare.Controllers.Officer
 
             foreach (var application in applications)
             {
+                _logger.LogInformation($"---------------APPLICATION ID: {application.ApplicationId}------------");
+
                 var Phases = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(application.Phase);
                 foreach (var phase in Phases!)
                 {
-                    _logger.LogInformation($"Officer: {officerDesignation == phase["Officer"]}");
+                    _logger.LogInformation($"Officer: {officerDesignation == phase["Officer"]} ACTION TAKEN : {phase["ActionTaken"]}");
                     if (officerDesignation == phase["Officer"])
                     {
                         switch (phase["ActionTaken"])
@@ -190,7 +192,7 @@ namespace SocialWelfare.Controllers.Officer
                 }
             }
 
-            if (IsMoreThanSpecifiedDays(generalDetails.SubmissionDate.ToString(), 45)) canOfficerTakeAction = false;
+            if (IsMoreThanSpecifiedDays(generalDetails.SubmissionDate!.ToString(), 45)) canOfficerTakeAction = false;
 
 
             helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", ApplicationId));
@@ -200,6 +202,15 @@ namespace SocialWelfare.Controllers.Officer
             var perAddressDetails = dbcontext.AddressJoins.FromSqlRaw("EXEC GetAddressDetails @AddressId", new SqlParameter("@AddressId", generalDetails!.PermanentAddressId)).ToList()[0];
             var serviceContent = dbcontext.Services.FirstOrDefault(u => u.ServiceId == generalDetails.ServiceId);
 
+            var applicationHistory = JsonConvert.DeserializeObject<dynamic>(dbcontext.ApplicationsHistories.FirstOrDefault(his => his.ApplicationId == ApplicationId)!.History);
+            string updateObject = "";
+            foreach (var item in applicationHistory!)
+            {
+                if (item["ActionTaken"] == "Update")
+                {
+                    updateObject = JsonConvert.SerializeObject(item["UpdateObject"]);
+                }
+            }
 
             var ApplicationDetails = new
             {
@@ -209,7 +220,8 @@ namespace SocialWelfare.Controllers.Officer
                 preAddressDetails,
                 perAddressDetails,
                 canOfficerTakeAction,
-                previousActions
+                previousActions,
+                updateObject,
             };
             return View(ApplicationDetails);
         }
@@ -356,12 +368,44 @@ namespace SocialWelfare.Controllers.Officer
             var poolList = JsonConvert.DeserializeObject<string[]>(form["poolIdList"].ToString());
             var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(dbcontext.Services.FirstOrDefault(u => u.ServiceId == serviceId)!.WorkForceOfficers!);
 
+            _logger.LogInformation($"--------------POOLLIST: {poolList}");
+
+
+            foreach (var item in poolList!)
+            {
+                var generalDetails = dbcontext.Applications.Where(u => u.ApplicationId == item).ToList()[0];
+                var phases = JsonConvert.DeserializeObject<List<dynamic>>(generalDetails.Phase);
+
+                for (int i = 0; i < phases!.Count; i++)
+                {
+                    var currentItem = phases[i];
+                    var previousItem = i > 0 ? phases[i - 1] : null;
+                    var nextItem = i < phases.Count - 1 ? phases[i + 1] : null;
+
+                    if (currentItem["Officer"] == officerDesignation)
+                    {
+                        if (previousItem != null && previousItem!["CanPull"] != null)
+                        {
+                            previousItem!["CanPull"] = false;
+                        }
+
+                        if (nextItem != null && nextItem!["CanPull"] != null)
+                        {
+                            nextItem!["CanPull"] = false;
+                        }
+                    }
+
+                }
+                _logger.LogInformation($"PHASE: {JsonConvert.SerializeObject(phases)}");
+                helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", item));
+            }
+
+
             foreach (var officer in WorkForceOfficers!)
             {
                 if (officer["Designation"] == officerDesignation)
                 {
                     JArray pool;
-                    _logger.LogInformation($"POOL LIST LENGHT: {poolList!.Length}");
                     if (poolList!.Length > 0)
                     {
                         if (officer["Designation"] == "Director Finance")

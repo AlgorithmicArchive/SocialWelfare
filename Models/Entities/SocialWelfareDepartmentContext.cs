@@ -49,7 +49,6 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
 
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("name=DefaultConnection");
 
@@ -102,9 +101,7 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.RelationName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
-            entity.Property(e => e.SubmissionDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.SubmissionDate).HasMaxLength(50);
 
             entity.HasOne(d => d.Service).WithMany(p => p.Applications)
                 .HasForeignKey(d => d.ServiceId)

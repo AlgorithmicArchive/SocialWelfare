@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
+using SocialWelfare.Models.Entities;
 
 namespace SocialWelfare.Controllers.Officer
 {
@@ -34,12 +36,9 @@ namespace SocialWelfare.Controllers.Officer
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
             var officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
-            if (officer == null)
-            {
-                return Json(new { status = false, message = "Officer not found." });
-            }
+            string updateObject = "";
 
-            var userSpecificDetails = JsonConvert.DeserializeObject<dynamic>(officer.UserSpecificDetails);
+            var userSpecificDetails = JsonConvert.DeserializeObject<dynamic>(officer!.UserSpecificDetails);
             string officerDesignation = userSpecificDetails!.Designation;
             string districtCode = userSpecificDetails.DistrictCode;
 
@@ -49,15 +48,10 @@ namespace SocialWelfare.Controllers.Officer
             string remarks = form["Remarks"].ToString();
 
             var application = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == applicationId);
-            if (application == null)
-            {
-                return Json(new { status = false, message = "Application not found." });
-            }
-
-            string email = application.Email;
+            string email = application!.Email;
             var phases = JsonConvert.DeserializeObject<List<dynamic>>(application.Phase);
-
             string? nextOfficer = null;
+
 
             for (int i = 0; i < phases!.Count; i++)
             {
@@ -79,8 +73,51 @@ namespace SocialWelfare.Controllers.Officer
                             nextOfficer = phases[i + 1].Officer;
                         }
                     }
+                    else if (action == "ReturnToEdit")
+                    {
+                        phases[i].ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt");
+                    }
                     else if (action == "Update")
                     {
+                        string Field = form["UpdateColumn"].ToString();
+                        string OldValue = "";
+                        string NewValue = "";
+                        string UpdateColumn = "";
+                        string UpdateColumnValue = "";
+                        _logger.LogInformation("----------------------------UPDATE ACTION ----------------------------");
+
+                        var entityType = dbcontext.Model.FindEntityType(typeof(Application));
+                        if (entityType!.GetProperties().Any(p => p.Name == Field))
+                        {
+                            _logger.LogInformation("NOT SERVICE SPECIFIC");
+
+                            var propertyInfo = typeof(Application).GetProperty(Field);
+                            OldValue = propertyInfo!.GetValue(application)?.ToString()!;
+                            NewValue = form["UpdateColumnValue"].ToString();
+                            UpdateColumn = Field;
+                            UpdateColumnValue = NewValue;
+                        }
+                        else
+                        {
+                            _logger.LogInformation("SERVICE SPECIFIC");
+
+                            var ServiceSpecific = JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific);
+                            foreach (var item in ServiceSpecific!)
+                            {
+
+                                if (item.Name == Field)
+                                {
+                                    OldValue = item.Value.ToString();
+                                    NewValue = form["UpdateColumnValue"].ToString();
+                                    item.Value = NewValue;
+                                    UpdateColumn = "ServiceSpecific";
+                                    UpdateColumnValue = JsonConvert.SerializeObject(ServiceSpecific);
+                                }
+                            }
+                        }
+
+                        updateObject = JsonConvert.SerializeObject(new { Officer = phases[i]["Officer"], ColumnName = Field, OldValue, NewValue });
+
                         phases[i].CanPull = true;
                         if (i + 1 < phases.Count)
                         {
@@ -89,7 +126,7 @@ namespace SocialWelfare.Controllers.Officer
                             phases[i + 1].ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt");
                             nextOfficer = phases[i + 1].Officer;
                         }
-                        helper.UpdateApplication(form["UpdateColumn"].ToString(), form["UpdateColumnValue"].ToString(), applicationIdParam);
+                        helper.UpdateApplication(UpdateColumn, UpdateColumnValue, applicationIdParam);
                     }
                     else if (action == "Return" && i - 1 >= 0)
                     {
@@ -111,7 +148,7 @@ namespace SocialWelfare.Controllers.Officer
 
             helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), applicationIdParam);
             helper.UpdateApplication("EditList", form["editList"].ToString(), applicationIdParam);
-            helper.UpdateApplicationHistory(applicationId, officerDesignation, action, remarks);
+            helper.UpdateApplicationHistory(applicationId, officerDesignation, action, remarks, updateObject);
 
             if (action == "Sanction")
             {

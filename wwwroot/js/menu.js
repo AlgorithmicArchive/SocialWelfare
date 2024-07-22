@@ -56,7 +56,6 @@ $(document).ready(function () {
               label: "Sent Applications",
               link: "/Officer/Applications?type=Sent",
             },
-            { label: "Update Requests", link: "/Officer/UpdateRequests" },
           ],
         },
       ],

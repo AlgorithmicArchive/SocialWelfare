@@ -3,7 +3,7 @@ function generateServiceForm(formData) {
   appendFormFields($("#form2 .row"), formData[1].fields, "col-sm-12", 1);
   appendFormFields($("#form2 .row"), formData[2].fields, "col-sm-12", 2);
   appendFormFields($("#form3 .row"), formData[3].fields, "col-sm-12", 3);
-  appendFormFields($("#form4 .row"), formData[4].fields, "col-sm-12", 4);
+  appendFormFields($("#form4 .row"), formData[4].fields, "col-sm-6", 4);
 
   getDistricts().then((options) => {
     options.forEach((option) => {
@@ -25,6 +25,7 @@ function generateServiceForm(formData) {
 
 // Create Input
 function createInput(obj, columSize, formNo) {
+  // Attach validation functions if available
   const validationFunctions =
     obj.validationFunctions?.map((item) => validationFunctionsList[item]) || [];
   if (validationFunctions.length) {
@@ -35,110 +36,143 @@ function createInput(obj, columSize, formNo) {
   let key;
   let readonly = true;
 
+  // Determine read-only status and fetch details based on form number
   if (ApplicationId != null) {
     const editList = JSON.parse(application.generalDetails.editList || "[]");
     readonly = !editList.includes(obj.name);
 
-    if (formNo === 0) {
-      details = {
-        ...application.generalDetails,
-        ...JSON.parse(application.generalDetails.serviceSpecific || "{}"),
-      };
-      key = obj.isFormSpecific
-        ? obj.name
-        : obj.name.charAt(0).toLowerCase() + obj.name.slice(1);
-    } else if (formNo === 1 && PresentAddressId != null) {
-      details = application.preAddressDetails[0];
-      key =
-        obj.name.replace("Present", "").charAt(0).toLowerCase() +
-        obj.name.replace("Present", "").slice(1);
-    } else if (formNo === 2 && PermanentAddressId != null) {
-      details = application.perAddressDetails[0];
-      if (details.addressId === application.preAddressDetails[0].addressId) {
-        $("#SameAsPresent").prop("checked", true);
-      }
-      key =
-        obj.name.replace("Permanent", "").charAt(0).toLowerCase() +
-        obj.name.replace("Permanent", "").slice(1);
-    } else if (formNo == 3 && application.generalDetails.bankDetails) {
-      details = JSON.parse(application.generalDetails.bankDetails);
-      key = obj.name;
-    } else if (formNo == 4 && application.generalDetails.documents) {
-      const documents = JSON.parse(application.generalDetails.documents);
-      details = {};
-      documents.forEach((item) => {
-        details[item.Label + "Enclosure"] = item.Enclosure;
-        details[item.Label + "File"] = item.File;
-      });
-      key = obj.name;
+    switch (formNo) {
+      case 0:
+        details = {
+          ...application.generalDetails,
+          ...JSON.parse(application.generalDetails.serviceSpecific || "{}"),
+        };
+        key = obj.isFormSpecific
+          ? obj.name
+          : obj.type == "radio"
+          ? obj.name.charAt(0).toLowerCase() + obj.name.slice(1) + "Name"
+          : obj.name.charAt(0).toLowerCase() + obj.name.slice(1);
+        break;
+      case 1:
+        if (PresentAddressId != null) {
+          details = application.preAddressDetails[0];
+          key =
+            obj.name.replace("Present", "").charAt(0).toLowerCase() +
+            obj.name.replace("Present", "").slice(1);
+        }
+        break;
+      case 2:
+        if (PermanentAddressId != null) {
+          details = application.perAddressDetails[0];
+          if (
+            details.addressId === application.preAddressDetails[0].addressId
+          ) {
+            $("#SameAsPresent").prop("checked", true);
+          }
+          key =
+            obj.name.replace("Permanent", "").charAt(0).toLowerCase() +
+            obj.name.replace("Permanent", "").slice(1);
+        }
+        break;
+      case 3:
+        if (application.generalDetails.bankDetails) {
+          details = JSON.parse(application.generalDetails.bankDetails);
+          key = obj.name;
+        }
+        break;
+      case 4:
+        if (application.generalDetails.documents) {
+          const documents = JSON.parse(application.generalDetails.documents);
+          details = {};
+          documents.forEach((item) => {
+            details[item.Label + "Enclosure"] = item.Enclosure;
+            details[item.Label + "File"] = item.File;
+          });
+          key = obj.name;
+        }
+        break;
+      default:
+        readonly = false;
     }
   } else {
     readonly = false;
   }
 
-  const label = `<label for="${obj.name}">${obj.label}</label>`;
+  const label = `<label for="${obj.name}" title="${obj.label}">${obj.label}</label>`;
   let value = details ? details[key] || "" : "";
-
+  // Append form data
   if (details != null) {
     const appendForm =
       formNo === 0
         ? generalForm
-        : formNo === 1 || formNo === 2
+        : [1, 2].includes(formNo)
         ? addressForm
         : formNo === 3
         ? bankForm
         : documentForm;
 
-    if ([1, 2].includes(formNo) && obj.name.match(/(District|Tehsil|Block)/)) {
-      if (details[key + "Id"]) value = details[key + "Id"];
+    if (
+      [1, 2].includes(formNo) &&
+      obj.name.match(/(District|Tehsil|Block)/) &&
+      details[key + "Id"]
+    ) {
+      value = details[key + "Id"];
     }
+
     appendForm.append(obj.name, value);
   }
 
+  // Handle select input type
   if (obj.type === "select") {
     const options = obj.options || [];
     const selectOptions = options
       .map((item) => `<option value="${item}">${item}</option>`)
       .join("");
-
     return `
       <div class="${columSize} mb-2">
         ${label}
-        <select class="form-select" name="${obj.name}" id="${
-      obj.name
-    }" value="${value}" ${readonly ? "disabled" : ""}>
+        <select class="form-select" name="${obj.name}" id="${obj.name}" ${
+      readonly ? "disabled" : ""
+    } value="${value}">
           ${selectOptions}
         </select>
       </div>
     `;
   }
 
+  // Handle radio input type
   if (obj.type === "radio") {
     const radioOptions = obj.options
       .map(
-        (item) =>
-          `<input type="radio" class="form-check-input ${obj.name}" name="${obj.name}" value="${item}"><span class="px-1 pe-4">${item}</span>`
+        (item) => `
+      <input type="radio" class="form-check-input ${obj.name}" name="${obj.name}" value="${item}" disabled="${readonly}">
+      <span class="px-1 pe-4">${item}</span>
+    `
       )
       .join("");
 
     return `
       <div class="${columSize} mb-2">
         ${radioOptions}
-        <input type="text" class="form-control" id="${obj.label}" name="${obj.label}" />
+        <input type="text" class="form-control" id="${obj.label}" name="${obj.label}" value="${value}"/>
       </div>
     `;
   }
 
+  // Handle other input types
   const classType = obj.type === "checkbox" ? "form-check" : "form-control";
   const maxLength = obj.maxLength || 100;
   const accept = obj.type === "file" ? obj.accept : null;
 
+  // Set profile image if applicable
   if (ApplicationId != null && obj.name === "ApplicantImage") {
     $("#profile").attr("src", value);
   }
 
   const inputType =
     obj.type === "file" && ApplicationId != null && details != null
+      ? "text"
+      : obj.type == "date"
       ? "text"
       : obj.type;
   const extraClasses =
@@ -148,19 +182,20 @@ function createInput(obj, columSize, formNo) {
 
   return `
     <div class="${columSize} mb-2">
-      ${formNo == 4 && obj.type == "file" ? "" : label}
+      ${formNo == 4 && obj.type == "file" ? "<label></label>" : label}
       <input class="${classType}${extraClasses}" type="${inputType}" name="${
     obj.name
-  }" id="${obj.name}" placeholder="${
-    obj.label
-  }" maxlength="${maxLength}"${acceptAttribute} value="${value}"${readOnlyAttribute}>
+  }" id="${obj.name}"
+        placeholder="${obj.type == "date" ? "dd/mm/yyyy" : obj.label}"
+        maxlength="${maxLength}"${acceptAttribute} value="${value}" ${readOnlyAttribute} ${
+    PresentAddressId == PermanentAddressId ? "checked" : ""
+  }>
     </div>
   `;
 }
 
 function appendFormFields(container, fields, columSize, formNo) {
-  const isForm1or2 = formNo === 1 || formNo === 2;
-  if (isForm1or2) {
+  if ([1, 2].includes(formNo)) {
     const columnTitle =
       formNo === 1 ? "Present Address Details" : "Permanent Address Details";
     const column = $(`
@@ -177,17 +212,20 @@ function appendFormFields(container, fields, columSize, formNo) {
       column.append(createInput(item, columSize, formNo));
     });
     container.append(column);
-  } else if (formNo == 4) {
+  } else if (formNo === 4) {
     const totalDocs = fields.length;
-    const column1 = $(`<div class="col-md-6"></div>`);
-    const column2 = $(`<div class="col-md-6"></div>`);
+    const column1 = $(
+      `<div class="col-md-6 border-end border-dark"><div class="row"></div></div>`
+    );
+    const column2 = $(`<div class="col-md-6"><div class="row"></div></div>`);
     fields.forEach((item, index) => {
-      if (index < totalDocs / 2)
-        column1.append(createInput(item, columSize, formNo));
-      else column2.append(createInput(item, columSize, formNo));
+      if (index < totalDocs / 2) {
+        column1.find(".row").append(createInput(item, columSize, formNo));
+      } else {
+        column2.find(".row").append(createInput(item, columSize, formNo));
+      }
     });
-    container.append(column1);
-    container.append(column2);
+    container.append(column1).append(column2);
   } else {
     fields.forEach((item) => {
       container.append(createInput(item, columSize, formNo));

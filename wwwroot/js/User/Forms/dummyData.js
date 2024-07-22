@@ -1,12 +1,32 @@
+function formatDateToCustomString(date) {
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
 const generalDummyData = {
   District: 5,
   ApplicantName: "MOMIN HUSSAIN RATHER",
-  DateOfBirth: "2000-05-23",
+  DateOfBirth: "23/Jul/2000",
   RelationName: "MUZAFFAR RATHER",
   MotherName: "RAHILA ROUF",
-  DateOfMarriage: new Date(new Date().setMonth(new Date().getMonth() + 2))
-    .toISOString()
-    .split("T")[0],
+  DateOfMarriage: formatDateToCustomString(
+    new Date(new Date().setMonth(new Date().getMonth() + 2))
+  ),
   MobileNumber: "9149653661",
   Email: "momin.rather@gmail.com",
 };

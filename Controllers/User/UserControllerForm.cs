@@ -48,23 +48,6 @@ namespace SocialWelfare.Controllers.User
             dbcontext.Database.ExecuteSqlRaw("EXEC InsertGeneralApplicationDetails @ApplicationId,@CitizenId,@ServiceId,@ApplicantName,@ApplicantImage,@Email,@MobileNumber,@Relation,@RelationName,@DateOfBirth,@Category,@ServiceSpecific,@BankDetails,@Documents,@ApplicationStatus",
                 ApplicationIdParam, CitizenIdParam, ServiceIdParam, ApplicantNameParam, ApplicantImageParam, EmailParam, MobileNumberParam, RelationParam, RelationNameParam, DateOfBirthParam, CateogryParam, ServiceSpecificParam, BankDetailsParam, DocumentsParam, ApplicationStatusParam);
 
-            var updateRequest = new
-            {
-                column = "ServiceSpecific",
-                formElement = new
-                {
-                    type = "date",
-                    label = "Date Of Marriage",
-                    name = "DateOfMarriage",
-                    validationFunctions = new[] { "notEmpty", "isDateWithinRange" },
-                    maxLength = "6",
-                    minLength = "1",
-                    isFormSpecific = true
-                },
-                newValue = "",
-                requested = 0,
-                updated = 0
-            };
 
             return Json(new
             {
@@ -175,7 +158,7 @@ namespace SocialWelfare.Controllers.User
 
             var phases = workForceOfficers.Select((officer, index) => new
             {
-                ReceivedOn = index == 0 ? DateTime.Now.ToString() : string.Empty,
+                ReceivedOn = index == 0 ? DateTime.Now.ToString("dd MMM yyyy hh:mm tt") : string.Empty,
                 Officer = officer.Designation,
                 HasApplication = index == 0,
                 ActionTaken = index == 0 ? "Pending" : string.Empty,
@@ -187,6 +170,7 @@ namespace SocialWelfare.Controllers.User
             helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), ApplicationId);
             helper.UpdateApplication("Documents", documents, ApplicationId);
             helper.UpdateApplication("ApplicationStatus", "Initiated", ApplicationId);
+            helper.UpdateApplication("SubmissionDate", DateTime.Now.ToString("dd MMM yyyy hh:mm tt"), ApplicationId);
 
             if (!form.ContainsKey("returnToEdit"))
             {
@@ -231,7 +215,6 @@ namespace SocialWelfare.Controllers.User
             var applicationIdParameter = new SqlParameter("@ApplicationId", ApplicationId);
             parameters.Add(applicationIdParameter);
 
-            _logger.LogInformation($"IMAGE: {form.Files["ApplicantImage"]!.FileName}");
 
             foreach (var key in form.Keys)
             {
@@ -324,10 +307,10 @@ namespace SocialWelfare.Controllers.User
             {
                 var phase = new
                 {
-                    ReceivedOn = i == 0 ? DateTime.Now.ToString() : "",
+                    ReceivedOn = i == 0 ? DateTime.Now.ToString("dd MMM yyyy hh:mm tt") : "",
                     Officer = workForceOfficers[i]["Designation"],
                     HasApplication = i == 0,
-                    ActionTaken = "",
+                    ActionTaken = i == 0 ? "Pending" : "",
                     Remarks = "",
                     CanPull = false
                 };

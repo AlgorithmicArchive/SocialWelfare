@@ -4,9 +4,10 @@ async function getDistricts() {
     const res = await fetch("/User/GetDistricts", { method: "get" });
     const data = await res.json();
     if (data.status) {
-      console.log(data);
       data.districts.forEach((item) => {
-        options.push(`<option value="${item.districtId}">${item.districtName}</option>`);
+        options.push(
+          `<option value="${item.districtId}">${item.districtName}</option>`
+        );
       });
     }
   } catch (error) {

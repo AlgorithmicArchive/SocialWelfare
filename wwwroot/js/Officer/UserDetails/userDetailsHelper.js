@@ -15,11 +15,30 @@ function isDigit(input) {
 }
 function createInputElement(label, id, value) {
   if (updateColumn.name == id) updateColumn.value = value;
+  let updated = false;
+  if (updateObject.ColumnName == id) {
+    value = updateObject.OldValue;
+    updated = true;
+  }
   return `
         <div class="col-sm-6 d-flex flex-column">
-            <label for="${id}">${label}</label>
+            <label for="${id}">${label}${
+    updated ? " given by Citizen " : ""
+  }</label>
             <input class="form-control mb-2" type="text"  value="${value}" readonly />
-        </div>`;
+        </div>
+        ${
+          updated
+            ? `
+           <div class="col-sm-6 d-flex flex-column">
+            <label for="${id}" class="text-danger fw-bold">${label} Updated By ${updateObject.Officer}</label>
+            <input class="form-control mb-2" type="text"  value="${updateObject.NewValue}" readonly />
+           </div>
+          
+          `
+            : ``
+        }
+        `;
 }
 function createDocumentInput(label, enclosure, file) {
   return `
@@ -92,10 +111,9 @@ function appendDocuments(documents) {
   }
 }
 function appendPerviousActions(previousActions) {
-  console.log(previousActions.length);
   if (previousActions.length > 0) {
     $("#showPreviousActions").show();
-    previousActions.map((item) => {
+    previousActions.reverse().map((item) => {
       $("#previousActions").append(`
         <tr>
           <td>${item.officer}</td>
@@ -148,15 +166,15 @@ function ProceedAction(applicationId, officer) {
       name: $("#extra input").attr("name"),
       value: $("#extra input").val(),
     };
-    const serviceSpecific = JSON.parse(
-      ApplicationDetails.generalDetails.serviceSpecific
-    );
-    if (serviceSpecific.hasOwnProperty(updateColumn.name)) {
-      serviceSpecific[updateColumn.name] = updateColumn.value;
-    }
+    // const serviceSpecific = JSON.parse(
+    //   ApplicationDetails.generalDetails.serviceSpecific
+    // );
+    // if (serviceSpecific.hasOwnProperty(updateColumn.name)) {
+    //   serviceSpecific[updateColumn.name] = updateColumn.value;
+    // }
 
-    formdata.append("UpdateColumn", "ServiceSpecific");
-    formdata.append("UpdateColumnValue", JSON.stringify(serviceSpecific));
+    formdata.append("UpdateColumn", updateColumn.name);
+    formdata.append("UpdateColumnValue", updateColumn.value);
   }
   fetch("/Officer/Action", { method: "post", body: formdata })
     .then((res) => res.json())
@@ -172,7 +190,7 @@ function ProceedAction(applicationId, officer) {
             "SanctionLetter.pdf";
           const embed = `<embed src="${filePath}" type="application/pdf" width="800" height="600">`;
           $(".full-screen-section").append(`
-            <p class="fw-bold text-center">This Application is sanctioned by you.</p>
+            <p class="fw-bold text-center">This Application is sanctioned.</p>
             ${embed}
           `);
         } else window.location.href = data.url;

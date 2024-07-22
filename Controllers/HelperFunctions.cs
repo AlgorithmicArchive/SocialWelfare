@@ -64,35 +64,35 @@ public class UserHelperFunctions
     }
 
     public string GenerateApplicationId(int districtId, SocialWelfareDepartmentContext dbcontext, ILogger<UserController> _logger)
-{
-    string? districtShort = dbcontext.Districts.FirstOrDefault(u => u.DistrictId == districtId)?.DistrictShort;
+    {
+        string? districtShort = dbcontext.Districts.FirstOrDefault(u => u.DistrictId == districtId)?.DistrictShort;
 
-    string financialYear = GetCurrentFinancialYear();
+        string financialYear = GetCurrentFinancialYear();
 
-    var result = dbcontext.ApplicationPerDistricts
-                  .FromSqlRaw("EXEC CountPerDistrict @DistrictId, @FinancialYear", 
-                              new SqlParameter("@DistrictId", districtId), 
-                              new SqlParameter("@FinancialYear", financialYear))
-                  .ToList();
+        var result = dbcontext.ApplicationPerDistricts
+                      .FromSqlRaw("EXEC CountPerDistrict @DistrictId, @FinancialYear",
+                                  new SqlParameter("@DistrictId", districtId),
+                                  new SqlParameter("@FinancialYear", financialYear))
+                      .ToList();
 
-    int countPerDistrict = result.FirstOrDefault()?.CountValue ?? 0;
+        int countPerDistrict = result.FirstOrDefault()?.CountValue ?? 0;
 
-    string sql = "";
+        string sql = "";
 
-    if (countPerDistrict != 0)
-        sql = "UPDATE ApplicationPerDistrict SET CountValue = @CountValue WHERE DistrictId = @districtId AND FinancialYear = @financialyear";
-    else
-        sql = "INSERT INTO ApplicationPerDistrict (DistrictId, FinancialYear, CountValue) VALUES (@districtId, @financialyear, @CountValue)";
+        if (countPerDistrict != 0)
+            sql = "UPDATE ApplicationPerDistrict SET CountValue = @CountValue WHERE DistrictId = @districtId AND FinancialYear = @financialyear";
+        else
+            sql = "INSERT INTO ApplicationPerDistrict (DistrictId, FinancialYear, CountValue) VALUES (@districtId, @financialyear, @CountValue)";
 
-    countPerDistrict++; // Increment before using in SqlParameter
+        countPerDistrict++; // Increment before using in SqlParameter
 
-    dbcontext.Database.ExecuteSqlRaw(sql,
-        new SqlParameter("@districtId", districtId),
-        new SqlParameter("@financialyear", financialYear),
-        new SqlParameter("@CountValue", countPerDistrict));
+        dbcontext.Database.ExecuteSqlRaw(sql,
+            new SqlParameter("@districtId", districtId),
+            new SqlParameter("@financialyear", financialYear),
+            new SqlParameter("@CountValue", countPerDistrict));
 
-    return $"{districtShort}/{financialYear}/{countPerDistrict}";
-}
+        return $"{districtShort}/{financialYear}/{countPerDistrict}";
+    }
 
 
     public SqlParameter[]? GetAddressParameters(IFormCollection form, string prefix)
@@ -125,7 +125,7 @@ public class UserHelperFunctions
         dbcontext.Database.ExecuteSqlRaw("EXEC UpdateApplication @ColumnName,@ColumnValue,@ApplicationId", columnNameParam, columnValueParam, applicationId);
     }
 
-    public void UpdateApplicationHistory(string applicationId, string actionTaker, string actionTaken, string remarks)
+    public void UpdateApplicationHistory(string applicationId, string actionTaker, string actionTaken, string remarks, string updateObject = "")
     {
         // Search for an existing history record
         var historyRecord = dbcontext.ApplicationsHistories.FirstOrDefault(u => u.ApplicationId == applicationId);
@@ -135,7 +135,8 @@ public class UserHelperFunctions
             ActionTaker = actionTaker,
             ActionTaken = actionTaken,
             Remarks = remarks,
-            DateTime = DateTime.Now.ToString("dd MMM yyyy hh:mm tt")
+            DateTime = DateTime.Now.ToString("dd MMM yyyy hh:mm tt"),
+            UpdateObject = JsonConvert.DeserializeObject<dynamic>(updateObject)
         };
 
         if (historyRecord == null)

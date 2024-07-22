@@ -144,6 +144,12 @@ function updateConditions(conditions) {
   const officerValue = $("#officer").val();
   const serviceValue = $("#service").val();
 
+  $("#spinner").append(`
+       <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+       </div>
+    `);
+
   if (districtValue != "") {
     conditions["JSON_VALUE(a.ServiceSpecific, '$.District')"] = districtValue;
   } else {
@@ -166,6 +172,7 @@ function updateConditions(conditions) {
   fetch("/Admin/GetFilteredCount?conditions=" + JSON.stringify(conditions))
     .then((res) => res.json())
     .then((data) => {
+      $("#spinner").empty();
       if (data.status) {
         $("#total").text(data.totalCount.length);
         $("#pending").text(data.pendingCount.length);
@@ -263,6 +270,11 @@ function SetServices() {
 }
 
 function setApplicationList(applicationList) {
+  let propertyToRemove = "submissionDate";
+  applicationList = applicationList.map((obj) => {
+    const { [propertyToRemove]: _, ...rest } = obj;
+    return rest;
+  });
   const container = $("#applicationListContainer");
   container.empty();
   $("#dataGrid").removeClass("d-none").addClass("d-flex");

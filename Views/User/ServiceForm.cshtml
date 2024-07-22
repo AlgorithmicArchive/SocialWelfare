@@ -65,6 +65,9 @@
     let PresentAddressId = application.preAddressDetails == undefined || application.preAddressDetails.length == 0 ? null : application.preAddressDetails[0].addressId;
     let PermanentAddressId = application.perAddressDetails == undefined || application.perAddressDetails.length == 0 ? null : application.perAddressDetails[0].addressId;
     let serviceContent = application.serviceContent;
+    window.ApplicationId = ApplicationId;
+    window.PresentAddressId = PresentAddressId;
+    window.PermanentAddressId = PermanentAddressId;
 </script>
 <script src="/js/User/Forms/dummyData.js"></script>
 <script src="/js/User/Forms/dataFetching.js"></script>

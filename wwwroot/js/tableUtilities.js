@@ -11,7 +11,7 @@ function initializeDataTable(tableId, containerId, data) {
 
     for (const key in item) {
       if (item.hasOwnProperty(key)) {
-        row += `<td>${item[key]}</td>`;
+        row += `<td>${item[key] == "" ? "N/A" : item[key]}</td>`;
       }
     }
 

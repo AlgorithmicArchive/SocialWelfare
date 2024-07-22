@@ -35,12 +35,12 @@ function CreateTimeline(phase, ApplicationId) {
     );
   for (let i = 0; i < phase.length; i++) {
     const item = phase[i];
-    const [date, time] = item.ReceivedOn.split(" ");
+    const date = item.ReceivedOn;
     sanctioned = item.ActionTaken == "Sanction" ? true : false;
     returnedToEdit = item.ActionTaken == "ReturnToEdit" ? true : false;
     const tr = $("<tr/>");
     tr.append(`
-        <td>${date} at ${time}</td>
+        <td>${date}</td>
         <td>${item.Officer}</td>
         <td>${item.ActionTaken == "" ? "Pending" : item.ActionTaken}</td>
         <td>${item.Remarks}</td>
