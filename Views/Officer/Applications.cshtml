@@ -4,10 +4,15 @@
         <button class="btn btn-secondary" id="poolButton">Pool</button>
     </div>
     <div id="mainContainer" class="container">
-        <table class="table table-bordered table-responsive table-striped table-hover">
+        <table class="table table-striped table-hover table-bordered" id="applicationsTable">
             <thead class="bg-dark text-white">
                 <tr>
                     <th scope="col">#</th>
+                    <th scope="col" class="">
+                        <span class="d-flex gap-2">
+                            <input type="checkbox" class="form-check d-flex parent-pool" /><span>Pool</span>
+                        </span>
+                    </th>
                     <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
                     <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
                     <th scope="col">Option</th>
@@ -16,25 +21,16 @@
             <tbody id="tbody"></tbody>
         </table>
     </div>
-    <div class="container mt-5" id="updateContainer" style="display: none;">
-        <table class="table table-bordered table-responsive table-striped table-hover">
-            <thead class="bg-dark text-white">
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
-                    <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
-                    <th scope="col">Option</th>
-                </tr>
-            </thead>
-            <tbody id="updateListTbody">
-            </tbody>
-        </table>
-    </div>
     <div id="PoolContainer" class="container" style="display: none;">
-        <table class="table table-striped table-hover table-bordered" style="border-radius:10px;overflow:hidden;">
+        <table class="table table-striped table-hover table-bordered" id="poolTable">
             <thead class="bg-dark text-white">
                 <tr>
                     <th scope="col">#</th>
+                    <th scope="col" class="">
+                        <span class="d-flex gap-2">
+                            <input type="checkbox" class="form-check d-flex poolList-parent" /><span>Pool</span>
+                        </span>
+                    </th>
                     <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
                     <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
                 </tr>
@@ -43,10 +39,33 @@
             </tbody>
         </table>
 
-        <button class="btn btn-dark d-flex mx-auto" id="sanctionAll">Sanction All</button>
+        <div class="d-flex gap-2 justify-content-center mt-5">
+            <button class="btn btn-dark d-flex" id="sanctionAll" disabled>Sanction All</button>
+            <button class="btn btn-dark d-flex" id="transferBack" disabled>Transfer Back to Pending List</button>
+        </div>
+
     </div>
 </div>
 
+<div class="modal" id="showSanctionLetter">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <!-- Modal body -->
+            <div class="modal-body">
+                <div class="container-fluid" id="sanctionLetterDistplay">
+                    <iframe id="sanctionFrame" style="width: 100%; height: 800px;"></iframe>
+                    <button class="btn btn-dark d-flex mx-auto" id="approve">Approve</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
 
 <script>
     const list = @Html.Raw(Json.Serialize(Model));

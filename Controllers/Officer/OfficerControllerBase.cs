@@ -364,11 +364,9 @@ namespace SocialWelfare.Controllers.Officer
             string officerDesignation = UserSpecificDetails!["Designation"];
             string districtCode = UserSpecificDetails["DistrictCode"];
             int serviceId = Convert.ToInt32(form["serviceId"].ToString());
-
+            string poolAction = form["poolAction"].ToString();
             var poolList = JsonConvert.DeserializeObject<string[]>(form["poolIdList"].ToString());
             var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(dbcontext.Services.FirstOrDefault(u => u.ServiceId == serviceId)!.WorkForceOfficers!);
-
-            _logger.LogInformation($"--------------POOLLIST: {poolList}");
 
 
             foreach (var item in poolList!)
@@ -396,7 +394,6 @@ namespace SocialWelfare.Controllers.Officer
                     }
 
                 }
-                _logger.LogInformation($"PHASE: {JsonConvert.SerializeObject(phases)}");
                 helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", item));
             }
 
@@ -415,9 +412,17 @@ namespace SocialWelfare.Controllers.Officer
                         foreach (string item in poolList!)
                         {
                             bool inPool = pool.Any(u => u.ToString() == item);
-                            if (!inPool)
+                            if (!inPool && poolAction == "add")
                             {
                                 pool.Add(item);
+                            }
+                            else if (inPool && poolAction == "remove")
+                            {
+                                var itemsToRemove = pool.Where(u => u.ToString() == item).ToList();
+                                foreach (var itemToRemove in itemsToRemove)
+                                {
+                                    pool.Remove(itemToRemove);
+                                }
                             }
                         }
                     }

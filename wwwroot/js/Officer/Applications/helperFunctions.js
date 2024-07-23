@@ -14,40 +14,47 @@ function UserDetails(applicationId) {
   window.location.href = "/Officer/UserDetails?ApplicationId=" + applicationId;
 }
 
-async function SanctionAll(poolList, ServiceId) {
-  for (let i = 0; i < poolList.length; i++) {
-    console.log(i);
-    hideSpinner();
-    const userApproved = confirm(
-      `Do you want to issue sanction letter for Reference Number ${poolList[i]}?`
-    );
+async function SanctionAll(poolList, finalList, ServiceId) {
+  if (finalList.length > 0) {
+    const id = finalList.shift();
     showSpinner();
-    if (userApproved) {
-      const formdata = new FormData();
-      formdata.append("ApplicationId", poolList[i]);
-      formdata.append("Action", "Sanction");
-      formdata.append("Remarks", "Sanctioned");
-      const response = await fetch("/Officer/Action", {
-        method: "post",
-        body: formdata,
-      });
-      const data = await response.json();
-      if (data.status) {
-        hideSpinner();
-        console.log(data.url);
-      }
-    }
-  }
-
-  const formdata = new FormData();
-  formdata.append("poolIdList", JSON.stringify([]));
-  formdata.append("serviceId", ServiceId);
-  fetch("/Officer/UpdatePool", { method: "post", body: formdata })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.status) {
-        hideSpinner();
-        window.location.href = "/Officer/Index";
-      }
+    const formdata = new FormData();
+    formdata.append("ApplicationId", id);
+    formdata.append("Action", "Sanction");
+    formdata.append("Remarks", "Sanctioned");
+    const response = await fetch("/Officer/Action", {
+      method: "post",
+      body: formdata,
     });
+    const data = await response.json();
+    if (data.status) {
+      hideSpinner();
+    }
+
+    $("#showSanctionLetter").modal("show");
+
+    $("#sanctionFrame").attr(
+      "src",
+      "/files/" + id.replace(/\//g, "_") + "SanctionLetter.pdf"
+    );
+    $("#approve")
+      .off("click")
+      .on("click", async function () {
+        $("#showSanctionLetter").modal("hide");
+        SanctionAll(poolList, finalList, ServiceId); // Recall the function with the modified array
+      });
+  } else {
+    const formdata = new FormData();
+    formdata.append("poolIdList", JSON.stringify(poolList));
+    formdata.append("serviceId", ServiceId);
+    console.log("EMPTY", poolList);
+    fetch("/Officer/UpdatePool", { method: "post", body: formdata })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status) {
+          hideSpinner();
+          window.location.href = "/Officer/Applications?type=Pending";
+        }
+      });
+  }
 }

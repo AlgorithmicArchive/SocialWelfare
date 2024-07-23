@@ -52,14 +52,14 @@ function CreateTimeline(phase, ApplicationId) {
   }
 
   if (returnedToEdit) {
-    $("#statusButtons").find("editFormButton").remove();
+    $("#statusButtons").find("#editFormButton").remove();
     $("#statusButtons").prepend(
       `<button class="btn btn-light" id="UpdateFormButton"
                 onclick='EditForm("${ApplicationId}",${returnedToEdit})'>Edit Form</button>`
     );
   }
   if (sanctioned) {
-    $("#statusButtons").find("downloadLetter").remove();
+    $("#statusButtons").find("#downloadLetter").remove();
     $("#statusButtons").prepend(
       `<button class="btn btn-light" id="downloadLetter"
                 onclick='downloadFile("${ApplicationId}")'>Downlaod Sanction Letter</button>`

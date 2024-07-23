@@ -1,6 +1,5 @@
 $(document).ready(function () {
   const Applications = list;
-  console.log(Applications);
   if (Applications.Type == "Pending") {
     PendingTable(Applications);
     PoolTable(Applications);
@@ -9,6 +8,7 @@ $(document).ready(function () {
 
   let poolApplications = Applications.PoolList;
   let poolIdList = [];
+  let finalList = [];
 
   if (poolApplications && poolApplications.length > 0) {
     poolApplications.forEach((element) => {
@@ -18,7 +18,6 @@ $(document).ready(function () {
   }
   $(document).on("change", ".pool", function () {
     const currentVal = $(this).val();
-    console.log(currentVal);
     if ($(this).is(":checked")) {
       if (!poolIdList.includes(currentVal)) {
         poolIdList.push(currentVal);
@@ -26,8 +25,6 @@ $(document).ready(function () {
     } else {
       poolIdList = poolIdList.filter((item) => item !== currentVal);
     }
-    console.log(poolIdList);
-
     const transferButton = $("#mainContainer").find(
       "button:contains('Transfer To Pool')"
     );
@@ -45,9 +42,33 @@ $(document).ready(function () {
     }
   });
 
+  $(document).on("change", ".poolList-element", function () {
+    const currentVal = $(this).val();
+    if ($(this).is(":checked")) {
+      if (!finalList.includes(currentVal)) {
+        finalList.push(currentVal);
+      }
+    } else {
+      finalList = finalList.filter((item) => item !== currentVal);
+    }
+
+    if (finalList.length > 0) {
+      $("#sanctionAll").prop("disabled", false);
+      $("#transferBack").prop("disabled", false);
+    } else {
+      $("#sanctionAll").prop("disabled", true);
+      $("#transferBack").prop("disabled", true);
+    }
+  });
+
   $(document).on("change", ".parent-pool", function () {
     const isChecked = $(this).is(":checked");
     $(".pool").prop("checked", isChecked).trigger("change");
+  });
+
+  $(document).on("change", ".poolList-parent", function () {
+    const isChecked = $(this).is(":checked");
+    $(".poolList-element").prop("checked", isChecked).trigger("change");
   });
 
   $(document).on("click", "#transferToPoolButton", function () {
@@ -62,6 +83,7 @@ $(document).ready(function () {
     const formData = new FormData();
     formData.append("serviceId", Applications.ServiceId);
     formData.append("poolIdList", JSON.stringify(poolIdList));
+    formData.append("poolAction", "add");
     console.log(Applications.ServiceId, poolIdList);
     fetch("/Officer/UpdatePool", { method: "post", body: formData })
       .then((res) => res.json())
@@ -74,8 +96,33 @@ $(document).ready(function () {
     PoolTable(Applications);
   });
 
+  $(document).on("click", "#transferBack", function () {
+    Applications.PoolList = Applications.PoolList.filter((element) => {
+      if (finalList.includes(element.applicationId)) {
+        Applications.PendingList.push(element);
+        return false; // Exclude this element from the new PoolList
+      }
+      return true; // Keep this element in the new PoolList
+    });
+    $("#containerSwitcher").show();
+    const formData = new FormData();
+    formData.append("serviceId", Applications.ServiceId);
+    formData.append("poolIdList", JSON.stringify(finalList));
+    formData.append("poolAction", "remove");
+    console.log(Applications.ServiceId, finalList);
+    fetch("/Officer/UpdatePool", { method: "post", body: formData })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status) {
+          console.log(data);
+        }
+      });
+    PendingTable(Applications);
+    PoolTable(Applications);
+  });
+
   $("#sanctionAll").on("click", () =>
-    SanctionAll(poolIdList, Applications.ServiceId)
+    SanctionAll(poolIdList,finalList, Applications.ServiceId)
   );
 
   $("#poolButton").on("click", function () {

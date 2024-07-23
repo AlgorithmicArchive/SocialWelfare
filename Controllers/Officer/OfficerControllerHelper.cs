@@ -55,6 +55,7 @@ namespace SocialWelfare.Controllers.Officer
 
             foreach (var application in applicationList)
             {
+                _logger.LogInformation($"Application ID: {application.ApplicationId}");
 
                 var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == application.ServiceId);
                 var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
@@ -345,7 +346,7 @@ namespace SocialWelfare.Controllers.Officer
                     AppliedDistrict,
                     AppliedService,
                     ApplicationWithOfficer,
-                    SubmissionDate = application.SubmissionDate.ToString().Split('T')[0]
+                    SubmissionDate = application.SubmissionDate!.ToString().Split('T')[0]
                 };
                 list.Add(obj);
             }
