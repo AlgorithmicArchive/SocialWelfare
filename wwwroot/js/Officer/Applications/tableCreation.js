@@ -65,6 +65,7 @@ function MiscellaneousTable(Applications) {
   $(".parent-pool").parent().parent().remove();
   let pendingList = [];
   pendingList = Applications.MiscellaneousList.map((element) => {
+    console.log(element);
     result = {
       applicationId: element.applicationId,
       applicantName: element.applicantName,

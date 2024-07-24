@@ -11,13 +11,15 @@ using SocialWelfare.Models.Entities;
 namespace SocialWelfare.Controllers.Officer
 {
     [Authorize(Roles = "Officer")]
-    public partial class OfficerController(SocialWelfareDepartmentContext dbcontext, ILogger<OfficerController> logger, UserHelperFunctions _helper, EmailSender _emailSender, PdfService pdfService) : Controller
+    public partial class OfficerController(SocialWelfareDepartmentContext dbcontext, ILogger<OfficerController> logger, UserHelperFunctions _helper, EmailSender _emailSender, PdfService pdfService, IWebHostEnvironment webHostEnvironment) : Controller
     {
         protected readonly SocialWelfareDepartmentContext dbcontext = dbcontext;
         protected readonly ILogger<OfficerController> _logger = logger;
         protected readonly EmailSender emailSender = _emailSender;
         protected readonly UserHelperFunctions helper = _helper;
         protected readonly PdfService _pdfService = pdfService;
+        private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
+
 
         public override void OnActionExecuted(ActionExecutedContext context)
         {
@@ -288,7 +290,6 @@ namespace SocialWelfare.Controllers.Officer
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"];
             string districtCode = UserSpecificDetails["DistrictCode"];
-            _logger.LogInformation($"Application ID:{ApplicationId}");
 
             var generalDetails = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == ApplicationId);
             var phases = JsonConvert.DeserializeObject<List<dynamic>>(generalDetails!.Phase);
@@ -297,7 +298,6 @@ namespace SocialWelfare.Controllers.Officer
             {
                 if (phases[i]["Officer"] == officerDesignation)
                 {
-                    _logger.LogInformation($"PHASE[i][ActionTaken] :{phases[i]["ActionTaken"]}");
                     if (phases[i]["ActionTaken"] == "Forward")
                     {
                         phases[i + 1]["HasApplication"] = false;
@@ -308,17 +308,23 @@ namespace SocialWelfare.Controllers.Officer
                         phases[i - 1]["HasApplication"] = false;
                         phases[i + 1]["ActionTaken"] = "Forward";
                     }
+                    else if (phases[i]["ActionTaken"] == "Sanction")
+                    {
+                        helper.UpdateApplication("ApplicationStatus", "Initiated", new SqlParameter("@ApplicationId", ApplicationId));
+                        string sourceFile = Path.Combine(_webHostEnvironment.WebRootPath, "files", ApplicationId.Replace("/", "_") + "SanctionLetter.pdf");
+                        string destinationFile = Path.Combine(_webHostEnvironment.WebRootPath, "files", ApplicationId.Replace("/", "_") + "BAK" + DateTime.Now.ToString("dd MMM YYYY") + "SanctionLetter.pdf");
+                        if (System.IO.File.Exists(sourceFile))
+                            System.IO.File.Move(sourceFile, destinationFile);
+                    }
                     phases[i]["ActionTaken"] = "Pending";
                     phases[i]["HasApplication"] = true;
                     phases[i]["Remarks"] = "";
                     phases[i]["CanPull"] = false;
-                    _logger.LogInformation($"PHASE[i][ActionTaken] :{phases[i]["ActionTaken"]}");
                     break;
                 }
             }
 
             helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", ApplicationId));
-
 
             return Json(new { status = true, PullApplication = "YES" });
         }

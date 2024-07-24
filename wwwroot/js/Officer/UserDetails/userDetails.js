@@ -1,10 +1,4 @@
 $(document).ready(function () {
-  getWorkForceOfficer(
-    ApplicationDetails.serviceContent,
-    ApplicationDetails.currentOfficer,
-    ApplicationDetails.generalDetails.applicationId
-  );
-
   const generalDetails = ApplicationDetails.generalDetails;
   const preAddressDetails = ApplicationDetails.preAddressDetails;
   const perAddressDetails = ApplicationDetails.perAddressDetails;
@@ -12,7 +6,20 @@ $(document).ready(function () {
   const documents = JSON.parse(generalDetails.documents);
   const previousActions = ApplicationDetails.previousActions;
   const canOfficerTakeAction = ApplicationDetails.canOfficerTakeAction;
+  const letterUpdateDetails = JSON.parse(
+    ApplicationDetails.serviceContent.letterUpdateDetails
+  );
 
+  getWorkForceOfficer(
+    ApplicationDetails.serviceContent,
+    ApplicationDetails.currentOfficer,
+    ApplicationDetails.generalDetails.applicationId,
+    letterUpdateDetails
+  );
+
+  if ($("#action").val() == "Sanction") {
+    CertificateDetails(letterUpdateDetails, generalDetails);
+  }
   const excludedProperties = [
     "phase",
     "bankDetails",
@@ -36,6 +43,7 @@ $(document).ready(function () {
   appendBankDetails(bankDetails);
   appendDocuments(documents);
   appendPerviousActions(previousActions);
+
   if (!canOfficerTakeAction) {
     $("#takeAction").after(
       `<p class="text-danger width-50 mt-5">Cannot proceed with this application because it has been either more than 15 days since it was received by you or more than 45 days since it was submitted.</p>`
@@ -46,7 +54,7 @@ $(document).ready(function () {
   $("#action").on("change", function () {
     const value = $(this).val();
     $("#extra").empty().removeClass("border border-dark p-3");
-
+    $("#ceritificateDetails").hide();
     if (value == "ReturnToEdit") {
       const formElements = JSON.parse(
         ApplicationDetails.serviceContent.formElement
@@ -90,6 +98,8 @@ $(document).ready(function () {
       if (validationFunctions.length) {
         attachValidation(updateColumn, validationFunctions);
       }
+    } else if (value == "Sanction") {
+      CertificateDetails(letterUpdateDetails, generalDetails);
     }
   });
 

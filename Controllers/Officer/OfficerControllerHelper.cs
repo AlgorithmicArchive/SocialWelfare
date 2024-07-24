@@ -198,10 +198,18 @@ namespace SocialWelfare.Controllers.Officer
 
             foreach (var application in applicationList)
             {
+                bool? canPull = false;
+                var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
+                foreach (var phase in phases!)
+                {
+                    if (phase["Officer"] == officerDesignation)
+                        canPull = phase["CanPull"];
+                }
                 var data = new
                 {
                     application.ApplicationId,
                     application.ApplicantName,
+                    canPull
                 };
                 SantionApplications.Add(data);
             }

@@ -17,6 +17,8 @@ public partial class Service
 
     public string? UpdateColumn { get; set; }
 
+    public string LetterUpdateDetails { get; set; } = null!;
+
     public DateTime CreatedAt { get; set; }
 
     public bool Active { get; set; }

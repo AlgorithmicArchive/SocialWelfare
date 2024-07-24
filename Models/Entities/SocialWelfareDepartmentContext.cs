@@ -41,6 +41,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<Tehsil> Tehsils { get; set; }
 
+    public virtual DbSet<UpdatedLetterDetail> UpdatedLetterDetails { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<Village> Villages { get; set; }
@@ -48,6 +50,7 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Ward> Wards { get; set; }
 
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("name=DefaultConnection");
@@ -234,6 +237,7 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.Department)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+            entity.Property(e => e.LetterUpdateDetails).HasDefaultValue("[]");
             entity.Property(e => e.ServiceName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
@@ -250,6 +254,13 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.TehsilName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<UpdatedLetterDetail>(entity =>
+        {
+            entity.HasKey(e => e.ApplicationId);
+
+            entity.Property(e => e.ApplicationId).HasMaxLength(50);
         });
 
         modelBuilder.Entity<User>(entity =>

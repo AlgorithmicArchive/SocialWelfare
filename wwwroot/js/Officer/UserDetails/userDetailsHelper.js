@@ -138,7 +138,18 @@ function getFormattedDateTime() {
 
   return now.toLocaleString("en-US", options);
 }
-function ProceedAction(applicationId, officer) {
+
+function formatDate() {
+  const date = new Date();
+  const options = { day: "2-digit", month: "short", year: "numeric" };
+  const dateString = date.toLocaleDateString("en-US", options);
+
+  const timeOptions = { hour: "2-digit", minute: "2-digit", hour12: true };
+  const timeString = date.toLocaleTimeString("en-US", timeOptions);
+
+  return `${dateString} ${timeString}`;
+}
+function ProceedAction(applicationId, officer, letterUpdateDetails) {
   const action = $("#action").val();
   const remarks = $("#remarks").val();
   if (remarks.length == 0) {
@@ -160,21 +171,27 @@ function ProceedAction(applicationId, officer) {
     });
 
     formdata.append("editList", JSON.stringify(editList));
-  }
-  if (action == "Update") {
+  } else if (action == "Update") {
     const updateColumn = {
       name: $("#extra input").attr("name"),
       value: $("#extra input").val(),
     };
-    // const serviceSpecific = JSON.parse(
-    //   ApplicationDetails.generalDetails.serviceSpecific
-    // );
-    // if (serviceSpecific.hasOwnProperty(updateColumn.name)) {
-    //   serviceSpecific[updateColumn.name] = updateColumn.value;
-    // }
-
     formdata.append("UpdateColumn", updateColumn.name);
     formdata.append("UpdateColumnValue", updateColumn.value);
+  } else if (action == "Sanction") {
+    const obj = {};
+    letterUpdateDetails.forEach((item) => {
+      const value = $("#new" + item.name).val();
+      if (value != "") {
+        obj[item.name] = {
+          OldValue: $("#" + item.name).val(),
+          NewValue: $("#new" + item.name).val(),
+          UpdatedBy: ApplicationDetails.currentOfficer,
+          UpdatedAt: formatDate(),
+        };
+      }
+    });
+    formdata.append("letterUpdateDetails", JSON.stringify(obj));
   }
   fetch("/Officer/Action", { method: "post", body: formdata })
     .then((res) => res.json())
@@ -182,22 +199,30 @@ function ProceedAction(applicationId, officer) {
       hideSpinner();
       if (data.status) {
         if (action == "Sanction") {
-          $("#closeExmpleModal").trigger("click");
-          $(".full-screen-section").empty();
           const filePath =
             "/files/" +
             data.applicationId.replace(/\//g, "_") +
             "SanctionLetter.pdf";
-          const embed = `<embed src="${filePath}" type="application/pdf" width="800" height="600">`;
-          $(".full-screen-section").append(`
-            <p class="fw-bold text-center">This Application is sanctioned.</p>
-            ${embed}
-          `);
+
+          $("#showSanctionLetter").modal("show");
+
+          $("#sanctionFrame").attr("src", filePath);
+          $("#approve")
+            .off("click")
+            .on("click", async function () {
+              $("#showSanctionLetter").modal("hide");
+              window.location.href = "/Officer/Index";
+            });
         } else window.location.href = data.url;
       }
     });
 }
-function getWorkForceOfficer(serviceContent, currentOfficer, applicationId) {
+function getWorkForceOfficer(
+  serviceContent,
+  currentOfficer,
+  applicationId,
+  letterUpdateDetails
+) {
   const workForceOfficers = JSON.parse(serviceContent.workForceOfficers);
   let officer;
   workForceOfficers.map((item) => {
@@ -241,7 +266,57 @@ function getWorkForceOfficer(serviceContent, currentOfficer, applicationId) {
         .addClass("btn btn-dark")
         .text("Proceed")
         .on("click", function () {
-          ProceedAction(applicationId, currentOfficer);
+          ProceedAction(applicationId, currentOfficer, letterUpdateDetails);
         })
     );
+}
+
+function convertToCamelCase(input) {
+  if (!input || typeof input !== "string") {
+    return "";
+  }
+
+  return input.charAt(0).toLowerCase() + input.slice(1);
+}
+
+function attachValidations(obj) {
+  let Obj = JSON.parse(JSON.stringify(obj));
+  Obj.name = "new" + obj.name;
+  const validationFunctions =
+    obj.validationFunctions?.map((item) => validationFunctionsList[item]) || [];
+  if (validationFunctions.length) {
+    attachValidation(Obj, validationFunctions);
+  }
+}
+
+function CertificateDetails(letterUpdateDetails, generalDetails) {
+  $("#ceritificateDetails").show();
+  $("#ceritificateDetails").empty();
+
+  letterUpdateDetails.forEach((item) => {
+    const type = item.type == "date" ? "text" : item.type;
+    let value;
+    if (generalDetails.hasOwnProperty(convertToCamelCase(item.name))) {
+      value = generalDetails[convertToCamelCase(item.name)];
+    } else {
+      const serviceSpecific = JSON.parse(generalDetails.serviceSpecific);
+      if (serviceSpecific.hasOwnProperty(item.name)) {
+        value = serviceSpecific[item.name];
+      }
+    }
+    $("#ceritificateDetails").append(`
+          <div class="row mt-2">
+              <div class="col-sm-6">
+                <label>${item.label}</label>
+                <input type="${type}" class="form-control" name="${item.name}" id="${item.name}" value="${value}" disabled/>
+              </div>
+              <div class="col-sm-6">
+                <label>New ${item.label}</label>
+                <input type="${type}" class="form-control" name="new${item.name}" id="new${item.name}" />
+              </div>
+          </div>
+      `);
+
+    attachValidations(item);
+  });
 }
