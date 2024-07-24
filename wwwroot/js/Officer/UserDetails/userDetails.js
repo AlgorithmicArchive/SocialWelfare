@@ -12,7 +12,6 @@ $(document).ready(function () {
   const documents = JSON.parse(generalDetails.documents);
   const previousActions = ApplicationDetails.previousActions;
   const canOfficerTakeAction = ApplicationDetails.canOfficerTakeAction;
-  console.log(ApplicationDetails);
 
   const excludedProperties = [
     "phase",
@@ -26,7 +25,6 @@ $(document).ready(function () {
     "service",
   ];
 
-  console.log(updateObject);
   // Set user image
   $("#userImage").attr("src", generalDetails.applicantImage);
 
@@ -45,7 +43,7 @@ $(document).ready(function () {
     $("#takeAction").remove();
   }
 
-$("#action").on("change", function () {
+  $("#action").on("change", function () {
     const value = $(this).val();
     $("#extra").empty().removeClass("border border-dark p-3");
 
@@ -77,7 +75,6 @@ $("#action").on("change", function () {
         $("#extra").append(`<hr>`);
       });
     } else if (value == "Update") {
-      console.log(updateColumn);
       $("#extra").append(
         `<label>${updateColumn.label}</label><input type="${
           updateColumn.type == "date" ? "text" : updateColumn.type

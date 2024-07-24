@@ -139,6 +139,46 @@ input:focus{
 }
 
 
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 150px; /* Adjust the width as needed */
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Track color */
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #888; /* Thumb color */
+    border-radius: 10px; /* Rounded corners (optional) */
+    border: 3px solid #f1f1f1; /* Border color to match the track */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555; /* Color on hover */
+}
+
+/* Firefox */
+html {
+    scrollbar-width: auto; /* Thin or auto */
+    scrollbar-color: #878787 #f1f1f1; /* Thumb and track color */
+}
+
+/* Internet Explorer 10+ */
+body {
+    -ms-overflow-style: none; /* Hide default scrollbar */
+}
+
+body::-webkit-scrollbar {
+    display: none; /* Hide Webkit scrollbar */
+}
+
+/* Custom scrollbar for IE and Edge using polyfill or JavaScript */
+
+/* Custom Scrollbar Polyfill (for browsers that do not support CSS custom properties) */
+
+
+
 @media only screen and (max-width: 600px) {
     .sm-hidden{
         display: none;

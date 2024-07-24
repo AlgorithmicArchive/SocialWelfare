@@ -43,7 +43,6 @@
 
 <script>
     const details = @Html.Raw(Json.Serialize(Model));
-    console.log(details)
     $("#username").text("Username: " + details.userDetails["username"]);
     $("#email").text("Email: " + details.userDetails["email"]);
     $("#mobileNumber").text("Mobile Number: " + details.userDetails["mobileNumber"]);

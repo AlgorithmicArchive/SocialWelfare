@@ -1,21 +1,28 @@
-$(document).ready(function () {
-  const Applications = list;
+let Applications;
+let poolApplications;
+let poolIdList = [];
+let finalList = [];
+
+function onSelect(list) {
+  Applications = list;
   if (Applications.Type == "Pending") {
     PendingTable(Applications);
     PoolTable(Applications);
   } else if (Applications.Type == "Sent") SentTable(Applications);
   else if (Applications.Type == "Sanction") MiscellaneousTable(Applications);
 
-  let poolApplications = Applications.PoolList;
-  let poolIdList = [];
-  let finalList = [];
+  $("#listTable").show();
 
+  poolApplications == Applications.PoolList;
   if (poolApplications && poolApplications.length > 0) {
     poolApplications.forEach((element) => {
       poolIdList.push(element.applicationId);
     });
     $("#containerSwitcher").show();
   }
+}
+
+$(document).ready(function () {
   $(document).on("change", ".pool", function () {
     const currentVal = $(this).val();
     if ($(this).is(":checked")) {
@@ -122,7 +129,7 @@ $(document).ready(function () {
   });
 
   $("#sanctionAll").on("click", () =>
-    SanctionAll(poolIdList,finalList, Applications.ServiceId)
+    SanctionAll(poolIdList, finalList, Applications.ServiceId)
   );
 
   $("#poolButton").on("click", function () {

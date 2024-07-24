@@ -1,84 +1,81 @@
-<div class="full-screen-section center-align flex-column px-1">
-    <div class="container shadow-lg rounded-border" style="max-height: 60vh;overflow-y: auto;">
-        <div class="row p-3">
-            <div class="col-sm-4">
-                <img id="userImage" src="/resources/profile.png" alt="Profile"
-                    class="img-fluid rounded-circle object-fit-contain border border-2 border-dark mx-auto"
-                    style="width: 200px; height:200px;">
-            </div>
-            <div class="col-sm-8">
-                <div class="row" id="personalDetails">
-                    <div class="col-sm-12">
-                        <p class="font-heading">Personal Details</p>
-                    </div>
+<div class="full-screen-section flex-column py-5">
+    <div class="container-fluid py-5">
+        <div class="container shadow-lg rounded-border" style="max-height: 60vh;overflow-y: auto;">
+            <div class="row p-3">
+                <div class="col-sm-4">
+                    <img id="userImage" src="/resources/profile.png" alt="Profile"
+                        class="img-fluid rounded-circle object-fit-contain border border-2 border-dark mx-auto"
+                        style="width: 200px; height:200px;">
                 </div>
-                <div class="row" id="addressDetails">
-                    <div class="col-sm-12">
-                        <p class="font-heading">Address Details</p>
+                <div class="col-sm-8">
+                    <div class="row" id="personalDetails">
+                        <div class="col-sm-12">
+                            <p class="font-heading">Personal Details</p>
+                        </div>
                     </div>
-                </div>
-                <div class="row" id="bankDetails">
-                    <div class="col-sm-12">
-                        <p class="font-heading">Bank Details</p>
+                    <div class="row" id="addressDetails">
+                        <div class="col-sm-12">
+                            <p class="font-heading">Address Details</p>
+                        </div>
                     </div>
-                </div>
-                <div class="row mt-2" id="showPreviousActions" style="display: none;">
-                    <div class="col-sm-12">
-                        <p class="font-heading">
-                            Previous Actions
-                        </p>
+                    <div class="row" id="bankDetails">
+                        <div class="col-sm-12">
+                            <p class="font-heading">Bank Details</p>
+                        </div>
                     </div>
-                    <div class="col-sm-12">
-                        <table class="table table-responsive table-bordered table-striped">
-                            <thead class="bg-dark text-white">
-                                <th>Officer</th>
-                                <th>Action</th>
-                                <th>Remarks</th>
-                            </thead>
-                            <tbody id="previousActions"></tbody>
-                        </table>
+                    <div class="row mt-2" id="showPreviousActions" style="display: none;">
+                        <div class="col-sm-12">
+                            <p class="font-heading">
+                                Previous Actions
+                            </p>
+                        </div>
+                        <div class="col-sm-12">
+                            <table class="table table-responsive table-bordered table-striped">
+                                <thead class="bg-dark text-white">
+                                    <th>Officer</th>
+                                    <th>Action</th>
+                                    <th>Remarks</th>
+                                </thead>
+                                <tbody id="previousActions"></tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-                <div class="row" id="documents">
-                    <div class="col-sm-12">
-                        <p class="font-heading">Documents</p>
+                    <div class="row" id="documents">
+                        <div class="col-sm-12">
+                            <p class="font-heading">Documents</p>
+                        </div>
                     </div>
-                </div>
 
+                </div>
             </div>
         </div>
     </div>
-    <button id="takeAction" class="btn btn-dark width-25 mt-4" data-bs-toggle="modal"
-        data-bs-target="#exampleModal">Take
-        Action</button>
+
+    <div class="container-fluid py-5">
+        <div class="container">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Action To Take</h1>
+                </div>
+                <div class="modal-body">
+                    <div class="container d-flex flex-column gap-2">
+                        <label for="Choose Action">Choose Action</label>
+                        <select name="action" id="action" class="form-select">
+                        </select>
+                        <div id="extra" style="max-height:240px;overflow-y:auto">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <button class="d-none" id="showDoc" data-bs-toggle="modal" data-bs-target="#showDocument"></button>
 <button class="d-none" id="sanctionButton" data-bs-toggle="modal" data-bs-target="#showSanctionLetter"></button>
 
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
-                <h1 class="modal-title fs-5" id="exampleModalLabel">Action To Take</h1>
-                <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="container d-flex flex-column gap-2">
-                    <label for="Choose Action">Choose Action</label>
-                    <select name="action" id="action" class="form-select">
-                    </select>
-                    <div id="extra" style="max-height:240px;overflow-y:auto">
-
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer bg-dark">
-                <button type="button" class="btn btn-light" id="closeExmpleModal" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div class="modal" id="showDocument">
     <div class="modal-dialog modal-xl">

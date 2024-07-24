@@ -22,6 +22,7 @@ label{
     box-shadow: none;
 }
 
+
 .form-control:read-only,.form-select:read-only{
     background-color: transparent;
 }

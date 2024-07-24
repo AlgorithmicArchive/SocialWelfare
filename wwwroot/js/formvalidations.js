@@ -21,23 +21,22 @@ function setErrorSpan(id, msg) {
 }
 
 function attachValidation(field, validationFunctions) {
-  $(document).on("input blur change", "#" + field.name, function () {
+  const name = field.type == "radio" ? field.name + "Name" : field.name;
+  $(document).on("input blur change", "#" + name, function () {
     for (let i = 0; i < validationFunctions.length; i++) {
-      let msg = validationFunctions[i](field, $("#" + field.name).val());
+      let msg = validationFunctions[i](field, $("#" + name).val());
       if (msg.length != 0) return;
     }
   });
 }
 
 function notEmpty(field, value) {
+  const name = field.type == "radio" ? field.name + "Name" : field.name;
   let msg = "";
-  if (
-    ($("#" + field.name).is("select") && value == "Please Select") ||
-    value == ""
-  ) {
+  if (($("#" + name).is("select") && value == "Please Select") || value == "") {
     msg = "This field is required.";
   }
-  setErrorSpan(field.name, msg);
+  setErrorSpan(name, msg);
   return msg;
 }
 

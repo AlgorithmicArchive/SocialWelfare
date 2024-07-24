@@ -45,19 +45,19 @@ $(document).ready(function () {
     officer: {
       left: [
         { label: "Home", link: "/Officer/Index" },
-        {
-          label: "Message Inbox",
-          dropdown: [
-            {
-              label: "Recieved Applications",
-              link: "/Officer/Applications?type=Pending",
-            },
-            {
-              label: "Sent Applications",
-              link: "/Officer/Applications?type=Sent",
-            },
-          ],
-        },
+        // {
+        //   label: "Message Inbox",
+        //   dropdown: [
+        //     {
+        //       label: "Recieved Applications",
+        //       link: "/Officer/Applications?type=Pending",
+        //     },
+        //     {
+        //       label: "Sent Applications",
+        //       link: "/Officer/Applications?type=Sent",
+        //     },
+        //   ],
+        // },
       ],
       right: [
         { label: "DSC Management", link: "/Officer/DSCManagement" },

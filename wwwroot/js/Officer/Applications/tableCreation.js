@@ -32,29 +32,9 @@ function PendingTable(Applications) {
   initializeDataTable("applicationsTable", "tbody", pendingList);
 }
 function SentTable(Applications) {
-  $(".parent-pool").parent().parent().remove();
-  const tbody =
-    Applications.SentApplications.length > 0
-      ? Applications.SentApplications.map(
-          (element, index) =>
-            `<tr>
-                <td>${index + 1}</td>
-                <td>${element.applicationId}</td>
-                <td>${element.applicantName}</td>
-                <td>${
-                  element.canPull
-                    ? `<button class="btn btn-dark w-100" onclick='PullApplication("${element.applicationId}");'>Pull</button>`
-                    : "Cannot Pull"
-                }</td>
-          </tr>
-          `
-        ).join("")
-      : `<tr><td colspan="4" class="fw-bold text-center">NO RECORD</td></tr>`;
-
-  Table("tbody", tbody);
-
   $("#tbody").empty();
-
+  $(".parent-pool").parent().parent().remove();
+  console.log($(".parent-pool").parent().parent());
   let pendingList = [];
   pendingList = Applications.SentApplications.map((element) => {
     result = {
@@ -81,17 +61,18 @@ function PoolTable(Applications) {
 }
 
 function MiscellaneousTable(Applications) {
-  if (Applications.MiscellaneousList.length > 0) {
-    const tbody = Applications.MiscellaneousList.map(
-      (element, index) => `
-      <tr>
-        <td>${index + 1}</td>
-        <td>${element.applicationId}</td>
-        <td>${element.applicantName}</td>
-        <td>NONE</td>
-      </tr>
-  `
-    );
-    Table("tbody", tbody);
-  }
+  $("#tbody").empty();
+  $(".parent-pool").parent().parent().remove();
+  let pendingList = [];
+  pendingList = Applications.MiscellaneousList.map((element) => {
+    result = {
+      applicationId: element.applicationId,
+      applicantName: element.applicantName,
+      button: element.canPull
+        ? `<button class="btn btn-dark w-100" onclick='PullApplication("${element.applicationId}");'>Pull</button>`
+        : "Cannot Pull",
+    };
+    return result;
+  });
+  initializeDataTable("applicationsTable", "tbody", pendingList);
 }

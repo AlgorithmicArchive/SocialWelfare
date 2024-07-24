@@ -1,7 +1,7 @@
-<div class="full-screen-section center-align flex-column py-5">
-    <div class="container mt-5">
-        <div class="row p-5 justify-content-between">
-            <div class="col-md-4 mt-2">
+<div class="full-screen-section flex-column py-5">
+    <div class="container-fluid mt-5">
+        <div class="row p-5 justify-content-between w-100">
+            <div class="col-md-3 mt-2">
                 <div class="card border-0 p-3 py-5 rounded-border"
                     style="cursor: pointer;background-color: #FFC107;color:#000" data-bs-toggle="tooltip"
                     data-bs-placement="top">
@@ -13,7 +13,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4 mt-2">
+            <div class="col-md-3 mt-2">
                 <div class="card border-0 p-3 py-5 rounded-border"
                     style="cursor: pointer;background-color: #007BFF;color:#fff" data-bs-toggle="tooltip"
                     data-bs-placement="top">
@@ -25,7 +25,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4 mt-2">
+            <div class="col-md-3 mt-2">
                 <div class="card border-0 p-3 py-5 rounded-border"
                     style="cursor: pointer;background-color: #28A745;color:#fff" data-bs-toggle="tooltip"
                     data-bs-placement="top">
@@ -37,7 +37,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4 mt-2">
+            <div class="col-md-3 mt-2">
                 <div class="card border-0 p-3 py-5 rounded-border"
                     style="cursor: pointer;background-color: #DC3545;color:#fff" data-bs-toggle="tooltip"
                     data-bs-placement="top">
@@ -49,7 +49,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4 mt-2">
+            <div class="col-md-3 mt-2">
                 <div class="card border-0 p-3 py-5 rounded-border"
                     style="cursor: pointer;background-color: #FD7E14;color:#fff" data-bs-toggle="tooltip"
                     data-bs-placement="top">
@@ -61,13 +61,63 @@
                 </div>
             </div>
 
-            <div class="col-md-4"></div>
         </div>
     </div>
+    <div class="container-fluid mt-5" id="listTable" style="display: none;">
+        <div class="container center-align gap-2 mb-2" id="containerSwitcher" style="display: none;">
+            <button class="btn btn-dark" id="mainButton">Inbox</button>
+            <button class="btn btn-secondary" id="poolButton">Pool</button>
+        </div>
+        <div id="mainContainer" class="container-fluid">
+            <table class="table table-striped table-hover table-bordered" id="applicationsTable">
+                <thead class="bg-dark text-white">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" class="">
+                            <span class="d-flex gap-2">
+                                <input type="checkbox" class="form-check d-flex parent-pool" /><span>Pool</span>
+                            </span>
+                        </th>
+                        <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
+                        <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
+                        <th scope="col">Option</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+            </table>
+        </div>
+        <div id="PoolContainer" class="container" style="display: none;">
+            <table class="table table-striped table-hover table-bordered" id="poolTable">
+                <thead class="bg-dark text-white">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" class="">
+                            <span class="d-flex gap-2">
+                                <input type="checkbox" class="form-check d-flex poolList-parent" /><span>Pool</span>
+                            </span>
+                        </th>
+                        <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
+                        <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
+                    </tr>
+                </thead>
+                <tbody id="poolArray">
+                </tbody>
+            </table>
 
+            <div class="d-flex gap-2 justify-content-center mt-5">
+                <button class="btn btn-dark d-flex" id="sanctionAll" disabled>Sanction All</button>
+                <button class="btn btn-dark d-flex" id="transferBack" disabled>Transfer Back to Inbox</button>
+            </div>
+
+        </div>
+    </div>
 </div>
 
 <script>
     const countList = @Html.Raw(Json.Serialize(Model));
 </script>
+<script src="/js/pagination.js"></script>
+<script src="/js/Officer/Applications/helperFunctions.js"></script>
+<script src="/js/Officer/Applications/tableCreation.js"></script>
+<script src="/js/Officer/Applications/script.js"></script>
 <script src="/js/Officer/index.js"></script>

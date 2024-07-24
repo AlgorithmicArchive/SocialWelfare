@@ -6,6 +6,12 @@ $(document).ready(function () {
   $("#reject").text(countList.reject);
   $("#return").text(countList.return);
 
+  const canSaction = countList.canSanction;
+  const canForward = countList.canForward;
+
+  if (!canSaction) $("#sanction").parent().parent().parent().remove();
+  if (!canForward) $("#forward").parent().parent().parent().remove();
+
   $('[data-bs-toggle="tooltip"]').tooltip({
     trigger: "manual", // Prevents automatic display on hover
     placement: "top",
@@ -26,13 +32,31 @@ $(document).ready(function () {
       setTimeout(() => {
         $(this).tooltip("hide");
       }, 2000);
-    } else if (property == "pending")
-      window.location.href = "/Officer/Applications?type=Pending";
-    else if (property == "forward" || property == "return")
-      window.location.href = "/Officer/Applications?type=Sent";
-    else if (property == "sanction")
-      window.location.href = "/Officer/Applications?type=Sanction";
-    else if (property == "reject")
-      window.location.href = "/Officer/Applications?type=Reject";
+    } else if (property == "pending") {
+      fetch("/Officer/Applications?type=Pending")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status) onSelect(data.applicationList);
+        });
+      // window.location.href = "/Officer/Applications?type=Pending";
+    } else if (property == "forward" || property == "return") {
+      fetch("/Officer/Applications?type=Sent")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status) onSelect(data.applicationList);
+        });
+    } else if (property == "sanction") {
+      fetch("/Officer/Applications?type=Sanction")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status) onSelect(data.applicationList);
+        });
+    } else if (property == "reject") {
+      fetch("/Officer/Applications?type=Reject")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status) onSelect(data.applicationList);
+        });
+    }
   });
 });

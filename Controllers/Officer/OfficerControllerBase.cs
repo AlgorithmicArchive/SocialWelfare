@@ -31,15 +31,14 @@ namespace SocialWelfare.Controllers.Officer
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
             var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
-
-
+            bool canSanction = true;
+            bool canForward = true;
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
-
 
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails["AccessLevel"]?.ToString() ?? string.Empty;
 
-            SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
+            SqlParameter AccessLevelCode = new("@AccessLevelCode", DBNull.Value);
             switch (accessLevel)
             {
                 case "Tehsil":
@@ -64,12 +63,9 @@ namespace SocialWelfare.Controllers.Officer
 
             foreach (var application in applications)
             {
-                _logger.LogInformation($"---------------APPLICATION ID: {application.ApplicationId}------------");
-
                 var Phases = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(application.Phase);
                 foreach (var phase in Phases!)
                 {
-                    _logger.LogInformation($"Officer: {officerDesignation == phase["Officer"]} ACTION TAKEN : {phase["ActionTaken"]}");
                     if (officerDesignation == phase["Officer"])
                     {
                         switch (phase["ActionTaken"])
@@ -95,13 +91,24 @@ namespace SocialWelfare.Controllers.Officer
                 }
             }
 
+            var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(dbcontext.Services.FirstOrDefault(service => service.ServiceId == 1)!.WorkForceOfficers!);
+            foreach (var officer in WorkForceOfficers!)
+            {
+                if (officer["Designation"] == officerDesignation)
+                {
+                    canSanction = officer["canSanction"];
+                    canForward = officer["canForward"];
+                }
+            }
             var countList = new
             {
                 Pending = PendingCount,
                 Forward = ForwardCount,
                 Sanction = SanctionCount,
                 Reject = RejectCount,
-                Return = ReturnCount
+                Return = ReturnCount,
+                CanSanction = canSanction,
+                CanForward = canForward
             };
 
             return View(countList);
@@ -124,7 +131,7 @@ namespace SocialWelfare.Controllers.Officer
                 ApplicationList = RejectApplications(Officer!);
 
 
-            return View(ApplicationList);
+            return Json(new { status = true, ApplicationList });
         }
         [HttpPost]
         public IActionResult GetWorkForceOfficers([FromForm] IFormCollection form)

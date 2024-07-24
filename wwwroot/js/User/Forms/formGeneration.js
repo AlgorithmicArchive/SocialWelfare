@@ -25,18 +25,46 @@ function generateServiceForm(formData) {
 
 // Create Input
 function createInput(obj, columSize, formNo) {
-  // Attach validation functions if available
+  attachValidations(obj);
+  const { details, key, readonly } = determineDetailsAndReadonlyStatus(
+    obj,
+    formNo
+  );
+  const label = createLabel(obj);
+  const value = getValue(details, key);
+  appendFormData(formNo, obj, details, key, value);
+
+  switch (obj.type) {
+    case "select":
+      return createSelectInput(obj, columSize, label, value, readonly);
+    case "radio":
+      return createRadioInput(obj, columSize, label, value, readonly);
+    default:
+      return createOtherInputTypes(
+        formNo,
+        obj,
+        details,
+        columSize,
+        label,
+        value,
+        readonly
+      );
+  }
+}
+
+function attachValidations(obj) {
   const validationFunctions =
     obj.validationFunctions?.map((item) => validationFunctionsList[item]) || [];
   if (validationFunctions.length) {
     attachValidation(obj, validationFunctions);
   }
+}
 
+function determineDetailsAndReadonlyStatus(obj, formNo) {
   let details = null;
   let key;
   let readonly = true;
 
-  // Determine read-only status and fetch details based on form number
   if (ApplicationId != null) {
     const editList = JSON.parse(application.generalDetails.editList || "[]");
     readonly = !editList.includes(obj.name);
@@ -98,9 +126,18 @@ function createInput(obj, columSize, formNo) {
     readonly = false;
   }
 
-  const label = `<label for="${obj.name}" title="${obj.label}">${obj.label}</label>`;
-  let value = details ? details[key] || "" : "";
-  // Append form data
+  return { details, key, readonly };
+}
+
+function createLabel(obj) {
+  return `<label for="${obj.name}" title="${obj.label}">${obj.label}</label>`;
+}
+
+function getValue(details, key) {
+  return details ? details[key] || "" : "";
+}
+
+function appendFormData(formNo, obj, details, key, value) {
   if (details != null) {
     const appendForm =
       formNo === 0
@@ -121,50 +158,58 @@ function createInput(obj, columSize, formNo) {
 
     appendForm.append(obj.name, value);
   }
+}
 
-  // Handle select input type
-  if (obj.type === "select") {
-    const options = obj.options || [];
-    const selectOptions = options
-      .map((item) => `<option value="${item}">${item}</option>`)
-      .join("");
-    return `
-      <div class="${columSize} mb-2">
-        ${label}
-        <select class="form-select" name="${obj.name}" id="${obj.name}" ${
-      readonly ? "disabled" : ""
-    } value="${value}">
-          ${selectOptions}
-        </select>
-      </div>
-    `;
-  }
+function createSelectInput(obj, columSize, label, value, readonly) {
+  const options = obj.options || [];
+  const selectOptions = options
+    .map((item) => `<option value="${item}">${item}</option>`)
+    .join("");
+  return `
+    <div class="${columSize} mb-2">
+      ${label}
+      <select class="form-select" name="${obj.name}" id="${obj.name}" ${
+    readonly ? "disabled" : ""
+  } value="${value}">
+        ${selectOptions}
+      </select>
+    </div>
+  `;
+}
 
-  // Handle radio input type
-  if (obj.type === "radio") {
-    const radioOptions = obj.options
-      .map(
-        (item) => `
-      <input type="radio" class="form-check-input ${obj.name}" name="${obj.name}" value="${item}" disabled="${readonly}">
+function createRadioInput(obj, columSize, label, value, readonly) {
+  const radioOptions = obj.options
+    .map(
+      (item) => `
+      <input type="radio" class="form-check-input ${obj.name}" name="${
+        obj.name
+      }" value="${item}" ${readonly ? "disabled" : ""}>
       <span class="px-1 pe-4">${item}</span>
     `
-      )
-      .join("");
+    )
+    .join("");
 
-    return `
-      <div class="${columSize} mb-2">
-        ${radioOptions}
-        <input type="text" class="form-control" id="${obj.label}" name="${obj.label}" value="${value}"/>
-      </div>
-    `;
-  }
+  return `
+    <div class="${columSize} mb-2">
+      ${radioOptions}
+      <input type="text" class="form-control" id="${obj.label}" name="${obj.label}" value="${value}"/>
+    </div>
+  `;
+}
 
-  // Handle other input types
+function createOtherInputTypes(
+  formNo,
+  obj,
+  details,
+  columSize,
+  label,
+  value,
+  readonly
+) {
   const classType = obj.type === "checkbox" ? "form-check" : "form-control";
   const maxLength = obj.maxLength || 100;
   const accept = obj.type === "file" ? obj.accept : null;
 
-  // Set profile image if applicable
   if (ApplicationId != null && obj.name === "ApplicantImage") {
     $("#profile").attr("src", value);
   }
@@ -188,7 +233,9 @@ function createInput(obj, columSize, formNo) {
   }" id="${obj.name}"
         placeholder="${obj.type == "date" ? "dd/mm/yyyy" : obj.label}"
         maxlength="${maxLength}"${acceptAttribute} value="${value}" ${readOnlyAttribute} ${
-    PresentAddressId == PermanentAddressId ? "checked" : ""
+    PresentAddressId != null && PresentAddressId == PermanentAddressId
+      ? "checked"
+      : ""
   }>
     </div>
   `;
