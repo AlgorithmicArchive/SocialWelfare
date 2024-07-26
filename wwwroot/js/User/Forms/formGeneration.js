@@ -6,23 +6,32 @@ function generateServiceForm(formData) {
   appendFormFields($("#form4 .row"), formData[4].fields, "col-sm-6", 4);
 
   getDistricts().then((options) => {
-    options.forEach((option) => {
-      $("[id*='district'], [id*='District']").append(option);
-    });
+    // Append the options to all relevant select elements first
     $("[id*='district'], [id*='District']").each(function () {
-      const isOldValue = $(this).attr("value");
-      const id = $(this).attr("id");
+      const select = $(this);
+      options.forEach((option) => {
+        select.append(option);
+      });
+    });
+
+    // Now, process each select element to restore the old value
+    $("[id*='district'], [id*='District']").each(function () {
+      const select = $(this);
+      const isOldValue = select.val(); // Use val() to get the current value
+      const id = select.attr("id");
+
       if (isOldValue) {
         if (/^\d+$/.test(isOldValue)) {
-          $(`#${id} option[value="${isOldValue}"]`)
-            .prop("selected", true)
-            .trigger("change");
+          const optionElement = $(`#${id} option[value="${isOldValue}"]`);
+          if (optionElement.length) {
+            optionElement.prop("selected", true);
+            select.trigger("change");
+          }
         }
       }
     });
   });
 }
-
 // Create Input
 function createInput(obj, columSize, formNo) {
   attachValidations(obj);
@@ -30,15 +39,21 @@ function createInput(obj, columSize, formNo) {
     obj,
     formNo
   );
+  let border = "";
+  if (returnToEdit != null && returnToEdit) {
+    border = readonly
+      ? " border border-danger "
+      : " border border-success border-3 ";
+  }
   const label = createLabel(obj);
   const value = getValue(details, key);
   appendFormData(formNo, obj, details, key, value);
 
   switch (obj.type) {
     case "select":
-      return createSelectInput(obj, columSize, label, value, readonly);
+      return createSelectInput(obj, columSize, label, value, readonly, border);
     case "radio":
-      return createRadioInput(obj, columSize, label, value, readonly);
+      return createRadioInput(obj, columSize, label, value, readonly, border);
     default:
       return createOtherInputTypes(
         formNo,
@@ -47,7 +62,8 @@ function createInput(obj, columSize, formNo) {
         columSize,
         label,
         value,
-        readonly
+        readonly,
+        border
       );
   }
 }
@@ -160,7 +176,7 @@ function appendFormData(formNo, obj, details, key, value) {
   }
 }
 
-function createSelectInput(obj, columSize, label, value, readonly) {
+function createSelectInput(obj, columSize, label, value, readonly, border) {
   const options = obj.options || [];
   const selectOptions = options
     .map((item) => `<option value="${item}">${item}</option>`)
@@ -168,16 +184,16 @@ function createSelectInput(obj, columSize, label, value, readonly) {
   return `
     <div class="${columSize} mb-2">
       ${label}
-      <select class="form-select" name="${obj.name}" id="${obj.name}" ${
-    readonly ? "disabled" : ""
-  } value="${value}">
+      <select class="form-select ${border}" name="${obj.name}" id="${
+    obj.name
+  }" ${readonly ? "disabled" : ""} value="${value}">
         ${selectOptions}
       </select>
     </div>
   `;
 }
 
-function createRadioInput(obj, columSize, label, value, readonly) {
+function createRadioInput(obj, columSize, label, value, readonly, border) {
   const radioOptions = obj.options
     .map(
       (item) => `
@@ -192,7 +208,9 @@ function createRadioInput(obj, columSize, label, value, readonly) {
   return `
     <div class="${columSize} mb-2">
       ${radioOptions}
-      <input type="text" class="form-control" id="${obj.label}" name="${obj.label}" value="${value}"/>
+      <input type="text" class="form-control ${border}" id="${
+    obj.label
+  }" name="${obj.label}" value="${value}" ${readonly ? "readonly" : ""}/>
     </div>
   `;
 }
@@ -204,7 +222,8 @@ function createOtherInputTypes(
   columSize,
   label,
   value,
-  readonly
+  readonly,
+  border
 ) {
   const classType = obj.type === "checkbox" ? "form-check" : "form-control";
   const maxLength = obj.maxLength || 100;
@@ -228,7 +247,7 @@ function createOtherInputTypes(
   return `
     <div class="${columSize} mb-2">
       ${formNo == 4 && obj.type == "file" ? "<label></label>" : label}
-      <input class="${classType}${extraClasses}" type="${inputType}" name="${
+      <input class="${classType}${extraClasses}${border}" type="${inputType}" name="${
     obj.name
   }" id="${obj.name}"
         placeholder="${obj.type == "date" ? "dd/mm/yyyy" : obj.label}"

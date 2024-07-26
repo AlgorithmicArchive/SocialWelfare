@@ -20,8 +20,7 @@ $(document).ready(function () {
   });
 
   $(document).on("click", ".file-input", function () {
-    if (!$(this).prop("readonly"))
-      $(this).attr("type", "file").trigger("click");
+    if (!$(this).prop("readonly")) $(this).attr("type", "file");
   });
 
   $("#next").click(() => {

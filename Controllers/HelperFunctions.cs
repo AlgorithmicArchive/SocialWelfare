@@ -152,7 +152,6 @@ public class UserHelperFunctions
             dbcontext.ApplicationsHistories.Add(newHistory);
             dbcontext.SaveChanges();
 
-            Console.WriteLine("New history record inserted.");
         }
         else
         {
@@ -168,7 +167,6 @@ public class UserHelperFunctions
             // Save the changes to the database
             dbcontext.SaveChanges();
 
-            Console.WriteLine("History record updated.");
         }
     }
 

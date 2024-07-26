@@ -182,14 +182,12 @@ function ProceedAction(applicationId, officer, letterUpdateDetails) {
     const obj = {};
     letterUpdateDetails.forEach((item) => {
       const value = $("#new" + item.name).val();
-      if (value != "") {
-        obj[item.name] = {
-          OldValue: $("#" + item.name).val(),
-          NewValue: $("#new" + item.name).val(),
-          UpdatedBy: ApplicationDetails.currentOfficer,
-          UpdatedAt: formatDate(),
-        };
-      }
+      obj[item.name] = {
+        OldValue: $("#" + item.name).val(),
+        NewValue: value,
+        UpdatedBy: ApplicationDetails.currentOfficer,
+        UpdatedAt: formatDate(),
+      };
     });
     formdata.append("letterUpdateDetails", JSON.stringify(obj));
   }

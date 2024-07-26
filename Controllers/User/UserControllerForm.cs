@@ -191,7 +191,7 @@ namespace SocialWelfare.Controllers.User
             if (form.ContainsKey("returnToEdit"))
             {
                 helper.UpdateApplication("EditList", "[]", ApplicationId);
-                helper.UpdateApplicationHistory(applicationId, "Citizen", $"Edited and returned to {workForceOfficers[0].Designation}", "NULL");
+                helper.UpdateApplicationHistory(applicationId, "Citizen", "Edited and returned to " + workForceOfficers[0].Designation, "NULL");
             }
             else
             {
@@ -210,12 +210,12 @@ namespace SocialWelfare.Controllers.User
 
         public async Task<IActionResult> UpdateGeneralDetails([FromForm] IFormCollection form)
         {
+            _logger.LogInformation("------HERE UPDATE GENERAL DETAILS------------");
+
             string ApplicationId = form["ApplicationId"].ToString();
             var parameters = new List<SqlParameter>();
             var applicationIdParameter = new SqlParameter("@ApplicationId", ApplicationId);
             parameters.Add(applicationIdParameter);
-
-
             foreach (var key in form.Keys)
             {
                 SqlParameter parameter;
@@ -232,15 +232,10 @@ namespace SocialWelfare.Controllers.User
                 var parameter = new SqlParameter($"@{file.Name}", path);
                 parameters.Add(parameter);
             }
-
-
             var sqlParams = string.Join(", ", parameters.Select(p => p.ParameterName + "=" + p.ParameterName));
             var sqlQuery = $"EXEC UpdateApplicationColumns {sqlParams}";
-
             // Execute SQL command
             dbcontext.Database.ExecuteSqlRaw(sqlQuery, parameters.ToArray());
-
-
             return Json(new { status = true, ApplicationId });
         }
         public IActionResult UpdateAddressDetails([FromForm] IFormCollection form)
@@ -296,9 +291,6 @@ namespace SocialWelfare.Controllers.User
         public IActionResult UpdateEditList([FromForm] IFormCollection form)
         {
 
-            _logger.LogInformation($"WorkForceOfficer: {form["workForceOficers"].ToString()}");
-
-
             var workForceOfficers = JsonConvert.DeserializeObject<List<dynamic>>(form["workForceOfficers"].ToString());
 
             List<object> Phases = [];
@@ -317,12 +309,9 @@ namespace SocialWelfare.Controllers.User
                 Phases.Add(phase);
             }
 
-            // Update Phase in Applications Table
             helper.UpdateApplication("Phase", JsonConvert.SerializeObject(Phases.ToArray()), new SqlParameter("@ApplicationId", form["ApplicationId"].ToString()));
-            // Update/Insert Documents in Applications Table
-
-
             helper.UpdateApplication("EditList", "[]", new SqlParameter("@ApplicationId", form["ApplicationId"].ToString()));
+            helper.UpdateApplicationHistory(form["ApplicationId"].ToString(), "Citizen", "Edited and returned to " + workForceOfficers[0].Designation, "NULL");
 
 
             return Json(new { status = true });

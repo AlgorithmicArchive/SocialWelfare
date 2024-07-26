@@ -56,6 +56,12 @@
 </div>
 
 <script>
+    const url = window.location.href;
+    const urlObj = new URL(url);
+    const params = new URLSearchParams(urlObj.search);
+    const applicationId = params.get('ApplicationId');
+    const returnToEdit = params.get('returnToEdit');
+
     const application = @Html.Raw(Json.Serialize(Model));
     const generalForm = new FormData();
     const addressForm = new FormData();

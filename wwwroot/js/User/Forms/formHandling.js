@@ -138,16 +138,20 @@ function handleFormData(
   urlUpdate,
   formNo
 ) {
+  console.log(currentForm, originalForm);
   if (isFormDataEmpty(originalForm)) {
+    console.log("if");
     copyFormData(currentForm, originalForm);
     processApplication(originalForm, urlInsert);
   } else if (isEqual(currentForm, originalForm).length != 0) {
+    console.log("else if");
     const differingValues = arrayToFormData(isEqual(currentForm, originalForm));
     console.log(differingValues);
     differingValues.append("ApplicationId", ApplicationId);
     copyFormData(currentForm, originalForm);
     processApplication(formNo == 4 ? originalForm : differingValues, urlUpdate);
   } else if (application.returnToEdit && formNo == 4) {
+    console.log("RETURN TO EDIT");
     const workForceOfficers = JSON.parse(serviceContent.workForceOfficers);
     const formdata = new FormData();
     formdata.append("ApplicationId", ApplicationId);
@@ -162,6 +166,7 @@ function handleFormData(
   }
 }
 function processApplication(originalForm, url) {
+  console.log("URL", url);
   showSpinner();
   fetch(url, { method: "post", body: originalForm })
     .then((res) => res.json())

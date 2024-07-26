@@ -1,7 +1,6 @@
 function handleDistrictChange(districtSelector, tehsilSelector, blockSelector) {
   $(districtSelector).on("change", function () {
     const id = $(this).val();
-
     // Update the Tehsil select element
     getTehsils(id).then((option) => {
       $(tehsilSelector).empty().append(option); // Clear existing options and append new ones
@@ -47,4 +46,3 @@ function empytPermanent() {
   $("#PermanentPincode").val("");
   $("#PermanentDistrict").trigger("change"); // to trigger and empty the tehsil select tag
 }
-

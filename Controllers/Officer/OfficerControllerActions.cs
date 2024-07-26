@@ -1,7 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SocialWelfare.Models.Entities;
@@ -35,8 +34,6 @@ namespace SocialWelfare.Controllers.Officer
         public void Sanction(string ApplicationId, string Officer)
         {
             var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(ApplicationId);
-            var letterUpdateDetails = dbcontext.UpdatedLetterDetails.FirstOrDefault(up => up.ApplicationId == ApplicationId);
-            var existingLetterUpdateDetails = JsonConvert.DeserializeObject<List<dynamic>>(letterUpdateDetails!.UpdatedDetails.ToString());
 
             var sanctionObject = new Dictionary<string, string>
             {
@@ -52,16 +49,30 @@ namespace SocialWelfare.Controllers.Officer
                 ["PRESENT ADDRESS"] = preAddressDetails.Address!.ToUpper() + ", TEHSIL: " + preAddressDetails.Tehsil + ", DISTRICT: " + preAddressDetails.District + ", PIN CODE: " + preAddressDetails.Pincode,
                 ["PERMANENT ADDRESS"] = perAddressDetails.Address!.ToUpper() + ", TEHSIL: " + perAddressDetails.Tehsil + ", DISTRICT: " + perAddressDetails.District + ", PIN CODE: " + perAddressDetails.Pincode,
             };
-            if (existingLetterUpdateDetails != null && existingLetterUpdateDetails.Any())
+
+            var letterUpdateDetails = dbcontext.UpdatedLetterDetails.FirstOrDefault(up => up.ApplicationId == ApplicationId);
+
+            if (letterUpdateDetails != null)
             {
-                var lastElement = existingLetterUpdateDetails.Last();
-                foreach (var property in (JObject)lastElement)
+                var existingLetterUpdateDetails = JsonConvert.DeserializeObject<List<dynamic>>(letterUpdateDetails!.UpdatedDetails.ToString());
+
+                if (existingLetterUpdateDetails != null && existingLetterUpdateDetails.Count != 0)
                 {
-                    var key = ConvertCamelCaseToUppercaseWithSpaces(property.Key.ToString());
-                    var value = property.Value;
-                    var newValue = value!["NewValue"]!.ToString();
-                    if (newValue != "")
-                        sanctionObject[key] = newValue;
+                    var lastElement = existingLetterUpdateDetails.LastOrDefault();
+                    if (lastElement != null && lastElement is JObject)
+                    {
+                        foreach (var property in (JObject)lastElement!)
+                        {
+                            var key = ConvertCamelCaseToUppercaseWithSpaces(property.Key.ToString());
+                            var value = property.Value;
+                            if (value != null && value["NewValue"] != null)
+                            {
+                                var newValue = value["NewValue"]!.ToString();
+                                if (!string.IsNullOrEmpty(newValue))
+                                    sanctionObject[key] = newValue;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -191,28 +202,30 @@ namespace SocialWelfare.Controllers.Officer
             {
                 var newLetterUpdateDetails = JsonConvert.DeserializeObject<dynamic>(form["letterUpdateDetails"].ToString());
 
-                var letterUpdateDetails = dbcontext.UpdatedLetterDetails.FirstOrDefault(up => up.ApplicationId == applicationId);
+                if (newLetterUpdateDetails != null)
+                {
+                    var letterUpdateDetails = dbcontext.UpdatedLetterDetails.FirstOrDefault(up => up.ApplicationId == applicationId);
 
-                if (letterUpdateDetails != null)
-                {
-                    var existingLetterUpdateDetails = JsonConvert.DeserializeObject<List<dynamic>>(letterUpdateDetails!.UpdatedDetails.ToString());
-                    existingLetterUpdateDetails!.Add(newLetterUpdateDetails);
-                    letterUpdateDetails.UpdatedDetails = JsonConvert.SerializeObject(existingLetterUpdateDetails);
-                    dbcontext.UpdatedLetterDetails.Update(letterUpdateDetails);
-                    dbcontext.SaveChanges();
-                }
-                else
-                {
-                    letterUpdateDetails = new UpdatedLetterDetail
+                    if (letterUpdateDetails != null)
                     {
-                        ApplicationId = applicationId,
-                        UpdatedDetails = JsonConvert.SerializeObject(new List<dynamic> { newLetterUpdateDetails })
-                    };
+                        var existingLetterUpdateDetails = JsonConvert.DeserializeObject<List<dynamic>>(letterUpdateDetails!.UpdatedDetails.ToString());
+                        existingLetterUpdateDetails!.Add(newLetterUpdateDetails);
+                        letterUpdateDetails.UpdatedDetails = JsonConvert.SerializeObject(existingLetterUpdateDetails);
+                        dbcontext.UpdatedLetterDetails.Update(letterUpdateDetails);
+                        dbcontext.SaveChanges();
+                    }
+                    else
+                    {
+                        letterUpdateDetails = new UpdatedLetterDetail
+                        {
+                            ApplicationId = applicationId,
+                            UpdatedDetails = JsonConvert.SerializeObject(new List<dynamic> { newLetterUpdateDetails })
+                        };
 
-                    dbcontext.UpdatedLetterDetails.Add(letterUpdateDetails);
-                    dbcontext.SaveChanges();  // Ensure to save the changes here as well
+                        dbcontext.UpdatedLetterDetails.Add(letterUpdateDetails);
+                        dbcontext.SaveChanges();  // Ensure to save the changes here as well
+                    }
                 }
-
 
                 Sanction(applicationId, officerDesignation);
             }

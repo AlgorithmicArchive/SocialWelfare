@@ -135,7 +135,7 @@ namespace SocialWelfare.Controllers.Officer
             var applicationList = dbcontext.Applications.FromSqlRaw(
                 "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @AccessLevel, @AccessLevelCode, @ServiceId",
                 new SqlParameter("@OfficerDesignation", officerDesignation),
-                new SqlParameter("@ActionTaken", "Forward,Return"),
+                new SqlParameter("@ActionTaken", "Forward,Return,ReturnToEdit"),
                 new SqlParameter("@AccessLevel", accessLevel),
                 AccessLevelCode,
                 new SqlParameter("@ServiceId", 1)).ToList();

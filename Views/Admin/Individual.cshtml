@@ -3,20 +3,17 @@
     ViewData["Title"] = "Inidividual";
 }
 
-<div class="container-fluid center-align flex-column p-5" style="max-height: 100vh;overflow-y: auto;">
+<div class="container-fluid center-align flex-column p-5">
     <p class="fs-4 text-center">Get Application Flow</p>
 
     <input class="form-control width-50 d-flex mx-auto" type="text" name="applicationId" id="applicationId"
         placeholder="Application Id">
 
     <button class="btn btn-dark d-flex mx-auto mt-2" id="getFlow">Get Application Flow</button>
+    <p class="text-danger fs-5 fw-bold mt-2" id="errorMsg"></p>
 
     <div class="container d-flex flex-column aling-items-center mt-5" id="displayList" style="display: block;">
 
-    </div>
-    <div id="buttons" class="flex gap-3 justify-content-center mt-5" style="display: none;">
-        <button class="btn btn-dark" id="previous">Previous</button>
-        <button class="btn btn-dark" id="next">Next</button>
     </div>
 
     <div class="custom-card mt-5 flex-column fs-3" id="displayDetails" style="display: none;">

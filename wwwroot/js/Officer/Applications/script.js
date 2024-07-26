@@ -13,7 +13,8 @@ function onSelect(list) {
 
   $("#listTable").show();
 
-  poolApplications == Applications.PoolList;
+  poolApplications = Applications.PoolList;
+  console.log(poolApplications);
   if (poolApplications && poolApplications.length > 0) {
     poolApplications.forEach((element) => {
       poolIdList.push(element.applicationId);

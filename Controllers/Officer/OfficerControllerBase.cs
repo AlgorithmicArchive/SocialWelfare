@@ -116,7 +116,6 @@ namespace SocialWelfare.Controllers.Officer
             return View(countList);
         }
 
-
         public IActionResult Applications(string? type)
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
@@ -290,6 +289,7 @@ namespace SocialWelfare.Controllers.Officer
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"];
             string districtCode = UserSpecificDetails["DistrictCode"];
+            string otherOfficer = "";
 
             var generalDetails = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == ApplicationId);
             var phases = JsonConvert.DeserializeObject<List<dynamic>>(generalDetails!.Phase);
@@ -300,11 +300,13 @@ namespace SocialWelfare.Controllers.Officer
                 {
                     if (phases[i]["ActionTaken"] == "Forward")
                     {
+                        otherOfficer = phases[i + 1]["Officer"];
                         phases[i + 1]["HasApplication"] = false;
                         phases[i + 1]["ActionTaken"] = "";
                     }
                     else if (phases[i]["ActionTaken"] == "Return")
                     {
+                        otherOfficer = phases[i - 1]["Officer"];
                         phases[i - 1]["HasApplication"] = false;
                         phases[i + 1]["ActionTaken"] = "Forward";
                     }
@@ -312,7 +314,7 @@ namespace SocialWelfare.Controllers.Officer
                     {
                         helper.UpdateApplication("ApplicationStatus", "Initiated", new SqlParameter("@ApplicationId", ApplicationId));
                         string sourceFile = Path.Combine(_webHostEnvironment.WebRootPath, "files", ApplicationId.Replace("/", "_") + "SanctionLetter.pdf");
-                        string destinationFile = Path.Combine(_webHostEnvironment.WebRootPath, "files", ApplicationId.Replace("/", "_") + "BAK" + DateTime.Now.ToString("dd MMM YYYY") + "SanctionLetter.pdf");
+                        string destinationFile = Path.Combine(_webHostEnvironment.WebRootPath, "files", ApplicationId.Replace("/", "_") + "BAK" + DateTime.Now.ToString("dd MMM yyyy hh:mm tt") + "SanctionLetter.pdf");
                         if (System.IO.File.Exists(sourceFile))
                             System.IO.File.Move(sourceFile, destinationFile);
                     }
@@ -325,7 +327,7 @@ namespace SocialWelfare.Controllers.Officer
             }
 
             helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", ApplicationId));
-
+            helper.UpdateApplicationHistory(ApplicationId, officerDesignation, "Pulled Back From " + otherOfficer == "" ? "Sanctioned Phase" : otherOfficer, "");
             return Json(new { status = true, PullApplication = "YES" });
         }
         public IActionResult UpdateRequests()

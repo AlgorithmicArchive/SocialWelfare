@@ -50,14 +50,6 @@ namespace SocialWelfare.Controllers.Admin
                     condition2.Append($" AND {condition.Key}='{condition.Value}'");
             }
 
-            // if (conditions?.ContainsKey("JSON_VALUE(app.value, '$.Officer')") == true && type != "Total" && type != "PendingWithCitizen")
-            // {
-            //     condition2.Append($" AND JSON_VALUE(app.value, '$.ActionTaken') = '{type}'");
-            // }
-            // else if (type == "Total")
-            // {
-            //     condition2.Append(" AND JSON_VALUE(app.value, '$.ActionTaken') != ''");
-            // }
 
             var applications = dbcontext.Applications.FromSqlRaw("EXEC GetApplications @Condition1, @Condition2",
                 new SqlParameter("@Condition1", condition1.ToString()),
@@ -334,8 +326,29 @@ namespace SocialWelfare.Controllers.Admin
         [HttpGet]
         public IActionResult GetHistory(string applicationId)
         {
-            var result = dbcontext.ApplicationsHistories.FirstOrDefault(a => a.ApplicationId == applicationId);
-            return Json(new { status = true, result });
+            int? UserId = HttpContext.Session.GetInt32("UserId");
+            var Division = JsonConvert.DeserializeObject<dynamic>(dbcontext.Users.FirstOrDefault(u => u.UserId == UserId)?.UserSpecificDetails!)!.DivisionCode;
+            if (Division != null)
+            {
+                var application = dbcontext.Applications.FirstOrDefault(a => a.ApplicationId == applicationId);
+                int applicationDistrict = JsonConvert.DeserializeObject<dynamic>(application!.ServiceSpecific)!.District;
+                int applicationDivision = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == applicationDistrict)!.Division;
+
+                if (Division == applicationDivision)
+                {
+                    var result = dbcontext.ApplicationsHistories.FirstOrDefault(a => a.ApplicationId == applicationId);
+                    return Json(new { status = true, result });
+                }
+                else
+                {
+                    return Json(new { status = false, response = "NO RECORD FOUND." });
+                }
+            }
+            else
+            {
+                var result = dbcontext.ApplicationsHistories.FirstOrDefault(a => a.ApplicationId == applicationId);
+                return Json(new { status = true, result });
+            }
         }
 
     }

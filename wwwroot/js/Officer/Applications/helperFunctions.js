@@ -45,7 +45,7 @@ async function SanctionAll(poolList, finalList, ServiceId) {
       });
   } else {
     const formdata = new FormData();
-    formdata.append("poolIdList", JSON.stringify(poolList));
+    formdata.append("poolIdList", JSON.stringify(finalList));
     formdata.append("serviceId", ServiceId);
     console.log("EMPTY", poolList);
     fetch("/Officer/UpdatePool", { method: "post", body: formdata })
@@ -53,7 +53,7 @@ async function SanctionAll(poolList, finalList, ServiceId) {
       .then((data) => {
         if (data.status) {
           hideSpinner();
-          window.location.href = "/Officer/Applications?type=Pending";
+          window.location.href = "/Officer/Index";
         }
       });
   }
