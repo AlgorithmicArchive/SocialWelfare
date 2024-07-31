@@ -1,5 +1,5 @@
-$(document).ready(function () {
-  console.log(countList);
+function SetCards(countList) {
+  $("#detailsCards").show();
   $("#pending").text(countList.pending);
   $("#forward").text(countList.forward);
   $("#sanction").text(countList.sanction);
@@ -16,7 +16,29 @@ $(document).ready(function () {
     trigger: "manual", // Prevents automatic display on hover
     placement: "top",
   });
+}
 
+$(document).ready(function () {
+  const services = serviceList;
+  services.map((item) => {
+    $("#services").append(
+      `<option value="${item.serviceId}">${item.serviceName}</option>`
+    );
+  });
+
+  $("#getRecords").on("click", function () {
+    if ($("#services").val() == "") {
+      $("#services").after(
+        `<span class="text-danger" style="font-size:12px;">This field is required</span>`
+      );
+    } else {
+      $("#services").siblings("span").remove();
+      const serviceId = $("#services").val();
+      fetch("/Officer/GetApplicationsList?serviceId=" + serviceId)
+        .then((res) => res.json())
+        .then((data) => SetCards(data.countList));
+    }
+  });
   $(".card").on("click", function () {
     const property = $(this).find(".value").attr("id");
     const value = $(this).find(".value").text();

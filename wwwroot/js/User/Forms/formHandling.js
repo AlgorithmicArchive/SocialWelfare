@@ -73,14 +73,8 @@ function handleFormAppend(formNo) {
         AccountNumber: $("#AccountNumber").val(),
       };
       currentForm.append("ApplicationId", ApplicationId);
-      currentForm.append("bankDetails", JSON.stringify(bankDetails));
       if (!isFormDataEmpty(bankForm)) {
         appendOrSetFormField(bankForm, "ApplicationId", ApplicationId);
-        appendOrSetFormField(
-          bankForm,
-          "bankDetails",
-          JSON.stringify(bankDetails)
-        );
       }
       handleFormData(bankForm, currentForm, urlInsert, urlUpdate, formNo);
       break;
@@ -138,42 +132,48 @@ function handleFormData(
   urlUpdate,
   formNo
 ) {
-  console.log(currentForm, originalForm);
   if (isFormDataEmpty(originalForm)) {
-    console.log("if");
     copyFormData(currentForm, originalForm);
     processApplication(originalForm, urlInsert);
   } else if (isEqual(currentForm, originalForm).length != 0) {
-    console.log("else if");
     const differingValues = arrayToFormData(isEqual(currentForm, originalForm));
-    console.log(differingValues);
     differingValues.append("ApplicationId", ApplicationId);
     copyFormData(currentForm, originalForm);
     processApplication(formNo == 4 ? originalForm : differingValues, urlUpdate);
   } else if (application.returnToEdit && formNo == 4) {
-    console.log("RETURN TO EDIT");
     const workForceOfficers = JSON.parse(serviceContent.workForceOfficers);
     const formdata = new FormData();
     formdata.append("ApplicationId", ApplicationId);
     formdata.append("workForceOfficers", JSON.stringify(workForceOfficers));
+    showSpinner();
     fetch("/User/UpdateEditList", { method: "post", body: formdata })
       .then((res) => res.json())
       .then((data) => {
+        hideSpinner();
         if (data.status) {
           window.location.href = "/User/ApplicationStatus";
         }
       });
+  } else if (formNo == 4) {
+    showSpinner();
+    const formdata = new FormData();
+    formdata.append("ApplicationId", ApplicationId);
+    fetch("/User/IncompleteApplication", { method: "post", body: formdata })
+      .then((res) => res.json())
+      .then((data) => {
+        hideSpinner();
+        if (data.status) window.location.href = "/User/ApplicationStatus";
+      });
   }
 }
 function processApplication(originalForm, url) {
-  console.log("URL", url);
+  console.log(originalForm);
   showSpinner();
   fetch(url, { method: "post", body: originalForm })
     .then((res) => res.json())
     .then((data) => {
       if (data.status) {
         hideSpinner();
-        console.log(data);
         ApplicationId =
           data.applicationId !== undefined ? data.applicationId : ApplicationId;
         PresentAddressId =
@@ -185,7 +185,6 @@ function processApplication(originalForm, url) {
             ? data.permanentAddressId
             : PermanentAddressId;
         if (data.complete) {
-          console.log(data);
           window.location.href =
             "/User/Acknowledgement?RefNo=" +
             encodeURIComponent(data.applicationId);
@@ -222,8 +221,22 @@ function isEqual(first, second) {
   for (let i = 0; i < array1.length; i++) {
     const [key1, value1] = array1[i];
     const [key2, value2] = array2[i];
-    if (value1 != value2) {
+    if (key1 !== key2) {
       differingValues.push({ key: key1, value: value1 });
+      continue;
+    }
+    try {
+      // Parse JSON strings and compare
+      const jsonValue1 = JSON.parse(value1);
+      const jsonValue2 = JSON.parse(value2);
+      if (JSON.stringify(jsonValue1) !== JSON.stringify(jsonValue2)) {
+        differingValues.push({ key: key1, value: value1 });
+      }
+    } catch (e) {
+      // Compare values directly if they are not JSON strings
+      if (value1 != value2) {
+        differingValues.push({ key: key1, value: value1 });
+      }
     }
   }
 

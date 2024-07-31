@@ -33,10 +33,35 @@ namespace SocialWelfare.Controllers.Officer
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
             var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
+            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
+            var Services = dbcontext.Services.Where(s => s.Active == true).ToList();
+            var ServiceList = new List<dynamic>();
+            foreach (var service in Services)
+            {
+                var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(service.WorkForceOfficers!);
+                foreach (var officer in WorkForceOfficers!)
+                {
+                    if (officer["Designation"] == officerDesignation)
+                    {
+                        ServiceList.Add(new { service.ServiceId, service.ServiceName });
+                    }
+                }
+            }
+
+
+            return View(ServiceList);
+        }
+
+        public IActionResult GetApplicationsList(string ServiceId)
+        {
+
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
             bool canSanction = true;
             bool canForward = true;
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
-
+            int serviceId = Convert.ToInt32(ServiceId);
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails["AccessLevel"]?.ToString() ?? string.Empty;
 
@@ -57,15 +82,17 @@ namespace SocialWelfare.Controllers.Officer
             int PendingCount = 0, ForwardCount = 0, SanctionCount = 0, RejectCount = 0, ReturnCount = 0;
 
             var applications = dbcontext.Applications.FromSqlRaw(
-                "EXEC GetApplicationCountForOfficer @OfficerDesignation, @AccessLevel, @AccessLevelCode",
+                "EXEC GetApplicationCountForOfficer @OfficerDesignation, @AccessLevel, @AccessLevelCode,@ServiceId",
                 new SqlParameter("@OfficerDesignation", officerDesignation),
                 new SqlParameter("@AccessLevel", accessLevel),
-                AccessLevelCode
+                AccessLevelCode,
+                new SqlParameter("@ServiceId", serviceId)
             ).ToList();
 
             foreach (var application in applications)
             {
-                var Phases = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(application.Phase);
+                var Phases = JsonConvert.DeserializeObject<List<Dictionary<string, dynamic>>>(application.Phase);
+
                 foreach (var phase in Phases!)
                 {
                     if (officerDesignation == phase["Officer"])
@@ -93,7 +120,10 @@ namespace SocialWelfare.Controllers.Officer
                 }
             }
 
-            var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(dbcontext.Services.FirstOrDefault(service => service.ServiceId == 1)!.WorkForceOfficers!);
+            var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(dbcontext.Services.FirstOrDefault(service => service.ServiceId == serviceId)!.WorkForceOfficers!);
+
+
+
             foreach (var officer in WorkForceOfficers!)
             {
                 if (officer["Designation"] == officerDesignation)
@@ -113,9 +143,9 @@ namespace SocialWelfare.Controllers.Officer
                 CanForward = canForward
             };
 
-            return View(countList);
-        }
 
+            return Json(new { status = true, countList });
+        }
         public IActionResult Applications(string? type)
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
@@ -192,9 +222,11 @@ namespace SocialWelfare.Controllers.Officer
                 {
                     var obj = new
                     {
+                        ReceivedOn = phases[i]["ReceivedOn"],
                         Officer = phases[i]["Officer"],
                         ActionTaken = phases[i]["ActionTaken"],
-                        Remarks = phases[i]["Remarks"]
+                        Remarks = phases[i]["Remarks"],
+                        Files = phases[i]["Files"]
                     };
                     previousActions.Add(obj);
                 }

@@ -51,6 +51,9 @@ namespace SocialWelfare.Controllers.Admin
             }
 
 
+            _logger.LogInformation("=======Conditions===============");
+            _logger.LogInformation($"{condition1.ToString()}========={condition2.ToString()}");
+
             var applications = dbcontext.Applications.FromSqlRaw("EXEC GetApplications @Condition1, @Condition2",
                 new SqlParameter("@Condition1", condition1.ToString()),
                 new SqlParameter("@Condition2", condition2.ToString())).ToList();
@@ -63,7 +66,7 @@ namespace SocialWelfare.Controllers.Admin
                 int districtCode = Convert.ToInt32(serviceSpecific!["District"]);
                 string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.DistrictName!;
                 string appliedService = dbcontext.Services.FirstOrDefault(s => s.ServiceId == application.ServiceId)?.ServiceName!;
-                string applicationWithOfficer = "";
+                string applicationCurrentlyWith = "";
                 string receivedOn = "";
                 var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
 
@@ -71,13 +74,13 @@ namespace SocialWelfare.Controllers.Admin
                 {
                     if (phase["ActionTaken"] == "Pending" || phase["ActionTaken"] == "Sanction")
                     {
-                        applicationWithOfficer = phase["Officer"];
+                        applicationCurrentlyWith = phase["Officer"];
                         receivedOn = phase["ReceivedOn"];
                         break;
                     }
                     else if (phase["ActionTaken"] == "ReturnToEdit")
                     {
-                        applicationWithOfficer = "Citizen";
+                        applicationCurrentlyWith = "Citizen";
                         receivedOn = phase["ReceivedOn"];
                         break;
                     }
@@ -92,7 +95,7 @@ namespace SocialWelfare.Controllers.Admin
                         application.ApplicationStatus,
                         AppliedDistrict = appliedDistrict,
                         AppliedService = appliedService,
-                        ApplicationWithOfficer = applicationWithOfficer,
+                        ApplicationCurrentlyWith = applicationCurrentlyWith,
                         ReceivedOn = receivedOn,
                         SubmissionDate = application.SubmissionDate!.ToString().Split('T')[0]
                     };
@@ -122,6 +125,8 @@ namespace SocialWelfare.Controllers.Admin
 
             return Json(new { status = true, TotalCount, PendingCount, RejectCount, ForwardCount, SanctionCount, PendingWithCitizenCount });
         }
+
+
         [HttpGet]
         public IActionResult GetDistricts(string? division)
         {
@@ -208,14 +213,14 @@ namespace SocialWelfare.Controllers.Admin
                 int districtCode = Convert.ToInt32(serviceSpecific!["District"]);
                 string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.Uuid == districtCode)?.DistrictName!;
                 string AppliedService = dbcontext.Services.FirstOrDefault(s => s.ServiceId == application.ServiceId)?.ServiceName!;
-                string ApplicationWithOfficer = "";
+                string ApplicationCurrentlyWith = "";
                 var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
 
                 foreach (var phase in phases!)
                 {
                     if (phase["ActionTaken"] == "Pending" || phase["ActionTaken"] == "Sanction")
                     {
-                        ApplicationWithOfficer = phase["Officer"];
+                        ApplicationCurrentlyWith = phase["Officer"];
                         break;
                     }
                 }
@@ -227,7 +232,7 @@ namespace SocialWelfare.Controllers.Admin
                     application.ApplicationStatus,
                     AppliedDistrict,
                     AppliedService,
-                    ApplicationWithOfficer
+                    ApplicationCurrentlyWith
                 };
                 list.Add(obj);
             }
@@ -241,14 +246,14 @@ namespace SocialWelfare.Controllers.Admin
             int districtCode = Convert.ToInt32(serviceSpecific!["District"]);
             string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.Uuid == districtCode)?.DistrictName!;
             string AppliedService = dbcontext.Services.FirstOrDefault(s => s.ServiceId == application.ServiceId)?.ServiceName!;
-            string ApplicationWithOfficer = "";
+            string ApplicationCurrentlyWith = "";
             var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
 
             foreach (var phase in phases!)
             {
                 if (phase["ActionTaken"] == "Pending" || phase["ActionTaken"] == "Sanction")
                 {
-                    ApplicationWithOfficer = phase["Officer"];
+                    ApplicationCurrentlyWith = phase["Officer"];
                     break;
                 }
             }
@@ -260,7 +265,7 @@ namespace SocialWelfare.Controllers.Admin
             obj.PreviousStatus = actionTaken != "Sanction" ? "Pending" : "Sanction";
             obj.AppliedDistrict = AppliedDistrict;
             obj.AppliedService = AppliedService;
-            obj.CurrentlyApplicationWithOfficer = ApplicationWithOfficer;
+            obj.ApplicationCurrentlyWith = ApplicationCurrentlyWith;
             obj.CurrentApplicationStatus = application.ApplicationStatus;
 
             return obj;

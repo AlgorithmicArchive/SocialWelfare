@@ -138,7 +138,7 @@ namespace SocialWelfare.Controllers
         [HttpGet]
         public IActionResult GetServices()
         {
-            var services = dbcontext.Services.ToList();
+            var services = dbcontext.Services.Where(ser => ser.Active == true).ToList();
             return Json(new { status = true, services });
         }
 
@@ -158,7 +158,21 @@ namespace SocialWelfare.Controllers
             return Json(new { status = true, blocks });
         }
 
+        [HttpGet]
+        public IActionResult IsDuplicateAccNo(string accNo, string applicationId)
+        {
+            var application = dbcontext.Applications.FromSqlRaw("EXEC GetDuplicateAccNo @AccountNo", new SqlParameter("@AccountNo", accNo)).ToList();
 
+            if (application.Count == 0)
+                return Json(new { status = false });
+            else if (application[0].ApplicationId == applicationId)
+                return Json(new { status = false });
+            else
+            {
+                if (application[0].ApplicationStatus == "Rejected") return Json(new { status = false });
+                else return Json(new { status = true });
+            }
+        }
 
     }
 }

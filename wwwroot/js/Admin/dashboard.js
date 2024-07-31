@@ -1,8 +1,9 @@
 $(document).ready(function () {
   const count = countList;
-  console.log(count);
   const divisionCode = count.divisionCode;
+  let applicationList;
   const conditions = {};
+
   const mappings = [
     { id: "#services", value: count.serviceCount.length },
     { id: "#officers", value: count.officerCount.length },
@@ -44,20 +45,16 @@ $(document).ready(function () {
     ]
   );
 
-  $("#service").on("change", function () {
+  $("#service").change(function () {
     updateConditions(conditions);
   });
-  $("#district").on("change", function () {
-    updateConditions(conditions);
-  });
-  $("#officer").on("change", function () {
-    updateConditions(conditions);
+
+  $("#getRecords").on("click", function () {
+    setApplicationList(applicationList);
   });
 
   $(".dashboard-card").on("click", function () {
     const card = $(this).attr("id");
-    console.log(card);
-    let applicationList;
     if (card == "Total") applicationList = count.totalCount;
     else if (card == "Pending") applicationList = count.pendingCount;
     else if (card == "Sanctioned") applicationList = count.sanctionCount;

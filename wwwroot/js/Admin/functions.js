@@ -269,15 +269,83 @@ function SetServices() {
     });
 }
 
+function convertCamelCaseToReadable(str) {
+  return (
+    str
+      // Insert a space before all capital letters
+      .replace(/([A-Z])/g, " $1")
+      // Capitalize the first letter of the resulting string
+      .replace(/^./, function (char) {
+        return char.toUpperCase();
+      })
+  );
+}
+
 function setApplicationList(applicationList) {
-  let propertyToRemove = "submissionDate";
+  let propertiesToRemove = [];
+
+  let checkedValues = $('input[name="chosenColumns"]:checked')
+    .map(function () {
+      return this.value;
+    })
+    .get();
+
+  if (checkedValues.length > 0) {
+    let properties = Object.keys(applicationList[0]);
+    properties.forEach((item) => {
+      if (!checkedValues.includes(item)) propertiesToRemove.push(item);
+    });
+
+    $("#applicationListTable thead tr").empty();
+    $("#applicationListTable thead tr").append(`<th>S.No.</th>`);
+
+    checkedValues.map((item) =>
+      $("#applicationListTable thead tr").append(
+        `<th>${convertCamelCaseToReadable(item)}</th>`
+      )
+    );
+    $('input[name="chosenColumns"]').prop("checked", false);
+  } else {
+    $("#applicationListTable thead tr").empty();
+    $("#applicationListTable thead tr").append(`
+        <th>S.No.</th>
+        <th>Application Number</th>
+        <th>Applicant Name</th>
+        <th>Application Status</th>
+        <th>Applied District</th>
+        <th>Applied Service</th>
+        <th>Application Currently With</th>
+        <th>Application Received On</th>
+        <th>Application Submission Date</th>
+      `);
+  }
+
   applicationList = applicationList.map((obj) => {
-    const { [propertyToRemove]: _, ...rest } = obj;
-    return rest;
+    return propertiesToRemove.reduce((acc, property) => {
+      const { [property]: _, ...rest } = acc;
+      return rest;
+    }, obj);
   });
+
+  // Update the table body with the new data
   const container = $("#applicationListContainer");
   container.empty();
   $("#dataGrid").removeClass("d-none").addClass("d-flex");
+
+  applicationList.forEach((item, index) => {
+    let row = `<tr><td>${index + 1}</td>`; // First column for index
+
+    for (const key in item) {
+      if (item.hasOwnProperty(key)) {
+        row += `<td>${item[key] == "" ? "N/A" : item[key]}</td>`;
+      }
+    }
+
+    row += `</tr>`;
+    container.append(row); // Append each row to the container
+  });
+
+  // Initialize DataTable after the table structure is complete
   initializeDataTable(
     "applicationListTable",
     "applicationListContainer",

@@ -23,9 +23,20 @@ $(document).ready(function () {
     if (!$(this).prop("readonly")) $(this).attr("type", "file");
   });
 
-  $("#next").click(() => {
+  $("#next").click(async () => {
     $(`#form${stepCount} input`).blur();
-    if ($(`#form${stepCount} .errorMsg`).length === 0) {
+    const accoutNumber = $("#AccountNumber").val();
+    let IsDuplicateAccNo = false;
+    if (accoutNumber != "") {
+      IsDuplicateAccNo = await duplicateAccountNumber(
+        "AccountNumber",
+        accoutNumber,
+        ApplicationId
+      );
+      console.log(accoutNumber);
+    }
+
+    if ($(`#form${stepCount} .errorMsg`).length === 0 && !IsDuplicateAccNo) {
       if (stepCount < 4) {
         handleFormAppend(stepCount);
         $(`#form${stepCount}`).hide();

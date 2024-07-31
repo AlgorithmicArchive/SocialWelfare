@@ -8,8 +8,8 @@ function createChart(labels, data) {
       {
         label: "Applications",
         data: data,
-        backgroundColor: ["blue","darkgreen", "orange","#0DCAF0", "red"],
-        borderColor: ["blue","darkgreen", "orange","#0DCAF0", "red"],
+        backgroundColor: ["blue", "darkgreen", "orange", "#0DCAF0", "red"],
+        borderColor: ["blue", "darkgreen", "orange", "#0DCAF0", "red"],
         borderWidth: 1,
       },
     ],
@@ -33,7 +33,13 @@ function createChart(labels, data) {
           align: "top",
           backgroundColor: (context) => {
             const index = context.dataIndex;
-            const backgroundColors = ["blue","darkgreen", "orange","#0DCAF0", "red"];
+            const backgroundColors = [
+              "blue",
+              "darkgreen",
+              "orange",
+              "#0DCAF0",
+              "red",
+            ];
             return backgroundColors[index];
           },
           borderRadius: 4,
@@ -66,8 +72,8 @@ function createPieChart(labels, values) {
       {
         label: "All Districts",
         data: values,
-        backgroundColor: ["darkgreen", "orange","#0DCAF0", "maroon"],
-        borderColor: ["darkgreen", "orange","#0DCAF0", "maroon"],
+        backgroundColor: ["darkgreen", "orange", "#0DCAF0", "maroon"],
+        borderColor: ["darkgreen", "orange", "#0DCAF0", "maroon"],
         borderWidth: 1,
       },
     ],
@@ -116,14 +122,14 @@ function createPieChart(labels, values) {
   );
 }
 function updateConditions(conditions, count) {
-  const districtValue = $("#district").val();
-  const officerValue = $("#officer").val();
+  const districtValue = $("#district").attr("data-id");
+  const officerValue = $("#officer").text();
   const serviceValue = $("#service").val();
 
   if (districtValue != "") {
-    conditions["specific.District"] = districtValue;
+    conditions["JSON_VALUE(a.ServiceSpecific, '$.District')"] = districtValue;
   } else {
-    delete conditions["specific.District"];
+    delete conditions["JSON_VALUE(a.ServiceSpecific, '$.District')"];
   }
 
   if (officerValue != "") {
@@ -133,9 +139,9 @@ function updateConditions(conditions, count) {
   }
 
   if (serviceValue != "") {
-    conditions["application.ServiceId"] = serviceValue;
+    conditions["a.ServiceId"] = serviceValue;
   } else {
-    delete conditions["application.ServiceId"];
+    delete conditions["a.ServiceId"];
   }
 
   if (!isEmpty(conditions)) {
@@ -152,7 +158,13 @@ function updateConditions(conditions, count) {
           count.rejectCount = data.rejectCount;
           count.sanctionCount = data.sanctionCount;
           createChart(
-            ["Total", "Sanctioned","Pending","Pending With Citizen", "Rejected"],
+            [
+              "Total",
+              "Sanctioned",
+              "Pending",
+              "Pending With Citizen",
+              "Rejected",
+            ],
             [
               count.totalCount.length,
               count.sanctionCount.length,
@@ -173,13 +185,13 @@ function SetDistricts(districtCode) {
     .then((res) => res.json())
     .then((data) => {
       if (data.status) {
-        console.log(data);
         const districts = data.districts;
         let districtName = "";
         districts.map((item) => {
           if (item.districtId == districtCode) districtName = item.districtName;
         });
         $("#district").text(districtName);
+        $("#district").attr("data-id", districtCode);
       }
     });
 }
@@ -211,11 +223,89 @@ function SetServices() {
       }
     });
 }
+function convertCamelCaseToReadable(str) {
+  return (
+    str
+      // Insert a space before all capital letters
+      .replace(/([A-Z])/g, " $1")
+      // Capitalize the first letter of the resulting string
+      .replace(/^./, function (char) {
+        return char.toUpperCase();
+      })
+  );
+}
 function setApplicationList(applicationList) {
+  let propertiesToRemove = [];
+
+  let checkedValues = $('input[name="chosenColumns"]:checked')
+    .map(function () {
+      return this.value;
+    })
+    .get();
+
+  console.log(checkedValues);
+  if (checkedValues.length > 0) {
+    let properties = Object.keys(applicationList[0]);
+    properties.forEach((item) => {
+      if (!checkedValues.includes(item)) propertiesToRemove.push(item);
+    });
+    $("#applicationListTable thead tr").empty();
+
+    console.log($("#applicationListTable thead tr"));
+    // $("#applicationListTable thead tr").append(`<th>S.No.</th>`);
+
+    // checkedValues.map((item) =>
+    //   $("#applicationListTable thead tr").append(
+    //     `<th>${convertCamelCaseToReadable(item)}</th>`
+    //   )
+    // );
+    $('input[name="chosenColumns"]').prop("checked", false);
+  } else {
+    $("#applicationListTable thead tr").empty();
+    $("#applicationListTable thead tr").append(`
+        <th>S.No.</th>
+        <th>Application Number</th>
+        <th>Applicant Name</th>
+        <th>Application Status</th>
+        <th>Applied District</th>
+        <th>Applied Service</th>
+        <th>Application Currently With</th>
+        <th>Application Received On</th>
+        <th>Application Submission Date</th>
+      `);
+  }
+
+  applicationList = applicationList.map((obj) => {
+    return propertiesToRemove.reduce((acc, property) => {
+      const { [property]: _, ...rest } = acc;
+      return rest;
+    }, obj);
+  });
+
+  // Update the table body with the new data
   const container = $("#applicationListContainer");
   container.empty();
   $("#dataGrid").removeClass("d-none").addClass("d-flex");
-  initializeDataTable('applicationListTable', "applicationListContainer", applicationList);
+
+  // applicationList.forEach((item, index) => {
+  //   let row = `<tr><td>${index + 1}</td>`; // First column for index
+
+  //   for (const key in item) {
+  //     if (item.hasOwnProperty(key)) {
+  //       row += `<td>${item[key] == "" ? "N/A" : item[key]}</td>`;
+  //     }
+  //   }
+
+  //   row += `</tr>`;
+  //   container.append(row); // Append each row to the container
+  // });
+
+  // Initialize DataTable after the table structure is complete
+  initializeDataTable(
+    "applicationListTable",
+    "applicationListContainer",
+    applicationList
+  );
 
   $("html, body").animate(
     {
@@ -224,10 +314,10 @@ function setApplicationList(applicationList) {
     "slow"
   );
 }
+let applicationList;
 
 $(document).ready(function () {
   const count = countList;
-  console.log(count);
   const districtCode = count.districtCode;
   const officer = count.officer;
   const conditions = {};
@@ -243,9 +333,9 @@ $(document).ready(function () {
     { id: "#sanction", value: count.sanctionCount.length },
   ];
   const AllDistrictCount = count.allDistrictCount;
-  
+
   createChart(
-    ["Total", "Sanctioned","Pending","Pending With Citizen", "Rejected"],
+    ["Total", "Sanctioned", "Pending", "Pending With Citizen", "Rejected"],
     [
       count.totalCount.length,
       count.sanctionCount.length,
@@ -255,7 +345,7 @@ $(document).ready(function () {
     ]
   );
   createPieChart(
-    ["Sanctioned","Pending","Pending With Citizen","Rejected"],
+    ["Sanctioned", "Pending", "Pending With Citizen", "Rejected"],
     [
       AllDistrictCount.sanctioned.length,
       AllDistrictCount.pending.length,
@@ -273,7 +363,7 @@ $(document).ready(function () {
   });
 
   createChart(
-    ["Total", "Sanctioned","Pending","Pending With Citizen", "Rejected"],
+    ["Total", "Sanctioned", "Pending", "Pending With Citizen", "Rejected"],
     [
       count.totalCount.length,
       count.sanctionCount.length,
@@ -295,7 +385,6 @@ $(document).ready(function () {
 
   $(".dashboard-card").on("click", function () {
     const card = $(this).attr("id");
-    let applicationList;
     if (card == "Total") applicationList = count.totalCount;
     else if (card == "Pending") applicationList = count.pendingCount;
     else if (card == "Sanctioned") applicationList = count.sanctionCount;
@@ -303,6 +392,10 @@ $(document).ready(function () {
       applicationList = count.pendingWithCitizenCount;
     else if (card == "Rejected") applicationList = count.rejectCount;
 
+    setApplicationList(applicationList);
+  });
+
+  $("#getRecords").on("click", function () {
     setApplicationList(applicationList);
   });
 });

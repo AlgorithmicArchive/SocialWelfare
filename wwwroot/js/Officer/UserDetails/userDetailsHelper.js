@@ -14,32 +14,56 @@ function isDigit(input) {
   return /^\d+$/.test(input.toString().replace(/\s/g, ""));
 }
 function createInputElement(label, id, value) {
-  if (updateColumn.name == id) updateColumn.value = value;
+  // Update updateColumn if necessary
+  if (updateColumn.name === id) {
+    updateColumn.value = value;
+    $("#extraDetails").empty().append(`
+      <label>${updateColumn.label}</label>
+      <input type="text" class="form-control" value="${updateColumn.value}" readonly/>
+    `);
+  }
+
+  // Check if the updateObject should be used and prepare extraDetails content
   let updated = false;
-  if (updateObject.ColumnName == id) {
+  let extraDetailsContent = "";
+  if (updateObject.ColumnName === id) {
     value = updateObject.OldValue;
     updated = true;
+    extraDetailsContent = `
+      <label>${label} given By Citizen</label>
+      <input type="text" class="form-control" value="${value}" readonly/>
+      <label class="mt-1 text-danger fw-bold" title="${label} Updated By ${updateObject.Officer}">${label} updated by ${updateObject.Officer}</label>
+      <input type="text" class="form-control" value="${updateObject.NewValue}" readonly/>
+    `;
+    $("#extraDetails").empty().append(extraDetailsContent);
   }
-  return `
-        <div class="col-sm-6 d-flex flex-column">
-            <label for="${id}">${label}${
-    updated ? " given by Citizen " : ""
-  }</label>
-            <input class="form-control mb-2" type="text"  value="${value}" readonly />
-        </div>
-        ${
-          updated
-            ? `
-           <div class="col-sm-6 d-flex flex-column">
-            <label for="${id}" class="text-danger fw-bold">${label} Updated By ${updateObject.Officer}</label>
-            <input class="form-control mb-2" type="text"  value="${updateObject.NewValue}" readonly />
-           </div>
-          
-          `
-            : ``
-        }
-        `;
+
+  // Construct the main input element
+  let mainInputElement = `
+    <div class="col-sm-6 d-flex flex-column">
+      <label for="${id}">${label}${updated ? " given by Citizen" : ""}</label>
+      <input class="form-control mb-2" type="text" value="${value}" readonly />
+    </div>
+  `;
+
+  // Construct the updated input element if necessary
+  let updatedInputElement = "";
+  if (updated) {
+    updatedInputElement = `
+      <div class="col-sm-6 d-flex flex-column">
+        <label for="${id}" class="text-danger fw-bold" title="${label} Updated By ${updateObject.Officer}">
+          ${label} Updated By ${updateObject.Officer}
+        </label>
+        <a href="#" onclick="openInIframe('${updateObject.File}'); return false;">View File</a>
+        <input class="form-control mb-2" type="text" value="${updateObject.NewValue}" readonly />
+      </div>
+    `;
+  }
+
+  // Return the combined HTML
+  return mainInputElement + updatedInputElement;
 }
+
 function createDocumentInput(label, enclosure, file) {
   return `
         <div class="col-sm-6 d-flex flex-column">
@@ -111,14 +135,22 @@ function appendDocuments(documents) {
   }
 }
 function appendPerviousActions(previousActions) {
+  console.log(previousActions);
   if (previousActions.length > 0) {
     $("#showPreviousActions").show();
     previousActions.reverse().map((item) => {
+      const files = item.files;
+      let filesTd = ``;
+      files.map((item) => {
+        filesTd += `<a href="#" class="me-4" onclick="openInIframe('${item}'); return false;">View File</a>`;
+      });
       $("#previousActions").append(`
         <tr>
-          <td>${item.officer}</td>
+          <td>${item.officer}</td>  
           <td>${item.actionTaken}</td>
+          <td>${item.receivedOn}</td>
           <td>${item.remarks}</td>
+          <td>${filesTd}</td>
         </tr>
     `);
     });
@@ -163,6 +195,8 @@ function ProceedAction(applicationId, officer, letterUpdateDetails) {
   formdata.append("Action", action);
   formdata.append("Remarks", remarks);
 
+  console.log(officer.split(" ").join("_") + "_Document");
+
   const editList = [];
 
   if (action == "ReturnToEdit") {
@@ -178,6 +212,10 @@ function ProceedAction(applicationId, officer, letterUpdateDetails) {
     };
     formdata.append("UpdateColumn", updateColumn.name);
     formdata.append("UpdateColumnValue", updateColumn.value);
+    formdata.append(
+      "UpdateColumnFile",
+      $("#" + updateColumn.name + "File")[0].files[0]
+    );
   } else if (action == "Sanction") {
     const obj = {};
     letterUpdateDetails.forEach((item) => {
@@ -190,6 +228,14 @@ function ProceedAction(applicationId, officer, letterUpdateDetails) {
       };
     });
     formdata.append("letterUpdateDetails", JSON.stringify(obj));
+  } else if (
+    action == "Forward" &&
+    $("#" + officer.split(" ").join("_") + "_Document").length != 0
+  ) {
+    formdata.append(
+      "ForwardFile",
+      $("#" + officer.split(" ").join("_") + "_Document")[0].files[0]
+    );
   }
   fetch("/Officer/Action", { method: "post", body: formdata })
     .then((res) => res.json())
@@ -288,21 +334,26 @@ function attachValidations(obj) {
 }
 
 function CertificateDetails(letterUpdateDetails, generalDetails) {
-  $("#ceritificateDetails").show();
-  $("#ceritificateDetails").empty();
+  if ((letterUpdateDetails != null) & (letterUpdateDetails.length > 0)) {
+    $("#ceritificateDetails").show();
+    $("#ceritificateDetails").empty();
 
-  letterUpdateDetails.forEach((item) => {
-    const type = item.type == "date" ? "text" : item.type;
-    let value;
-    if (generalDetails.hasOwnProperty(convertToCamelCase(item.name))) {
-      value = generalDetails[convertToCamelCase(item.name)];
-    } else {
-      const serviceSpecific = JSON.parse(generalDetails.serviceSpecific);
-      if (serviceSpecific.hasOwnProperty(item.name)) {
-        value = serviceSpecific[item.name];
+    $("#ceritificateDetails").append(
+      `<p class="fs-3 fw-bold text-center">Certificate Details</p>`
+    );
+
+    letterUpdateDetails.forEach((item) => {
+      const type = item.type == "date" ? "text" : item.type;
+      let value;
+      if (generalDetails.hasOwnProperty(convertToCamelCase(item.name))) {
+        value = generalDetails[convertToCamelCase(item.name)];
+      } else {
+        const serviceSpecific = JSON.parse(generalDetails.serviceSpecific);
+        if (serviceSpecific.hasOwnProperty(item.name)) {
+          value = serviceSpecific[item.name];
+        }
       }
-    }
-    $("#ceritificateDetails").append(`
+      $("#ceritificateDetails").append(`
           <div class="row mt-2">
               <div class="col-sm-6">
                 <label>${item.label}</label>
@@ -315,6 +366,7 @@ function CertificateDetails(letterUpdateDetails, generalDetails) {
           </div>
       `);
 
-    attachValidations(item);
-  });
+      attachValidations(item);
+    });
+  }
 }

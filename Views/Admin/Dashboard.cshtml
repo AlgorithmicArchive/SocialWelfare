@@ -6,29 +6,33 @@
 
 <div class="container-fluid d-flex flex-column gap-5 py-4 ps-0" id="dashboard">
 
-    <div class="row w-100 mx-auto">
-        <div class="col-sm-4">
-            <label for="District">District</label>
-            <select class="form-select bg-white" name="district" id="district">
-                <option value="">Select District</option>
-            </select>
-        </div>
-        <div class="col-sm-4">
-            <label for="Service">Service</label>
-            <select class="form-select" name="service" id="service">
-                <option value="">Select Service</option>
-            </select>
-        </div>
-        <div class="col-sm-4">
-            <label for="Officer">Officer</label>
-            <select class="form-select" name="officer" id="officer">
-                <option value="">Select Officer</option>
-            </select>
-        </div>
-        <div class="col-sm-12 d-flex justify-content-center p-2" id="spinner">
+    <div class="container-fluid">
+        <div class="row w-100 mx-auto mb-0">
+            <div class="col-md-4">
+                <label for="District">District</label>
+                <select class="form-select bg-white" name="district" id="district">
+                    <option value="">Select District</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="Service">Service</label>
+                <select class="form-select" name="service" id="service">
+                    <option value="">Select Service</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="Officer">Officer</label>
+                <select class="form-select" name="officer" id="officer">
+                    <option value="">Select Officer</option>
+                </select>
+            </div>
+            <div class="col-md-12 d-flex justify-content-center p-2" id="spinner">
 
+            </div>
         </div>
+
     </div>
+
 
     <div class="container-fluid d-flex justify-content-center ps-0">
         <div class="row w-100 justify-content-around">
@@ -95,24 +99,56 @@
         </div>
     </div>
 
-    <div class="container-fluid d-none flex-column gap-5 py-5 mb-5" id="dataGrid">
-        <div class="d-flex gap-2">
-            <button class="btn btn-info" onclick="printTable('printableArea')">Print</button>
-            <button class="btn btn-success" onclick="exportTableToExcel('applicationListTable')">EXCEL</button>
-            <button class="btn btn-danger" onclick="SaveAsPdf('printableArea','applicationListTable')">PDF</button>
+    <div class="container-fluid d-none flex-column gap-3 py-5 mb-5" id="dataGrid">
+        <div class="container-fluid d-flex justify-content-between">
+            <div class="d-flex justify-content-center align-items-center gap-2">
+                <div class="dropdown">
+                    <button type="button" class="btn btn-light border dropdown-toggle w-100" data-bs-toggle="dropdown">
+                        Select Report Columns
+                    </button>
+                    <ul class="dropdown-menu w-100 px-2">
+                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
+                                value="applicationNo">Application Number</li>
+                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
+                                value="applicantName">Applicant Name</li>
+                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
+                                value="applicationStatus">Application Status</li>
+                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
+                                value="appliedDistrict">Applied District</li>
+                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
+                                value="appliedService">Applied Service</li>
+                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
+                                value="applicationCurrentlyWith">Application Currently With</li>
+                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
+                                value="receivedOn">Received
+                            On</li>
+                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
+                                value="submissionDate">Application Submission Date</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary" id="getRecords">Get Records</button>
+            </div>
+            <div class="">
+                <button class="btn btn-info" onclick="printTable('printableArea')">Print</button>
+                <button class="btn btn-success" onclick="exportTableToExcel('applicationListTable')">EXCEL</button>
+                <button class="btn btn-danger" onclick="SaveAsPdf('printableArea','applicationListTable')">PDF</button>
+            </div>
         </div>
+
         <div id="printableArea">
             <table class="table table-responsive table-bordered table-striped" id="applicationListTable">
                 <thead class="bg-dark text-white">
-                    <th>S.No.</th>
-                    <th>Application Number</th>
-                    <th>Applicant Name</th>
-                    <th>Application Status</th>
-                    <th>Applied District</th>
-                    <th>Applied Service</th>
-                    <th>Application Currently With</th>
-                    <th>Application Received On</th>
-                    @* <th>Application Submission Date</th> *@
+                    <tr>
+                        <th>S.No.</th>
+                        <th>Application Number</th>
+                        <th>Applicant Name</th>
+                        <th>Application Status</th>
+                        <th>Applied District</th>
+                        <th>Applied Service</th>
+                        <th>Application Currently With</th>
+                        <th>Application Received On</th>
+                        <th>Application Submission Date</th>
+                    </tr>
                 </thead>
                 <tbody id="applicationListContainer">
 

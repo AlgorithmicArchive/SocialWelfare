@@ -7,6 +7,7 @@ const validationFunctionsList = {
   isEmailValid,
   isDateWithinRange,
   CapitalizeAlphabets,
+  duplicateAccountNumber,
 };
 
 function setErrorSpan(id, msg) {
@@ -113,6 +114,19 @@ function isDateWithinRange(field, value) {
       `The range should be between ${field.minLength} to ${field.maxLength} months from current date.`
     );
   }
+  return msg;
+}
+
+async function duplicateAccountNumber(id, value, applicationId) {
+  let msg = "";
+  const res = await fetch(
+    "/Base/IsDuplicateAccNo?accNo=" + value + "&applicationId=" + applicationId
+  );
+  const data = await res.json();
+  if (data.status) {
+    msg = "Application with this account number already exists.";
+  }
+  setErrorSpan(id, msg);
   return msg;
 }
 

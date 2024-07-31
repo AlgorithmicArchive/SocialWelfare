@@ -5,6 +5,7 @@ let finalList = [];
 
 function onSelect(list) {
   Applications = list;
+  console.log(Applications);
   if (Applications.Type == "Pending") {
     PendingTable(Applications);
     PoolTable(Applications);
@@ -14,7 +15,6 @@ function onSelect(list) {
   $("#listTable").show();
 
   poolApplications = Applications.PoolList;
-  console.log(poolApplications);
   if (poolApplications && poolApplications.length > 0) {
     poolApplications.forEach((element) => {
       poolIdList.push(element.applicationId);

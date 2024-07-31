@@ -20,6 +20,25 @@ $(document).ready(function () {
   if ($("#action").val() == "Sanction") {
     CertificateDetails(letterUpdateDetails, generalDetails);
   }
+
+  if (
+    $("#action").val() == "Forward" &&
+    ApplicationDetails.currentOfficer == "District Social Welfare Officer" &&
+    updateColumn != null
+  ) {
+    $("#extra").empty();
+    $("#extra").append(`
+        <label title="${updateColumn.label} Certificate by TSWO">${
+      updateColumn.label
+    } Certificate by TSWO</label>
+        <input class="form-control" type="file" name="${ApplicationDetails.currentOfficer
+          .split(" ")
+          .join("_")}_Document" id="${ApplicationDetails.currentOfficer
+      .split(" ")
+      .join("_")}_Document" />
+    `);
+  }
+
   const excludedProperties = [
     "phase",
     "bankDetails",
@@ -84,11 +103,14 @@ $(document).ready(function () {
       });
     } else if (value == "Update") {
       $("#extra").append(
-        `<label>${updateColumn.label}</label><input type="${
+        `<label>${updateColumn.label} to be updated</label><input type="${
           updateColumn.type == "date" ? "text" : updateColumn.type
         }" class="form-control datepicker-input" id="${
           updateColumn.name
-        }" name="${updateColumn.name}" value="${updateColumn.value}"/>`
+        }" name="${updateColumn.name}" value="${updateColumn.value}"/>
+        <label class="mt-1">Document of proof</label>
+        <input type="file" id="${updateColumn.name}File" class="form-control"/>
+        `
       );
 
       const validationFunctions =
@@ -98,6 +120,18 @@ $(document).ready(function () {
       if (validationFunctions.length) {
         attachValidation(updateColumn, validationFunctions);
       }
+    } else if (value == "Forward") {
+      $("#extra").empty();
+      $("#extra").append(`
+          <label title="${updateColumn.label} Certificate by TSWO">${
+        updateColumn.label
+      } Certificate by TSWO</label>
+          <input class="form-control" type="file" name="${ApplicationDetails.currentOfficer
+            .split(" ")
+            .join("_")}_Document" id="${ApplicationDetails.currentOfficer
+        .split(" ")
+        .join("_")}_Document" />
+      `);
     } else if (value == "Sanction") {
       CertificateDetails(letterUpdateDetails, generalDetails);
     }

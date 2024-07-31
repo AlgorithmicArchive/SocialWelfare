@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SocialWelfare.Models.Entities;
 
 namespace SocialWelfare.Controllers.User
@@ -41,8 +42,8 @@ namespace SocialWelfare.Controllers.User
             var CitizenIdParam = new SqlParameter("@CitizenId", userId);
             var EmailParam = new SqlParameter("@Email", form["Email"].ToString());
             var MobileNumberParam = new SqlParameter("@MobileNumber", form["MobileNumber"].ToString());
-            var BankDetailsParam = new SqlParameter("@BankDetails", "");
-            var DocumentsParam = new SqlParameter("@Documents", "");
+            var BankDetailsParam = new SqlParameter("@BankDetails", "{}");
+            var DocumentsParam = new SqlParameter("@Documents", "[]");
             var ApplicationStatusParam = new SqlParameter("@ApplicationStatus", "Incomplete");
 
             dbcontext.Database.ExecuteSqlRaw("EXEC InsertGeneralApplicationDetails @ApplicationId,@CitizenId,@ServiceId,@ApplicantName,@ApplicantImage,@Email,@MobileNumber,@Relation,@RelationName,@DateOfBirth,@Category,@ServiceSpecific,@BankDetails,@Documents,@ApplicationStatus",
@@ -101,8 +102,6 @@ namespace SocialWelfare.Controllers.User
                     }
                 }
 
-                _logger.LogInformation($"ApplicationID: {form["ApplicationId"]}, PresentAddressId: {presentAddressId}, PermanentAddressId: {permanentAddressId}");
-
                 return Json(new
                 {
                     status = true,
@@ -113,15 +112,23 @@ namespace SocialWelfare.Controllers.User
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while inserting address details.");
                 return Json(new { status = false, message = ex.Message });
             }
         }
         public IActionResult InsertBankDetails([FromForm] IFormCollection form)
         {
             var ApplicationId = new SqlParameter("@ApplicationId", form["ApplicationId"].ToString());
-            var bankDetails = form["bankDetails"].ToString();
-            helper.UpdateApplication("BankDetails", bankDetails, ApplicationId);
+
+            var bankDetails = new
+            {
+                BankName = form["BankName"].ToString(),
+                BranchName = form["BranchName"].ToString(),
+                AccountNumber = form["AccountNumber"].ToString(),
+                IfscCode = form["IfscCode"].ToString(),
+            };
+
+
+            helper.UpdateApplication("BankDetails", JsonConvert.SerializeObject(bankDetails), ApplicationId);
 
             return Json(new { status = true, ApplicationId = form["ApplicationId"].ToString() });
         }
@@ -163,7 +170,8 @@ namespace SocialWelfare.Controllers.User
                 HasApplication = index == 0,
                 ActionTaken = index == 0 ? "Pending" : string.Empty,
                 Remarks = string.Empty,
-                CanPull = false
+                CanPull = false,
+                Files = new JArray(),
             }).ToList();
 
             // Update Phase, Documents, and ApplicationStatus in Applications Table
@@ -175,18 +183,26 @@ namespace SocialWelfare.Controllers.User
             if (!form.ContainsKey("returnToEdit"))
             {
                 var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(applicationId);
-
+                int districtCode = Convert.ToInt32(serviceSpecific["District"]);
+                string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)!.DistrictName;
                 var details = new Dictionary<string, string>
                 {
                     ["REFERENCE NUMBER"] = userDetails.ApplicationId,
                     ["APPLICANT NAME"] = userDetails.ApplicantName,
+                    ["PARENTAGE"] = userDetails.RelationName,
+                    ["APPLIED DISTRICT"] = AppliedDistrict,
+                    ["BANK NAME"] = bankDetails["BankName"],
+                    ["ACCOUNT NUMBER"] = bankDetails["AccountNumber"],
+                    ["IFSC CODE"] = bankDetails["IfscCode"],
                     ["DATE OF MARRIAGE"] = serviceSpecific["DateOfMarriage"],
+                    ["DATE OF SUBMISSION"] = userDetails.SubmissionDate!,
                     ["PRESENT ADDRESS"] = $"{preAddressDetails.Address}, TEHSIL: {preAddressDetails.Tehsil}, DISTRICT: {preAddressDetails.District}, PIN CODE: {preAddressDetails.Pincode}",
                     ["PERMANENT ADDRESS"] = $"{perAddressDetails.Address}, TEHSIL: {perAddressDetails.Tehsil}, DISTRICT: {perAddressDetails.District}, PIN CODE: {perAddressDetails.Pincode}"
                 };
 
                 _pdfService.CreateAcknowledgement(details, userDetails.ApplicationId);
             }
+
 
             if (form.ContainsKey("returnToEdit"))
             {
@@ -210,7 +226,6 @@ namespace SocialWelfare.Controllers.User
 
         public async Task<IActionResult> UpdateGeneralDetails([FromForm] IFormCollection form)
         {
-            _logger.LogInformation("------HERE UPDATE GENERAL DETAILS------------");
 
             string ApplicationId = form["ApplicationId"].ToString();
             var parameters = new List<SqlParameter>();
@@ -283,8 +298,16 @@ namespace SocialWelfare.Controllers.User
         public IActionResult UpdateBankDetails([FromForm] IFormCollection form)
         {
             var ApplicationId = new SqlParameter("@ApplicationId", form["ApplicationId"].ToString());
-            var bankDetails = form["bankDetails"].ToString();
-            helper.UpdateApplication("BankDetails", bankDetails, ApplicationId);
+
+            var bankDetails = new
+            {
+                BankName = form["BankName"].ToString(),
+                BranchName = form["BranchName"].ToString(),
+                AccountNumber = form["AccountNumber"].ToString(),
+                IfscCode = form["IfscCode"].ToString(),
+            };
+
+            helper.UpdateApplication("BankDetails", JsonConvert.SerializeObject(bankDetails), ApplicationId);
 
             return Json(new { status = true, ApplicationId = form["ApplicationId"].ToString() });
         }
@@ -304,7 +327,8 @@ namespace SocialWelfare.Controllers.User
                     HasApplication = i == 0,
                     ActionTaken = i == 0 ? "Pending" : "",
                     Remarks = "",
-                    CanPull = false
+                    CanPull = false,
+                    Files = new JArray(),
                 };
                 Phases.Add(phase);
             }
@@ -314,6 +338,14 @@ namespace SocialWelfare.Controllers.User
             helper.UpdateApplicationHistory(form["ApplicationId"].ToString(), "Citizen", "Edited and returned to " + workForceOfficers[0].Designation, "NULL");
 
 
+            return Json(new { status = true });
+        }
+
+        public IActionResult IncompleteApplication([FromForm] IFormCollection form)
+        {
+            var ApplicationId = new SqlParameter("@ApplicationId", form["ApplicationId"].ToString());
+            helper.UpdateApplication("ApplicationStatus", "Initiated", ApplicationId);
+            helper.UpdateApplicationHistory(form["ApplicationId"].ToString(), "Citizen", "Application Submitted.", "NULL");
             return Json(new { status = true });
         }
 

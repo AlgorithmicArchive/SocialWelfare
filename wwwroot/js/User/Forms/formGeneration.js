@@ -35,6 +35,7 @@ function generateServiceForm(formData) {
 // Create Input
 function createInput(obj, columSize, formNo) {
   attachValidations(obj);
+
   const { details, key, readonly } = determineDetailsAndReadonlyStatus(
     obj,
     formNo
@@ -83,8 +84,7 @@ function determineDetailsAndReadonlyStatus(obj, formNo) {
 
   if (ApplicationId != null) {
     const editList = JSON.parse(application.generalDetails.editList || "[]");
-    readonly = !editList.includes(obj.name);
-
+    readonly = editList.includes(obj.name);
     switch (formNo) {
       case 0:
         details = {
@@ -141,7 +141,6 @@ function determineDetailsAndReadonlyStatus(obj, formNo) {
   } else {
     readonly = false;
   }
-
   return { details, key, readonly };
 }
 
@@ -228,13 +227,14 @@ function createOtherInputTypes(
   const classType = obj.type === "checkbox" ? "form-check" : "form-control";
   const maxLength = obj.maxLength || 100;
   const accept = obj.type === "file" ? obj.accept : null;
-
   if (ApplicationId != null && obj.name === "ApplicantImage") {
     $("#profile").attr("src", value);
   }
 
   const inputType =
-    obj.type === "file" && ApplicationId != null && details != null
+    obj.type === "file" &&
+    ApplicationId != null &&
+    Object.keys(details).length != 0
       ? "text"
       : obj.type == "date"
       ? "text"

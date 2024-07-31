@@ -1,6 +1,17 @@
 <div class="full-screen-section flex-column py-5 mb-5">
     <div class="container-fluid mt-5">
-        <div class="row p-5 justify-content-between w-100">
+        <div class="row p-5">
+            <div class="col-sm-12 w-50 mx-auto">
+                <select class="form-select" name="services" id="services">
+                    <option value="">Select Service</option>
+                </select>
+            </div>
+            <div class="col-sm-12 mt-2">
+                <button class="btn btn-primary d-flex mx-auto text-center fw-bold" id="getRecords">Get
+                    Records</button>
+            </div>
+        </div>
+        <div class="row p-5 justify-content-between w-100" id="detailsCards" style="display: none;">
             <div class="col-md-3 mt-2">
                 <div class="card border-0 p-3 py-5 rounded-border"
                     style="cursor: pointer;background-color: #FFC107;color:#000" data-bs-toggle="tooltip"
@@ -63,7 +74,7 @@
 
         </div>
     </div>
-    <div class="container-fluid mt-5" id="listTable" style="display: none;">
+    <div class="container-fluid mt-2" id="listTable" style="display: none;">
         <div class="container center-align gap-2 mb-2" id="containerSwitcher" style="display: none;">
             <button class="btn btn-dark" id="mainButton">Inbox</button>
             <button class="btn btn-secondary" id="poolButton">Pool</button>
@@ -80,7 +91,8 @@
                         </th>
                         <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
                         <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
-                        <th scope="col">Option</th>
+                        <th scope="col">Applicant Submission Date <i class="fa-solid fa-sort"></i></th>
+                        <th scope="col">Action</th>
                     </tr>
                 </thead>
                 <tbody id="tbody"></tbody>
@@ -134,7 +146,7 @@
 </div>
 
 <script>
-    const countList = @Html.Raw(Json.Serialize(Model));
+    const serviceList = @Html.Raw(Json.Serialize(Model));
 </script>
 <script src="/js/pagination.js"></script>
 <script src="/js/Officer/Applications/helperFunctions.js"></script>

@@ -113,7 +113,14 @@ namespace SocialWelfare.Controllers.Officer
 
                     if (action == "Forward")
                     {
-                        phases[i].CanPull = true;
+                        phases[i].CanPull = phases[i + 1].Officer != "Director Finance";
+                        var filePath = await helper.GetFilePath(form.Files["ForwardFile"]);
+                        _logger.LogInformation($"--FILE------: {filePath}");
+
+                        if (!string.IsNullOrEmpty(filePath))
+                        {
+                            phases[i].Files.Add(filePath);
+                        }
                         if (i + 1 < phases.Count)
                         {
                             phases[i + 1].HasApplication = true;
@@ -133,6 +140,7 @@ namespace SocialWelfare.Controllers.Officer
                         string NewValue = "";
                         string UpdateColumn = "";
                         string UpdateColumnValue = "";
+                        string UpdateColumnFile = await helper.GetFilePath(form.Files["UpdateColumnFile"]);
 
                         var entityType = dbcontext.Model.FindEntityType(typeof(Application));
                         if (entityType!.GetProperties().Any(p => p.Name == Field))
@@ -160,7 +168,7 @@ namespace SocialWelfare.Controllers.Officer
                             }
                         }
 
-                        updateObject = JsonConvert.SerializeObject(new { Officer = phases[i]["Officer"], ColumnName = Field, OldValue, NewValue });
+                        updateObject = JsonConvert.SerializeObject(new { Officer = phases[i]["Officer"], ColumnName = Field, OldValue, NewValue, File = UpdateColumnFile });
 
                         phases[i].CanPull = true;
                         if (i + 1 < phases.Count)
