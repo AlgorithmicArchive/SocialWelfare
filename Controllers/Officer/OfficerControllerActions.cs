@@ -101,6 +101,9 @@ namespace SocialWelfare.Controllers.Officer
             var phases = JsonConvert.DeserializeObject<List<dynamic>>(application.Phase);
             string? nextOfficer = null;
 
+            string file = await helper.GetFilePath(form.Files["ForwardFile"]);
+
+
 
             for (int i = 0; i < phases!.Count; i++)
             {
@@ -114,13 +117,6 @@ namespace SocialWelfare.Controllers.Officer
                     if (action == "Forward")
                     {
                         phases[i].CanPull = phases[i + 1].Officer != "Director Finance";
-                        var filePath = await helper.GetFilePath(form.Files["ForwardFile"]);
-                        _logger.LogInformation($"--FILE------: {filePath}");
-
-                        if (!string.IsNullOrEmpty(filePath))
-                        {
-                            phases[i].Files.Add(filePath);
-                        }
                         if (i + 1 < phases.Count)
                         {
                             phases[i + 1].HasApplication = true;
@@ -204,7 +200,7 @@ namespace SocialWelfare.Controllers.Officer
 
             helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), applicationIdParam);
             helper.UpdateApplication("EditList", form["editList"].ToString(), applicationIdParam);
-            helper.UpdateApplicationHistory(applicationId, officerDesignation, action, remarks, updateObject);
+            helper.UpdateApplicationHistory(applicationId, officerDesignation, action, remarks, updateObject, file);
 
             if (action == "Sanction")
             {

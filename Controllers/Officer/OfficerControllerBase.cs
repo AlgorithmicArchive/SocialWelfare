@@ -195,7 +195,6 @@ namespace SocialWelfare.Controllers.Officer
             var generalDetails = dbcontext.Applications.Where(u => u.ApplicationId == ApplicationId).ToList()[0];
             var phases = JsonConvert.DeserializeObject<List<dynamic>>(generalDetails.Phase);
             bool canOfficerTakeAction = true;
-            var previousActions = new List<dynamic>();
 
             for (int i = 0; i < phases!.Count; i++)
             {
@@ -217,18 +216,6 @@ namespace SocialWelfare.Controllers.Officer
                     if (IsMoreThanSpecifiedDays(currentItem["ReceivedOn"].ToString(), 15)) canOfficerTakeAction = false;
 
                     break;
-                }
-                else
-                {
-                    var obj = new
-                    {
-                        ReceivedOn = phases[i]["ReceivedOn"],
-                        Officer = phases[i]["Officer"],
-                        ActionTaken = phases[i]["ActionTaken"],
-                        Remarks = phases[i]["Remarks"],
-                        Files = phases[i]["Files"]
-                    };
-                    previousActions.Add(obj);
                 }
             }
 
@@ -260,7 +247,7 @@ namespace SocialWelfare.Controllers.Officer
                 preAddressDetails,
                 perAddressDetails,
                 canOfficerTakeAction,
-                previousActions,
+                previousActions = applicationHistory,
                 updateObject,
             };
             return View(ApplicationDetails);
@@ -411,12 +398,30 @@ namespace SocialWelfare.Controllers.Officer
             string officerDesignation = UserSpecificDetails!["Designation"];
             string districtCode = UserSpecificDetails["DistrictCode"];
             int serviceId = Convert.ToInt32(form["serviceId"].ToString());
-            string poolAction = form["poolAction"].ToString();
-            var poolList = JsonConvert.DeserializeObject<string[]>(form["poolIdList"].ToString());
+            string action = form["action"].ToString();
+            var IdList = JsonConvert.DeserializeObject<string[]>(form["IdList"].ToString());
+            var listType = form["listType"].ToString();
             var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(dbcontext.Services.FirstOrDefault(u => u.ServiceId == serviceId)!.WorkForceOfficers!);
 
+            string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
+            string accessCode = "0";
 
-            foreach (var item in poolList!)
+            SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
+
+            switch (accessLevel)
+            {
+                case "Tehsil":
+                    accessCode = UserSpecificDetails!["TehsilCode"].ToString();
+                    break;
+                case "District":
+                    accessCode = UserSpecificDetails!["DistrictCode"].ToString();
+                    break;
+                case "Division":
+                    accessCode = UserSpecificDetails!["DivisionCode"].ToString();
+                    break;
+            }
+
+            foreach (var item in IdList!)
             {
                 var generalDetails = dbcontext.Applications.Where(u => u.ApplicationId == item).ToList()[0];
                 var phases = JsonConvert.DeserializeObject<List<dynamic>>(generalDetails.Phase);
@@ -444,49 +449,45 @@ namespace SocialWelfare.Controllers.Officer
                 helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", item));
             }
 
+            var arrayLists = dbcontext.ApplicationLists.FirstOrDefault(list => list.ServiceId == serviceId && list.Officer == officerDesignation && list.AccessLevel == accessLevel && list.AccessCode == Convert.ToInt32(accessCode));
 
-            foreach (var officer in WorkForceOfficers!)
+            var PoolList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.PoolList);
+            var ApprovalList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.ApprovalList);
+
+            _logger.LogInformation($"-------------IDS: {form["IdList"]}-------------------");
+
+            foreach (var item in IdList)
             {
-                if (officer["Designation"] == officerDesignation)
+                if (listType == "Approve")
                 {
-                    JArray pool;
-                    if (poolList!.Length > 0)
-                    {
-                        if (officer["Designation"] == "Director Finance")
-                            pool = JArray.Parse(officer["pool"].ToString());
-                        else
-                            pool = JArray.Parse(officer["pool"][districtCode.ToString()].ToString());
-                        foreach (string item in poolList!)
-                        {
-                            bool inPool = pool.Any(u => u.ToString() == item);
-                            if (!inPool && poolAction == "add")
-                            {
-                                pool.Add(item);
-                            }
-                            else if (inPool && poolAction == "remove")
-                            {
-                                var itemsToRemove = pool.Where(u => u.ToString() == item).ToList();
-                                foreach (var itemToRemove in itemsToRemove)
-                                {
-                                    pool.Remove(itemToRemove);
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        pool = new JArray();
-                    }
-                    if (officer["Designation"] == "Director Finance")
-                        officer["pool"] = pool;
-                    else officer["pool"][districtCode.ToString()] = pool;
+                    if (action == "add" && !ApprovalList!.Contains(item)) ApprovalList.Add(item);
+                    else if (action == "remove" && ApprovalList!.Contains(item)) ApprovalList.Remove(item);
+
+                    arrayLists.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
 
                 }
-            }
-            var serviceIdParam = new SqlParameter("@ServiceId", serviceId);
-            var WorkForceOfficersParam = new SqlParameter("@WorkForceOfficer", JsonConvert.SerializeObject(WorkForceOfficers));
+                else if (listType == "Pool")
+                {
+                    if (action == "add" && !PoolList!.Contains(item)) PoolList.Add(item);
+                    else if (action == "remove" && PoolList!.Contains(item)) PoolList.Remove(item);
 
-            dbcontext.Database.ExecuteSqlRaw("EXEC UpdateWorkForceOfficer @ServiceId,@WorkForceOfficer", serviceIdParam, WorkForceOfficersParam);
+                    arrayLists.PoolList = JsonConvert.SerializeObject(PoolList);
+                }
+                else if (listType == "ApproveToPool")
+                {
+                    if (ApprovalList!.Contains(item)) ApprovalList.Remove(item);
+                    if (!PoolList!.Contains(item)) PoolList.Add(item);
+
+                    arrayLists.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
+                    arrayLists.PoolList = JsonConvert.SerializeObject(PoolList);
+                }
+            }
+
+
+
+            dbcontext.Entry(arrayLists).State = EntityState.Modified;
+            dbcontext.SaveChanges();
+
 
 
             return Json(new { status = true });

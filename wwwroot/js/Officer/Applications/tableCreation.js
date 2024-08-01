@@ -17,7 +17,7 @@ function PendingTable(Applications) {
   let pendingList = [];
   pendingList = Applications.PendingList.map((element) => {
     const checkboxColumn = canSanction
-      ? `<input type="checkbox" class="form-check pool mx-auto" value="${element.applicationId}" name="pool" />`
+      ? `<input type="checkbox" class="form-check pending-element" value="${element.applicationId}" name="pending-element" />`
       : "";
 
     let result = {};
@@ -25,26 +25,11 @@ function PendingTable(Applications) {
     if (checkboxColumn) {
       result.checkbox = checkboxColumn;
     }
-
     if (element.dateOfMarriage != null) {
       extra.dateOfMarriage = element.dateOfMarriage;
-      $("#applicationsTable thead tr").empty();
-      $("#applicationsTable thead tr").append(`
-          <th scope="col">#</th>
-          <th scope="col" class="">
-              <span class="d-flex gap-2">
-                  <input type="checkbox" class="form-check d-flex parent-pool" /><span>Pool</span>
-              </span>
-          </th>
-          <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
-          <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
-          <th scope="col">Date Of Marriage <i class="fa-solid fa-sort"></i></th>
-          <th scope="col">Applicant Submission Date (Days Elapsed)<i class="fa-solid fa-sort"></i></th>
-          <th scope="col">Action</th>
-        `);
 
       if (!canSanction) {
-        $(".parent-pool").parent().parent().remove();
+        $(".pending-parent").parent().parent().remove();
       }
     }
 
@@ -87,12 +72,50 @@ function PoolTable(Applications) {
   let list = [];
   list = Applications.PoolList.map(({ applicationId, applicantName }) => {
     return {
-      checkbox: `<input type="checkbox" class="form-check mx-auto poolList-element" value="${applicationId}" />`,
+      checkbox: `<input type="checkbox" class="form-check poolList-element" value="${applicationId}" />`,
       applicationId,
       applicantName,
     };
   });
   initializeDataTable("poolTable", "poolArray", list);
+}
+
+function ApproveTable(Applications) {
+  let list = [];
+  list = Applications.ApproveList.map(
+    ({
+      applicationId,
+      applicantName,
+      appliedDistrict,
+      parentage,
+      motherName,
+      dateOfBirth,
+      dateOfMarriage,
+      address,
+      district,
+      tehsil,
+      pincode,
+      submissionDate,
+    }) => {
+      return {
+        checkbox: `<input type="checkbox" class="form-check approve-element" value="${applicationId}" />`,
+        applicationId,
+        applicantName,
+        appliedDistrict,
+        parentage,
+        motherName,
+        dateOfBirth,
+        dateOfMarriage,
+        address,
+        district,
+        tehsil,
+        pincode,
+        submissionDate,
+      };
+    }
+  );
+
+  initializeDataTable("approveTable", "approveArray", list);
 }
 
 function MiscellaneousTable(Applications) {

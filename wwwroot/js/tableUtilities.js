@@ -27,7 +27,7 @@ function initializeDataTable(tableId, containerId, data) {
     info: true,
     lengthChange: true,
     pageLength: 10, // Default number of entries to display
-    lengthMenu: [5, 10, 25, 50, 100], // Options for the user to select from
+    lengthMenu: [5, 10, 25, 50, 100, 500, 1000], // Options for the user to select from
     pagingType: "full_numbers", // Use full pagination control
 
     // Customizing pagination text

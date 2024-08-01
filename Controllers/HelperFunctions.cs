@@ -125,7 +125,7 @@ public class UserHelperFunctions
         dbcontext.Database.ExecuteSqlRaw("EXEC UpdateApplication @ColumnName,@ColumnValue,@ApplicationId", columnNameParam, columnValueParam, applicationId);
     }
 
-    public void UpdateApplicationHistory(string applicationId, string actionTaker, string actionTaken, string remarks, string updateObject = "")
+    public void UpdateApplicationHistory(string applicationId, string actionTaker, string actionTaken, string remarks, string updateObject = "", string File = "")
     {
         // Search for an existing history record
         var historyRecord = dbcontext.ApplicationsHistories.FirstOrDefault(u => u.ApplicationId == applicationId);
@@ -136,7 +136,8 @@ public class UserHelperFunctions
             ActionTaken = actionTaken,
             Remarks = remarks,
             DateTime = DateTime.Now.ToString("dd MMM yyyy hh:mm tt"),
-            UpdateObject = JsonConvert.DeserializeObject<dynamic>(updateObject)
+            UpdateObject = JsonConvert.DeserializeObject<dynamic>(updateObject),
+            File
         };
 
         if (historyRecord == null)

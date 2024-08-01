@@ -4,7 +4,6 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SocialWelfare.Models.Entities;
 
 namespace SocialWelfare.Controllers.Officer
 {
@@ -17,22 +16,24 @@ namespace SocialWelfare.Controllers.Officer
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string districtCode = UserSpecificDetails?["DistrictCode"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
-
+            string accessCode = "0";
 
             SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
 
             switch (accessLevel)
             {
                 case "Tehsil":
-                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["TehsilCode"]?.ToString() ?? string.Empty);
+                    accessCode = UserSpecificDetails!["TehsilCode"].ToString();
                     break;
                 case "District":
-                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DistrictCode"]?.ToString() ?? string.Empty);
+                    accessCode = UserSpecificDetails!["DistrictCode"].ToString();
                     break;
                 case "Division":
-                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DivisionCode"]?.ToString() ?? string.Empty);
+                    accessCode = UserSpecificDetails!["DivisionCode"].ToString();
                     break;
             }
+
+            AccessLevelCode = new SqlParameter("@AccessLevelCode", accessCode ?? string.Empty);
 
 
 
@@ -49,7 +50,8 @@ namespace SocialWelfare.Controllers.Officer
             bool canSanction = false;
             bool canUpdate = false;
             int serviceId = 0;
-            List<Application> PoolList = [];
+            List<dynamic> PoolList = [];
+            List<dynamic> ApprovalList = [];
             List<dynamic> PendingList = [];
             JArray pool = [];
 
@@ -58,7 +60,9 @@ namespace SocialWelfare.Controllers.Officer
                 var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == application.ServiceId);
                 var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
                 var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
-                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific);
+                var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
+                int DistrictCode = Convert.ToInt32(serviceSpecific["District"]);
+                string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
                 serviceId = service.ServiceId;
 
 
@@ -69,48 +73,45 @@ namespace SocialWelfare.Controllers.Officer
                 {
                     applicationId = application.ApplicationId,
                     applicantName = application.ApplicantName,
+                    appliedDistrict,
+                    parentage = application.RelationName + $" ({application.Relation.ToUpper()})",
+                    motherName = serviceSpecific["MotherName"],
+                    dateOfBirth = application.DateOfBirth,
                     dateOfMarriage = serviceSpecific!["DateOfMarriage"],
+                    address = preAddressDetails.Address!.ToUpper(),
+                    district = preAddressDetails.District!.ToUpper(),
+                    tehsil = preAddressDetails.Tehsil!.ToUpper(),
+                    pincode = preAddressDetails.Pincode,
                     submissionDate = application.SubmissionDate,
                 };
 
+                var arrayLists = dbcontext.ApplicationLists.FirstOrDefault(list => list.ServiceId == serviceId && list.Officer == officerDesignation && list.AccessLevel == accessLevel && list.AccessCode == Convert.ToInt32(accessCode));
 
-                if (officerDesignation == "Director Finance" && canSanction)
+                if (canSanction)
                 {
-                    pool = JArray.Parse(officer["pool"].ToString());
-                }
-                else if (canSanction)
-                {
-                    var poolElement = officer["pool"]?[districtCode];
-                    pool = poolElement != null ? JArray.Parse(poolElement.ToString()) : new JArray();
-                    if (poolElement == null)
+                    if (arrayLists == null)
                     {
-                        officer["pool"][districtCode] = pool;
-                    }
-                }
-
-                if (pool.Count == 0)
-                {
-                    PendingList.Add(app);
-                }
-                else
-                {
-                    bool inPool = pool.Any(item => item.ToString() == application.ApplicationId);
-                    if (inPool)
-                    {
-                        PoolList.Add(application);
+                        dbcontext.Database.ExecuteSqlRaw("EXEC InsertApplicationListTable @ServiceId,@Officer,@AccessLevel,@AccessCode", new SqlParameter("@ServiceId", serviceId), new SqlParameter("@Officer", officerDesignation), new SqlParameter("@AccessLevel", accessLevel), new SqlParameter("@AccessCode", Convert.ToInt32(accessCode)));
+                        PendingList.Add(app);
                     }
                     else
                     {
-                        PendingList.Add(app);
+                        var poolList = JsonConvert.DeserializeObject<List<string>>(arrayLists.PoolList);
+                        var approvalList = JsonConvert.DeserializeObject<List<string>>(arrayLists.ApprovalList);
+
+                        if (approvalList!.Contains(app.applicationId)) ApprovalList.Add(app);
+                        else if (poolList!.Contains(app.applicationId)) PoolList.Add(app);
+                        else PendingList.Add(app);
                     }
                 }
-
+                else PendingList.Add(app);
 
             }
 
             dynamic obj = new System.Dynamic.ExpandoObject();
             obj.PendingList = PendingList;
             obj.PoolList = PoolList;
+            obj.ApproveList = ApprovalList;
             obj.canSanction = canSanction;
             obj.canUpdate = canUpdate;
             obj.Type = "Pending";
@@ -380,7 +381,6 @@ namespace SocialWelfare.Controllers.Officer
 
             return list;
         }
-
         public IActionResult GetFilteredCount(string? conditions)
         {
             int? UserId = HttpContext.Session.GetInt32("UserId");

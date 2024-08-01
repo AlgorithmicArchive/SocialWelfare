@@ -135,22 +135,20 @@ function appendDocuments(documents) {
   }
 }
 function appendPerviousActions(previousActions) {
-  console.log(previousActions);
   if (previousActions.length > 0) {
     $("#showPreviousActions").show();
     previousActions.reverse().map((item) => {
-      const files = item.files;
-      let filesTd = ``;
-      files.map((item) => {
-        filesTd += `<a href="#" class="me-4" onclick="openInIframe('${item}'); return false;">View File</a>`;
-      });
       $("#previousActions").append(`
         <tr>
-          <td>${item.officer}</td>  
-          <td>${item.actionTaken}</td>
-          <td>${item.receivedOn}</td>
-          <td>${item.remarks}</td>
-          <td>${filesTd}</td>
+          <td>${item.ActionTaker}</td>  
+          <td>${item.ActionTaken}</td>
+          <td>${item.DateTime}</td>
+          <td>${item.Remarks}</td>
+          <td>${
+            item.File == ""
+              ? "NIL"
+              : `<a href="#" onclick="openInIframe('${item.File}'); return false;">View File</a>`
+          }</td>
         </tr>
     `);
     });

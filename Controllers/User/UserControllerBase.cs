@@ -163,8 +163,9 @@ namespace SocialWelfare.Controllers.User
             {
                 ["REFERENCE NUMBER"] = userDetails.ApplicationId,
                 ["APPLICANT NAME"] = userDetails.ApplicantName,
-                ["PARENTAGE"] = userDetails.RelationName,
-                ["APPLIED DISTRICT"] = AppliedDistrict,
+                ["PARENTAGE"] = userDetails.RelationName + $" ({userDetails.Relation.ToUpper()})",
+                ["MOTHER NAME"] = serviceSpecific["MotherName"],
+                ["APPLIED DISTRICT"] = AppliedDistrict.ToUpper(),
                 ["BANK NAME"] = bankDetails["BankName"],
                 ["ACCOUNT NUMBER"] = bankDetails["AccountNumber"],
                 ["IFSC CODE"] = bankDetails["IfscCode"],

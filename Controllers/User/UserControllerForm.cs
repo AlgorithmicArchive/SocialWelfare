@@ -171,7 +171,6 @@ namespace SocialWelfare.Controllers.User
                 ActionTaken = index == 0 ? "Pending" : string.Empty,
                 Remarks = string.Empty,
                 CanPull = false,
-                Files = new JArray(),
             }).ToList();
 
             // Update Phase, Documents, and ApplicationStatus in Applications Table
@@ -189,8 +188,9 @@ namespace SocialWelfare.Controllers.User
                 {
                     ["REFERENCE NUMBER"] = userDetails.ApplicationId,
                     ["APPLICANT NAME"] = userDetails.ApplicantName,
-                    ["PARENTAGE"] = userDetails.RelationName,
-                    ["APPLIED DISTRICT"] = AppliedDistrict,
+                    ["PARENTAGE"] = userDetails.RelationName + $" ({userDetails.Relation.ToUpper()})",
+                    ["MOTHER NAME"] = serviceSpecific["MotherName"],
+                    ["APPLIED DISTRICT"] = AppliedDistrict.ToUpper(),
                     ["BANK NAME"] = bankDetails["BankName"],
                     ["ACCOUNT NUMBER"] = bankDetails["AccountNumber"],
                     ["IFSC CODE"] = bankDetails["IfscCode"],
@@ -328,7 +328,6 @@ namespace SocialWelfare.Controllers.User
                     ActionTaken = i == 0 ? "Pending" : "",
                     Remarks = "",
                     CanPull = false,
-                    Files = new JArray(),
                 };
                 Phases.Add(phase);
             }

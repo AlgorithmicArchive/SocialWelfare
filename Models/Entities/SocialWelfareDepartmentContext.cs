@@ -19,6 +19,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<Application> Applications { get; set; }
 
+    public virtual DbSet<ApplicationList> ApplicationLists { get; set; }
+
     public virtual DbSet<ApplicationPerDistrict> ApplicationPerDistricts { get; set; }
 
     public virtual DbSet<ApplicationsHistory> ApplicationsHistories { get; set; }
@@ -48,17 +50,13 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Village> Villages { get; set; }
 
     public virtual DbSet<Ward> Wards { get; set; }
-
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
-
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("name=DefaultConnection");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AddressJoin>().HasNoKey();
-
         modelBuilder.Entity<Address>(entity =>
         {
             entity.ToTable("Address");
@@ -81,6 +79,7 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.ApplicationStatus)
                 .HasMaxLength(15)
                 .IsUnicode(false);
+            entity.Property(e => e.BankDetails).HasDefaultValue("{}");
             entity.Property(e => e.Category).HasMaxLength(50);
             entity.Property(e => e.DateOfBirth)
                 .HasMaxLength(50)
@@ -110,6 +109,21 @@ public partial class SocialWelfareDepartmentContext : DbContext
                 .HasForeignKey(d => d.ServiceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Applicati__Servi__25DB9BFC");
+        });
+
+        modelBuilder.Entity<ApplicationList>(entity =>
+        {
+            entity.HasKey(e => e.Uuid);
+
+            entity.ToTable("ApplicationList");
+
+            entity.Property(e => e.Uuid).HasColumnName("UUID");
+            entity.Property(e => e.AccessLevel)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.ApprovalList).HasDefaultValue("[]");
+            entity.Property(e => e.Officer).HasMaxLength(50);
+            entity.Property(e => e.PoolList).HasDefaultValue("[]");
         });
 
         modelBuilder.Entity<ApplicationPerDistrict>(entity =>

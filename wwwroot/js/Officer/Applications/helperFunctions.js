@@ -45,9 +45,9 @@ async function SanctionAll(poolList, finalList, ServiceId) {
       });
   } else {
     const formdata = new FormData();
-    formdata.append("poolIdList", JSON.stringify(finalList));
+    formdata.append("IdList", JSON.stringify(finalList));
     formdata.append("serviceId", ServiceId);
-    console.log("EMPTY", poolList);
+    formdata.append("listType", "Pool");
     fetch("/Officer/UpdatePool", { method: "post", body: formdata })
       .then((res) => res.json())
       .then((data) => {
