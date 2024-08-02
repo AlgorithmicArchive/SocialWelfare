@@ -74,8 +74,8 @@ function printTable(divId) {
   }
 
   // Desired window size
-  var width = 1080;
-  var height = 600;
+  var width = 3000;
+  var height = 2000;
 
   // Calculate the position for centering the window
   var left = (screen.width - width) / 2;
@@ -88,7 +88,7 @@ function printTable(divId) {
   );
   myWindow.document.write("<html><head><title>Print Table</title>");
   myWindow.document.write(`<style>
-          table { border-collapse: collapse; }
+          table { border-collapse: seprate; width:100% }
           th, td { border: 2px solid black; padding: 8px; text-align: left; }
           thead { background-color: #f2f2f2; }
           th { border: 1px solid black; }

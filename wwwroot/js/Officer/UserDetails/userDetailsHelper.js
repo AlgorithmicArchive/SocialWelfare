@@ -27,6 +27,7 @@ function createInputElement(label, id, value) {
   let updated = false;
   let extraDetailsContent = "";
   if (updateObject.ColumnName === id) {
+    console.log(documents);
     value = updateObject.OldValue;
     updated = true;
     extraDetailsContent = `
@@ -36,6 +37,9 @@ function createInputElement(label, id, value) {
       <input type="text" class="form-control" value="${updateObject.NewValue}" readonly/>
     `;
     $("#extraDetails").empty().append(extraDetailsContent);
+    $("#documents").append(
+      `<label class="text-danger fw-bold">${label} Updated By ${updateObject.Officer}</label><a href="#" onclick="openInIframe('${updateObject.File}'); return false;">View File</a>`
+    );
   }
 
   // Construct the main input element
@@ -192,8 +196,6 @@ function ProceedAction(applicationId, officer, letterUpdateDetails) {
   formdata.append("Officer", officer);
   formdata.append("Action", action);
   formdata.append("Remarks", remarks);
-
-  console.log(officer.split(" ").join("_") + "_Document");
 
   const editList = [];
 

@@ -9,7 +9,7 @@ namespace SocialWelfare.Controllers.Officer
 {
     public partial class OfficerController : Controller
     {
-        public dynamic PendingApplications(Models.Entities.User Officer)
+        public dynamic PendingApplications(Models.Entities.User Officer, int start, int length)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer?.UserSpecificDetails!);
 
@@ -43,7 +43,7 @@ namespace SocialWelfare.Controllers.Officer
                 new SqlParameter("@ActionTaken", "Pending"),
                 new SqlParameter("@AccessLevel", accessLevel),
                 AccessLevelCode,
-                new SqlParameter("@ServiceId", 1)).ToList();
+                new SqlParameter("@ServiceId", 1)).AsEnumerable().Skip(start).Take(length).ToList();
 
 
 
@@ -78,10 +78,8 @@ namespace SocialWelfare.Controllers.Officer
                     motherName = serviceSpecific["MotherName"],
                     dateOfBirth = application.DateOfBirth,
                     dateOfMarriage = serviceSpecific!["DateOfMarriage"],
-                    address = preAddressDetails.Address!.ToUpper(),
-                    district = preAddressDetails.District!.ToUpper(),
-                    tehsil = preAddressDetails.Tehsil!.ToUpper(),
-                    pincode = preAddressDetails.Pincode,
+                    bankDetails = $"{bankDetails["BankName"]}/{bankDetails["IfscCode"]}/{bankDetails["AccountNumber"]}",
+                    address = $"{preAddressDetails.Address!.ToUpper()}, TEHSIL:{preAddressDetails.Tehsil!.ToUpper()}, DISTRICT:{preAddressDetails.District!.ToUpper()}, PINCODE:{preAddressDetails.Pincode}",
                     submissionDate = application.SubmissionDate,
                 };
 
@@ -153,6 +151,7 @@ namespace SocialWelfare.Controllers.Officer
             foreach (var application in applicationList)
             {
                 bool? canPull = false;
+                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific);
                 var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
                 foreach (var phase in phases!)
                 {
@@ -163,6 +162,7 @@ namespace SocialWelfare.Controllers.Officer
                 {
                     application.ApplicationId,
                     application.ApplicantName,
+                    dateOfMarriage = serviceSpecific!["DateOfMarriage"],
                     application.SubmissionDate,
                     canPull
                 };
@@ -208,6 +208,7 @@ namespace SocialWelfare.Controllers.Officer
             foreach (var application in applicationList)
             {
                 bool? canPull = false;
+                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific);
                 var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
                 foreach (var phase in phases!)
                 {
@@ -218,6 +219,7 @@ namespace SocialWelfare.Controllers.Officer
                 {
                     application.ApplicationId,
                     application.ApplicantName,
+                    dateOfMarriage = serviceSpecific!["DateOfMarriage"],
                     application.SubmissionDate,
                     canPull
                 };
@@ -276,6 +278,8 @@ namespace SocialWelfare.Controllers.Officer
             obj.Type = "Reject";
             return obj;
         }
+
+
         public bool IsMoreThanSpecifiedDays(string dateString, int value)
         {
             if (DateTime.TryParse(dateString, out DateTime parsedDate))

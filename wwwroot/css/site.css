@@ -130,6 +130,11 @@ p{
     margin-bottom: 10px;
 }
 
+table thead th{
+    min-width: 150px;
+    white-space: "nowrap"
+}
+
 th{
     vertical-align: top;
 }

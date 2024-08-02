@@ -1,15 +1,11 @@
 <div class="full-screen-section flex-column py-5 mb-5">
     <div class="container-fluid mt-5">
-        <div class="row p-5">
-            <div class="col-sm-12 w-50 mx-auto">
-                <select class="form-select" name="services" id="services">
-                    <option value="">Select Service</option>
-                </select>
-            </div>
-            <div class="col-sm-12 mt-2">
-                <button class="btn btn-primary d-flex mx-auto text-center fw-bold" id="getRecords">Get
-                    Records</button>
-            </div>
+        <div class="container d-flex justify-content-center gap-2">
+            <select class="form-select w-50" name="services" id="services">
+                <option value="">Select Service</option>
+            </select>
+
+            <button class="btn btn-primary" id="getRecords">Get Records</button>
         </div>
         <div class="row p-5 justify-content-between w-100" id="detailsCards" style="display: none;">
             <div class="col-md-3 mt-2">
@@ -101,7 +97,8 @@
                             <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
                             <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
                             <th scope="col">Date Of Marriage <i class="fa-solid fa-sort"></i></th>
-                            <th scope="col">Applicant Submission Date <i class="fa-solid fa-sort"></i></th>
+                            <th scope="col">Applicant Submission Date (Days Elapsed) <i class="fa-solid fa-sort"></i>
+                            </th>
                             <th scope="col">Action</th>
                         </tr>
                     </thead>
@@ -109,32 +106,33 @@
                 </table>
             </div>
             <div id="ApproveContainer" class="container-fluid" style="display: none;">
-                <table class="table table-striped table-hover table-bordered" id="approveTable">
-                    <thead class="bg-dark text-white">
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col" class="">
-                                <span class="d-flex gap-2">
-                                    <input type="checkbox" class="form-check d-flex approve-parent" /><span></span>
-                                </span>
-                            </th>
-                            <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
-                            <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
-                            <th scope="col">Applied To District <i class="fa-solid fa-sort"></i></th>
-                            <th scope="col">Parentage <i class="fa-solid fa-sort"></i></th>
-                            <th scope="col">Mother's Name <i class="fa-solid fa-sort"></i></th>
-                            <th scope="col">Date Of Birth <i class="fa-solid fa-sort"></i></th>
-                            <th scope="col">Date Of Marriage <i class="fa-solid fa-sort"></i></th>
-                            <th scope="col">Address <i class="fa-solid fa-sort"></i></th>
-                            <th scope="col">District <i class="fa-solid fa-sort"></i></th>
-                            <th scope="col">Tehsil <i class="fa-solid fa-sort"></i></th>
-                            <th scope="col">Pincode <i class="fa-solid fa-sort"></i></th>
-                            <th scope="col">Submission Date <i class="fa-solid fa-sort"></i></th>
-                        </tr>
-                    </thead>
-                    <tbody id="approveArray">
-                    </tbody>
-                </table>
+                <div class="table-responsive" style="overflow-x: auto;">
+                    <table class="table table-striped table-hover table-bordered" id="approveTable">
+                        <thead class="bg-dark text-white">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col" class="">
+                                    <span class="d-flex gap-2">
+                                        <input type="checkbox" class="form-check d-flex approve-parent" /><span></span>
+                                    </span>
+                                </th>
+                                <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
+                                <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
+                                <th scope="col">Applied To District <i class="fa-solid fa-sort"></i></th>
+                                <th scope="col">Parentage <i class="fa-solid fa-sort"></i></th>
+                                <th scope="col">Mother's Name <i class="fa-solid fa-sort"></i></th>
+                                <th scope="col">Date Of Birth <i class="fa-solid fa-sort"></i></th>
+                                <th scope="col">Date Of Marriage <i class="fa-solid fa-sort"></i></th>
+                                <th scope="col">Bank Details (Bank Name/IFSC Code/Account Number)<i
+                                        class="fa-solid fa-sort"></i></th>
+                                <th scope="col">Address <i class="fa-solid fa-sort"></i></th>
+                                <th scope="col">Submission Date (Days Elapsed)<i class="fa-solid fa-sort"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="approveArray">
+                        </tbody>
+                    </table>
+                </div>
 
                 <div class="d-flex gap-2 justify-content-center mt-5">
                     <button class="btn btn-dark d-flex" id="transferToPoolButton" disabled>Transfer To Pool</button>
@@ -155,6 +153,8 @@
                             </th>
                             <th scope="col">Reference Number <i class="fa-solid fa-sort"></i></th>
                             <th scope="col">Applicant Name <i class="fa-solid fa-sort"></i></th>
+                            <th scope="col">Date Of Marriage <i class="fa-solid fa-sort"></i></th>
+                            <th scope="col">Date Of Submission (Days Elapsed) <i class="fa-solid fa-sort"></i></th>
                         </tr>
                     </thead>
                     <tbody id="poolArray">
@@ -165,6 +165,8 @@
                     <button class="btn btn-dark d-flex" id="sanctionAll" disabled>Sanction</button>
                     <button class="btn btn-dark d-flex" id="transferBackFromPool" disabled>Transfer Back to
                         Inbox</button>
+                    <button class="btn btn-dark d-flex" id="transferBackToInbox" disabled>Transfer Back to
+                        Approve List</button>
                 </div>
 
             </div>

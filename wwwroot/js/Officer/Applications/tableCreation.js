@@ -1,17 +1,28 @@
 function daysUntil(targetDateStr) {
+  // Parse the target date string and create a Date object
   let targetDate = new Date(Date.parse(targetDateStr));
+  // Create a new Date object for the current date
   let currentDate = new Date();
+
+  // Set the time component of both dates to midnight (00:00:00)
+  targetDate.setHours(0, 0, 0, 0);
+  currentDate.setHours(0, 0, 0, 0);
+
+  // Calculate the difference in milliseconds
   let differenceInMillis = targetDate - currentDate;
+  // Convert the difference from milliseconds to days
   let millisecondsPerDay = 1000 * 60 * 60 * 24;
   let differenceInDays = Math.ceil(differenceInMillis / millisecondsPerDay);
-  return differenceInDays;
+
+  // Return the absolute difference in days
+  return Math.abs(differenceInDays);
 }
 
 function PendingTable(Applications) {
   $("#tbody").empty();
   const canSanction = Applications.canSanction;
   if (!canSanction) {
-    $(".parent-pool").parent().parent().remove();
+    $(".pending-parent").parent().parent().remove();
   }
 
   let pendingList = [];
@@ -42,7 +53,7 @@ function PendingTable(Applications) {
         element.submissionDate +
         " (" +
         daysUntil(element.submissionDate) +
-        " days)",
+        " day(s))",
       button: `<button class="btn btn-dark w-100" onclick='UserDetails("${element.applicationId}");'>View</button>`,
     };
     return result;
@@ -52,31 +63,41 @@ function PendingTable(Applications) {
 }
 function SentTable(Applications) {
   $("#tbody").empty();
-  $(".parent-pool").parent().parent().remove();
-  console.log($(".parent-pool").parent().parent());
-  let pendingList = [];
-  pendingList = Applications.SentApplications.map((element) => {
+  $(".pending-parent").parent().parent().remove();
+  let sentList = [];
+  sentList = Applications.SentApplications.map((element) => {
+    console.log(element);
     result = {
       applicationId: element.applicationId,
       applicantName: element.applicantName,
-      submissionDate: element.submissionDate,
+      dateOfMarriage: element.dateOfMarriage,
+      submissionDate:
+        element.submissionDate +
+        " (" +
+        daysUntil(element.submissionDate) +
+        " day(s))",
       button: element.canPull
         ? `<button class="btn btn-dark w-100" onclick='PullApplication("${element.applicationId}");'>Pull</button>`
         : "Cannot Pull",
     };
     return result;
   });
-  initializeDataTable("applicationsTable", "tbody", pendingList);
+  initializeDataTable("applicationsTable", "tbody", sentList);
 }
 function PoolTable(Applications) {
   let list = [];
-  list = Applications.PoolList.map(({ applicationId, applicantName }) => {
-    return {
-      checkbox: `<input type="checkbox" class="form-check poolList-element" value="${applicationId}" />`,
-      applicationId,
-      applicantName,
-    };
-  });
+  list = Applications.PoolList.map(
+    ({ applicationId, applicantName, dateOfMarriage, submissionDate }) => {
+      return {
+        checkbox: `<input type="checkbox" class="form-check poolList-element" value="${applicationId}" />`,
+        applicationId,
+        applicantName,
+        dateOfMarriage,
+        submissionDate:
+          submissionDate + " (" + daysUntil(submissionDate) + " day(s))",
+      };
+    }
+  );
   initializeDataTable("poolTable", "poolArray", list);
 }
 
@@ -91,10 +112,8 @@ function ApproveTable(Applications) {
       motherName,
       dateOfBirth,
       dateOfMarriage,
+      bankDetails,
       address,
-      district,
-      tehsil,
-      pincode,
       submissionDate,
     }) => {
       return {
@@ -106,11 +125,10 @@ function ApproveTable(Applications) {
         motherName,
         dateOfBirth,
         dateOfMarriage,
+        bankDetails,
         address,
-        district,
-        tehsil,
-        pincode,
-        submissionDate,
+        submissionDate:
+          submissionDate + " (" + daysUntil(submissionDate) + " day(s))",
       };
     }
   );
@@ -120,13 +138,18 @@ function ApproveTable(Applications) {
 
 function MiscellaneousTable(Applications) {
   $("#tbody").empty();
-  $(".parent-pool").parent().parent().remove();
+  $(".pending-parent").parent().parent().remove();
   let pendingList = [];
   pendingList = Applications.MiscellaneousList.map((element) => {
     result = {
       applicationId: element.applicationId,
       applicantName: element.applicantName,
-      submissionDate: element.submissionDate,
+      dateOfMarriage: element.dateOfMarriage,
+      submissionDate:
+        element.submissionDate +
+        " (" +
+        daysUntil(element.submissionDate) +
+        " day(s))",
       button: element.canPull
         ? `<button class="btn btn-dark w-100" onclick='PullApplication("${element.applicationId}");'>Pull</button>`
         : "Cannot Pull",

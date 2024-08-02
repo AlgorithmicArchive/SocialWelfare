@@ -146,21 +146,20 @@ namespace SocialWelfare.Controllers.Officer
 
             return Json(new { status = true, countList });
         }
-        public IActionResult Applications(string? type)
+        public IActionResult Applications(string? type, int start = 0, int length = 10)
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
             Models.Entities.User Officer = dbcontext.Users.Find(userId)!;
             dynamic? ApplicationList = null;
 
             if (type!.ToString() == "Pending")
-                ApplicationList = PendingApplications(Officer!);
+                ApplicationList = PendingApplications(Officer!, start, length);
             else if (type!.ToString() == "Sent")
                 ApplicationList = SentApplications(Officer!);
             else if (type.ToString() == "Sanction")
                 ApplicationList = SanctionApplications(Officer!);
             else if (type.ToString() == "Reject")
                 ApplicationList = RejectApplications(Officer!);
-
 
             return Json(new { status = true, ApplicationList });
         }
@@ -454,8 +453,6 @@ namespace SocialWelfare.Controllers.Officer
             var PoolList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.PoolList);
             var ApprovalList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.ApprovalList);
 
-            _logger.LogInformation($"-------------IDS: {form["IdList"]}-------------------");
-
             foreach (var item in IdList)
             {
                 if (listType == "Approve")
@@ -477,6 +474,14 @@ namespace SocialWelfare.Controllers.Officer
                 {
                     if (ApprovalList!.Contains(item)) ApprovalList.Remove(item);
                     if (!PoolList!.Contains(item)) PoolList.Add(item);
+
+                    arrayLists.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
+                    arrayLists.PoolList = JsonConvert.SerializeObject(PoolList);
+                }
+                else if (listType == "PoolToApprove")
+                {
+                    if (!ApprovalList!.Contains(item)) ApprovalList.Add(item);
+                    if (PoolList!.Contains(item)) PoolList.Remove(item);
 
                     arrayLists.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
                     arrayLists.PoolList = JsonConvert.SerializeObject(PoolList);

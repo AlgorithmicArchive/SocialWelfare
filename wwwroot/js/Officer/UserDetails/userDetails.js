@@ -10,7 +10,6 @@ $(document).ready(function () {
     ApplicationDetails.serviceContent.letterUpdateDetails
   );
 
-
   getWorkForceOfficer(
     ApplicationDetails.serviceContent,
     ApplicationDetails.currentOfficer,

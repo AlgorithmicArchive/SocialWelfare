@@ -164,7 +164,8 @@ namespace SocialWelfare.Controllers.Officer
                             }
                         }
 
-                        updateObject = JsonConvert.SerializeObject(new { Officer = phases[i]["Officer"], ColumnName = Field, OldValue, NewValue, File = UpdateColumnFile });
+                        string desigShort = dbcontext.OfficersDesignations.FirstOrDefault(of => of.Designation == officerDesignation)!.DesignationShort;
+                        updateObject = JsonConvert.SerializeObject(new { Officer = desigShort, ColumnName = Field, OldValue, NewValue, File = UpdateColumnFile });
 
                         phases[i].CanPull = true;
                         if (i + 1 < phases.Count)

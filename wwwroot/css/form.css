@@ -1,10 +1,6 @@
 label{
     font-size: 14px;
     font-family: 'Courier New', Courier, monospace; 
-    width: 300px; /* Set the width of the container */
-    white-space: nowrap; /* Prevent the text from wrapping */
-    overflow: hidden; /* Hide the overflow text */
-    text-overflow: ellipsis; /* Add ellipsis (...) */
 }
 
 .form-heading{
