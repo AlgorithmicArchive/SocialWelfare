@@ -19,47 +19,14 @@ function daysUntil(targetDateStr) {
 }
 
 function PendingTable(Applications) {
-  $("#tbody").empty();
-  const canSanction = Applications.canSanction;
-  if (!canSanction) {
-    $(".pending-parent").parent().parent().remove();
-  }
-
-  let pendingList = [];
-  pendingList = Applications.PendingList.map((element) => {
-    const checkboxColumn = canSanction
-      ? `<input type="checkbox" class="form-check pending-element" value="${element.applicationId}" name="pending-element" />`
-      : "";
-
-    let result = {};
-    let extra = {};
-    if (checkboxColumn) {
-      result.checkbox = checkboxColumn;
-    }
-    if (element.dateOfMarriage != null) {
-      extra.dateOfMarriage = element.dateOfMarriage;
-
-      if (!canSanction) {
-        $(".pending-parent").parent().parent().remove();
-      }
-    }
-
-    result = {
-      ...result, // Spread the existing properties (if any)
-      applicationId: element.applicationId,
-      applicantName: element.applicantName,
-      ...extra,
-      submissionDate:
-        element.submissionDate +
-        " (" +
-        daysUntil(element.submissionDate) +
-        " day(s))",
-      button: `<button class="btn btn-dark w-100" onclick='UserDetails("${element.applicationId}");'>View</button>`,
-    };
-    return result;
-  });
-
-  initializeDataTable("applicationsTable", "tbody", pendingList);
+  // Initialize the DataTable
+  initializeRecordTables(
+    "applicationsTable",
+    "/Officer/Applications",
+    "Pending",
+    0,
+    1
+  );
 }
 function SentTable(Applications) {
   $("#tbody").empty();
@@ -98,7 +65,7 @@ function PoolTable(Applications) {
       };
     }
   );
-  initializeDataTable("poolTable", "poolArray", list);
+  // initializeDataTable("poolTable", "poolArray", list, "Pool");
 }
 
 function ApproveTable(Applications) {
@@ -133,7 +100,7 @@ function ApproveTable(Applications) {
     }
   );
 
-  initializeDataTable("approveTable", "approveArray", list);
+  // initializeDataTable("approveTable", "approveArray", list, "Approve");
 }
 
 function MiscellaneousTable(Applications) {

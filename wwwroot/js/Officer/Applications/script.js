@@ -6,24 +6,13 @@ let poolIdList = [];
 let finalList = [];
 
 function selectedCount(id, arr) {
-  $(`#${id}`).text($(`#${id}`).text().split("(")[0] + `(${arr.length})`);
+  let count = Array.isArray(arr) ? arr.length : arr;
+  $(`#${id}`).text($(`#${id}`).text().split("(")[0] + `(${count})`);
 }
 
 function toggleTransferButton() {
-  const transferButton = $("#mainContainer").find(
-    "button:contains('Transfer To Approve List')"
-  );
-  if (approvalIdList.length > 0) {
-    if (transferButton.length === 0) {
-      $("#mainContainer").append(`
-        <button class="btn btn-dark d-flex mx-auto" id="transferToApproveButton">
-          Transfer To Approve List
-        </button>
-      `);
-    }
-  } else {
-    transferButton.remove();
-  }
+  const isDisabled = approvalIdList.length === 0;
+  $("#transferToApproveButton").prop("disabled", isDisabled);
 }
 
 function togglePoolButtons() {
@@ -44,113 +33,89 @@ function toggleSanctionButtons() {
 }
 
 function transferToApproveList() {
-  Applications.PendingList = Applications.PendingList.filter((element) => {
-    if (approvalIdList.includes(element.applicationId)) {
-      Applications.ApproveList.push(element);
-      return false;
-    }
-    return true;
-  });
   $("#containerSwitcher").show();
   updatePool("Approve", approvalIdList, "add");
-  refreshTables();
   $("#pending-parent").prop("checked", false).trigger("change");
+  Applications.pendingList.recordsTotal -= approvalIdList.length;
+  Applications.approveList.recordsTotal += approvalIdList.length;
+  selectedCount("mainButton", Applications.pendingList.recordsTotal);
+  selectedCount("approveButton", Applications.approveList.recordsTotal);
+  selectedCount("poolButton", Applications.poolList.recordsTotal);
   approvalIdList = [];
   selectedCount("transferToApproveButton", approvalIdList);
   toggleTransferButton();
-  selectedCount("mainButton", Applications.PendingList);
-  selectedCount("approveButton", Applications.ApproveList);
-  selectedCount("poolButton", Applications.PoolList);
+  $("#mainButton").click();
 }
 
 function transferBackFromApproveList() {
-  Applications.ApproveList = Applications.ApproveList.filter((element) => {
-    if (finalList.includes(element.applicationId)) {
-      Applications.PendingList.push(element);
-      return false;
-    }
-    return true;
-  });
   $("#containerSwitcher").show();
   updatePool("Approve", finalList, "remove");
-  refreshTables();
   $("#approve-parent").prop("checked", false).trigger("change");
+
+  Applications.pendingList.recordsTotal += finalList.length;
+  Applications.approveList.recordsTotal -= finalList.length;
+  selectedCount("mainButton", Applications.pendingList.recordsTotal);
+  selectedCount("approveButton", Applications.approveList.recordsTotal);
+  selectedCount("poolButton", Applications.poolList.recordsTotal);
   finalList = [];
-  togglePoolButtons();
   selectedCount("transferToPoolButton", finalList);
   selectedCount("transferBackFromApprove", finalList);
-  selectedCount("mainButton", Applications.PendingList);
-  selectedCount("approveButton", Applications.ApproveList);
-  selectedCount("poolButton", Applications.PoolList);
+  togglePoolButtons();
+  $("#mainButton").click();
 }
 
 function transferToPoolList() {
-  Applications.ApproveList = Applications.ApproveList.filter((element) => {
-    if (finalList.includes(element.applicationId)) {
-      Applications.PoolList.push(element);
-      return false;
-    }
-    return true;
-  });
   $("#containerSwitcher").show();
   updatePool("ApproveToPool", finalList, "add");
-  refreshTables();
   $("#approve-parent").prop("checked", false).trigger("change");
+  Applications.approveList.recordsTotal -= finalList.length;
+  Applications.poolList.recordsTotal += finalList.length;
+  selectedCount("mainButton", Applications.pendingList.recordsTotal);
+  selectedCount("approveButton", Applications.approveList.recordsTotal);
+  selectedCount("poolButton", Applications.poolList.recordsTotal);
   finalList = [];
-  togglePoolButtons();
   selectedCount("transferToPoolButton", finalList);
   selectedCount("transferBackFromApprove", finalList);
-  selectedCount("mainButton", Applications.PendingList);
-  selectedCount("approveButton", Applications.ApproveList);
-  selectedCount("poolButton", Applications.PoolList);
+  togglePoolButtons();
+  $("#poolButton").click();
 }
 
 function transferFromPoolToApproveList() {
-  Applications.PoolList = Applications.PoolList.filter((element) => {
-    if (finalList.includes(element.applicationId)) {
-      Applications.ApproveList.push(element);
-      return false;
-    }
-    return true;
-  });
   $("#containerSwitcher").show();
   updatePool("PoolToApprove", finalList, "add");
-  refreshTables();
   $("#approve-parent").prop("checked", false).trigger("change");
+  Applications.poolList.recordsTotal -= finalList.length;
+  Applications.approveList.recordsTotal += finalList.length;
+  selectedCount("mainButton", Applications.pendingList.recordsTotal);
+  selectedCount("approveButton", Applications.approveList.recordsTotal);
+  selectedCount("poolButton", Applications.poolList.recordsTotal);
   finalList = [];
-  toggleSanctionButtons();
   selectedCount("sanctionAll", finalList);
   selectedCount("transferBackFromPool", finalList);
   selectedCount("transferBackToInbox", finalList);
-  selectedCount("mainButton", Applications.PendingList);
-  selectedCount("approveButton", Applications.ApproveList);
-  selectedCount("poolButton", Applications.PoolList);
+  toggleSanctionButtons();
+  $("approveButton").click();
 }
 
 function transferBackFromPoolList() {
-  Applications.PoolList = Applications.PoolList.filter((element) => {
-    if (finalList.includes(element.applicationId)) {
-      Applications.PendingList.push(element);
-      return false;
-    }
-    return true;
-  });
   $("#containerSwitcher").show();
   updatePool("Pool", finalList, "remove");
-  refreshTables();
   $("#poolList-parent").prop("checked", false).trigger("change");
+  Applications.pendingList.recordsTotal += finalList.length;
+  Applications.poolList.recordsTotal -= finalList.length;
+  selectedCount("mainButton", Applications.pendingList.recordsTotal);
+  selectedCount("approveButton", Applications.approveList.recordsTotal);
+  selectedCount("poolButton", Applications.poolList.recordsTotal);
   finalList = [];
-  toggleSanctionButtons();
   selectedCount("sanctionAll", finalList);
   selectedCount("transferBackFromPool", finalList);
-  selectedCount("mainButton", Applications.PendingList);
-  selectedCount("approveButton", Applications.ApproveList);
-  selectedCount("poolButton", Applications.PoolList);
+  toggleSanctionButtons();
+  $("#mainButton").click();
 }
 
 function updatePool(listType, idList, action) {
   const formData = new FormData();
-  formData.append("serviceId", Applications.ServiceId);
+  formData.append("serviceId", Applications.serviceId);
   formData.append("listType", listType);
   formData.append("IdList", JSON.stringify(idList));
   formData.append("action", action);
@@ -159,15 +124,8 @@ function updatePool(listType, idList, action) {
     .then((data) => {
       if (data.status) {
         finalList = [];
-        console.log(data);
       }
     });
-}
-
-function refreshTables() {
-  PendingTable(Applications);
-  PoolTable(Applications);
-  ApproveTable(Applications);
 }
 
 function switchContainer(containerId, buttonId) {
@@ -175,12 +133,14 @@ function switchContainer(containerId, buttonId) {
     .find(".btn-dark")
     .removeClass("btn-dark")
     .addClass("btn-secondary");
-  $("#mainContainer, #ApproveContainer, #PoolContainer").hide();
-  $(`#${containerId}`).show();
-  setTimeout(() => {
-    $(`#${buttonId}`).removeClass("btn-secondary").addClass("btn-dark");
-    console.log($(`#${buttonId}`).attr("class"));
-  }, 100);
+  // Hide all the containers and remove the 'd-flex' class
+  $("#MainContainer, #ApproveContainer, #PoolContainer")
+    .removeClass("d-flex")
+    .addClass("d-none");
+
+  // Show the specific container by adding 'd-flex' and removing 'd-none' classes
+  $(`#${containerId}`).removeClass("d-none").addClass("d-flex");
+  $(`#${buttonId}`).removeClass("btn-secondary").addClass("btn-dark");
 }
 
 function updateOptionButtons(tableId) {
@@ -197,42 +157,72 @@ function updateOptionButtons(tableId) {
 
 function onSelect(list) {
   Applications = list;
-  console.log(Applications);
 
-  switch (Applications.Type) {
+  const initializeTable = (type, length) => {
+    initializeRecordTables(
+      "applicationsTable",
+      "/Officer/Applications",
+      type,
+      0,
+      length
+    );
+  };
+
+  const showContainerSwitcher = () => {
+    $("#containerSwitcher").show();
+  };
+
+  const hideContainerSwitcher = () => {
+    $("#containerSwitcher").hide();
+  };
+
+  const switchToMainContainer = () => {
+    switchContainer("MainContainer", "transferToApproveButton");
+  };
+
+  const showListTable = () => {
+    $("#listTable").show();
+  };
+
+  const processApplications = (
+    applications,
+    idList,
+    containerSwitcherVisibility
+  ) => {
+    if (applications && applications.data.length > 0) {
+      applications.data.forEach((element) =>
+        idList.push(element.applicationId)
+      );
+      if (containerSwitcherVisibility) showContainerSwitcher();
+      $("#mainButton").removeClass("btn-secondary").addClass("btn-dark");
+      selectedCount("mainButton", Applications.pendingList.recordsTotal);
+      selectedCount("approveButton", Applications.approveList.recordsTotal);
+      selectedCount("poolButton", Applications.poolList.recordsTotal);
+    }
+  };
+
+  switch (Applications.type) {
     case "Pending":
-      PendingTable(Applications);
-      PoolTable(Applications);
-      ApproveTable(Applications);
+      initializeTable(Applications.type, 10);
+      if (
+        Applications.poolList.data.length > 0 ||
+        Applications.approveList.data.length > 0
+      ) {
+        showContainerSwitcher();
+      }
+      switchToMainContainer();
       break;
     case "Sent":
-      SentTable(Applications);
-      break;
     case "Sanction":
-      MiscellaneousTable(Applications);
+      hideContainerSwitcher();
+      initializeTable(Applications.type, 10);
       break;
   }
 
-  $("#listTable").show();
+  showListTable();
 
-  if (Applications.PoolList && Applications.PoolList.length > 0) {
-    poolApplications = Applications.PoolList;
-    poolApplications.forEach((element) =>
-      poolIdList.push(element.applicationId)
-    );
-    $("#containerSwitcher").show();
-  }
-
-  if (Applications.ApproveList && Applications.ApproveList.length > 0) {
-    approvalApplications = Applications.ApproveList;
-    approvalApplications.forEach((element) =>
-      poolIdList.push(element.applicationId)
-    );
-    $("#containerSwitcher").show();
-  }
-  selectedCount("mainButton", Applications.PendingList);
-  selectedCount("approveButton", Applications.ApproveList);
-  selectedCount("poolButton", Applications.PoolList);
+  processApplications(Applications.poolList, poolIdList, true);
+  processApplications(Applications.approveList, poolIdList, true);
 }
 
 $(document).ready(function () {
@@ -318,17 +308,35 @@ $(document).ready(function () {
   );
 
   $("#poolButton").on("click", function () {
+    initializeRecordTables(
+      "applicationsTable",
+      "/Officer/Applications",
+      "Pool",
+      0,
+      1
+    );
     switchContainer("PoolContainer", "poolButton");
-    updateOptionButtons("poolTable");
   });
 
   $("#mainButton").on("click", function () {
-    switchContainer("mainContainer", "mainButton");
-    updateOptionButtons("applicationsTable");
+    initializeRecordTables(
+      "applicationsTable",
+      "/Officer/Applications",
+      "Pending",
+      0,
+      1
+    );
+    switchContainer("MainContainer", "mainButton");
   });
 
   $("#approveButton").on("click", function () {
+    initializeRecordTables(
+      "applicationsTable",
+      "/Officer/Applications",
+      "Approve",
+      0,
+      1
+    );
     switchContainer("ApproveContainer", "approveButton");
-    updateOptionButtons("approveTable");
   });
 });

@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,7 @@ namespace SocialWelfare.Controllers.Officer
 {
     public partial class OfficerController : Controller
     {
-        public dynamic PendingApplications(Models.Entities.User Officer, int start, int length)
+        public dynamic PendingApplications(Models.Entities.User Officer, int start, int length, string type, bool AllData = false)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer?.UserSpecificDetails!);
 
@@ -36,14 +37,13 @@ namespace SocialWelfare.Controllers.Officer
             AccessLevelCode = new SqlParameter("@AccessLevelCode", accessCode ?? string.Empty);
 
 
-
             var applicationList = dbcontext.Applications.FromSqlRaw(
                 "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @AccessLevel, @AccessLevelCode, @ServiceId",
                 new SqlParameter("@OfficerDesignation", officerDesignation),
                 new SqlParameter("@ActionTaken", "Pending"),
                 new SqlParameter("@AccessLevel", accessLevel),
                 AccessLevelCode,
-                new SqlParameter("@ServiceId", 1)).AsEnumerable().Skip(start).Take(length).ToList();
+                new SqlParameter("@ServiceId", 1)).ToList();
 
 
 
@@ -54,6 +54,38 @@ namespace SocialWelfare.Controllers.Officer
             List<dynamic> ApprovalList = [];
             List<dynamic> PendingList = [];
             JArray pool = [];
+            var pendingColumns = new List<dynamic>
+                {
+                    new { title = "S.No" },
+                    new { title = "Choose <input type='checkbox' class='form-check pending-parent' name='pending-parent' />" },
+                    new { title = "Reference Number" },
+                    new { title = "Applicant Name" },
+                    new { title = "Date Of Marriage" },
+                    new { title = "Submission Date" },
+                    new { title = "Action"}
+                };
+
+            var approveColumns = new List<dynamic>
+                {
+                    new { title = "S.No" },
+                    new { title = "Choose <input type='checkbox' class='form-check approve-parent' name='approve-parent' />" },
+                    new { title = "Reference Number" },
+                    new { title = "Applicant Name" },
+                    new { title = "Submission Location" },
+                    new { title = "Parentage" },
+                    new { title = "Mother's Name" },
+                    new { title = "Date Of Birth" },
+                    new { title = "Date Of Marriage" },
+                    new { title = "Bank Details" },
+                    new { title = "Address" },
+                    new { title = "Submission Date" },
+                };
+
+            var poolColumns = new List<dynamic>(pendingColumns);
+
+            int pendingIndex = 1;
+            int approveIndex = 1;
+            int poolIndex = 1;
 
             foreach (var application in applicationList)
             {
@@ -65,23 +97,41 @@ namespace SocialWelfare.Controllers.Officer
                 string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
                 serviceId = service.ServiceId;
 
-
                 canSanction = officer!["canSanction"];
                 canUpdate = officer["canUpdate"];
 
-                var app = new
-                {
-                    applicationId = application.ApplicationId,
-                    applicantName = application.ApplicantName,
+                List<dynamic> pendingData = [
+                    pendingIndex,
+                    application.ApplicationId,
+                    application.ApplicantName,
+                    application.SubmissionDate!,
+                    $"<button class='btn btn-dark w-100' onclick=UserDetails('{application.ApplicationId}');>View</button>"
+                ];
+
+                if (canSanction)
+                    pendingData.Insert(1, $"<input type='checkbox' class='form-check pending-element' value='{application.ApplicationId}' name='pending-element' />");
+                else
+                    pendingColumns.RemoveAt(1);
+
+                if (serviceSpecific["DateOfMarriage"] != null)
+                    pendingData.Insert(pendingData.Count - 1, serviceSpecific["DateOfMarriage"]);
+                else
+                    pendingColumns.RemoveAt(pendingData.Count - 1);
+
+                List<dynamic> approveData = [
+                    approveIndex,
+                    $"<input type='checkbox' class='form-check approve-element' value='{application.ApplicationId}' name='pending-element' />",
+                    application.ApplicationId,
+                    application.ApplicantName,
                     appliedDistrict,
-                    parentage = application.RelationName + $" ({application.Relation.ToUpper()})",
-                    motherName = serviceSpecific["MotherName"],
-                    dateOfBirth = application.DateOfBirth,
-                    dateOfMarriage = serviceSpecific!["DateOfMarriage"],
-                    bankDetails = $"{bankDetails["BankName"]}/{bankDetails["IfscCode"]}/{bankDetails["AccountNumber"]}",
-                    address = $"{preAddressDetails.Address!.ToUpper()}, TEHSIL:{preAddressDetails.Tehsil!.ToUpper()}, DISTRICT:{preAddressDetails.District!.ToUpper()}, PINCODE:{preAddressDetails.Pincode}",
-                    submissionDate = application.SubmissionDate,
-                };
+                    application.RelationName + $" ({application.Relation.ToUpper()})",
+                    serviceSpecific["MotherName"],
+                    application.DateOfBirth,
+                    serviceSpecific!["DateOfMarriage"],
+                    $"{bankDetails["BankName"]}/{bankDetails["IfscCode"]}/{bankDetails["AccountNumber"]}",
+                    $"{preAddressDetails.Address!.ToUpper()}, TEHSIL:{preAddressDetails.Tehsil!.ToUpper()}, DISTRICT:{preAddressDetails.District!.ToUpper()}, PINCODE:{preAddressDetails.Pincode}",
+                    application.SubmissionDate!
+                ];
 
                 var arrayLists = dbcontext.ApplicationLists.FirstOrDefault(list => list.ServiceId == serviceId && list.Officer == officerDesignation && list.AccessLevel == accessLevel && list.AccessCode == Convert.ToInt32(accessCode));
 
@@ -90,38 +140,79 @@ namespace SocialWelfare.Controllers.Officer
                     if (arrayLists == null)
                     {
                         dbcontext.Database.ExecuteSqlRaw("EXEC InsertApplicationListTable @ServiceId,@Officer,@AccessLevel,@AccessCode", new SqlParameter("@ServiceId", serviceId), new SqlParameter("@Officer", officerDesignation), new SqlParameter("@AccessLevel", accessLevel), new SqlParameter("@AccessCode", Convert.ToInt32(accessCode)));
-                        PendingList.Add(app);
+                        PendingList.Add(pendingData);
+                        pendingIndex++;
                     }
                     else
                     {
                         var poolList = JsonConvert.DeserializeObject<List<string>>(arrayLists.PoolList);
                         var approvalList = JsonConvert.DeserializeObject<List<string>>(arrayLists.ApprovalList);
 
-                        if (approvalList!.Contains(app.applicationId)) ApprovalList.Add(app);
-                        else if (poolList!.Contains(app.applicationId)) PoolList.Add(app);
-                        else PendingList.Add(app);
+                        if (approvalList!.Contains(application.ApplicationId))
+                        {
+                            ApprovalList.Add(approveData);
+                            approveIndex++;
+                        }
+                        else if (poolList!.Contains(application.ApplicationId))
+                        {
+                            poolColumns[1] = new { title = "<input type='checkbox' class='form-check poolList-parent' value='' name='poolList-parent' />" };
+                            pendingData[1] = $"<input type='checkbox' class='form-check poolList-element' value='{application.ApplicationId}' name='poolList-element' />";
+                            PoolList.Add(pendingData);
+                            poolIndex++;
+                        }
+                        else
+                        {
+                            PendingList.Add(pendingData);
+                            pendingIndex++;
+                        }
                     }
                 }
-                else PendingList.Add(app);
-
+                else
+                {
+                    PendingList.Add(pendingData);
+                    pendingIndex++;
+                }
             }
 
-            dynamic obj = new System.Dynamic.ExpandoObject();
-            obj.PendingList = PendingList;
-            obj.PoolList = PoolList;
-            obj.ApproveList = ApprovalList;
-            obj.canSanction = canSanction;
-            obj.canUpdate = canUpdate;
-            obj.Type = "Pending";
-            obj.ServiceId = serviceId;
 
-            return obj;
+
+            var obj = new
+            {
+                PendingList = new
+                {
+                    data = PendingList.AsEnumerable().Skip(start).Take(length),
+                    columns = pendingColumns,
+                    recordsTotal = PendingList.Count,
+                    recordsFiltered = PendingList.AsEnumerable().Skip(start).Take(length).ToList().Count,
+                },
+                PoolList = new
+                {
+                    data = PoolList.AsEnumerable().Skip(start).Take(length),
+                    columns = poolColumns,
+                    recordsTotal = PoolList.Count,
+                    recordsFiltered = PoolList.AsEnumerable().Skip(start).Take(length).ToList().Count
+                },
+                ApproveList = new
+                {
+                    data = ApprovalList.AsEnumerable().Skip(start).Take(length),
+                    columns = approveColumns,
+                    recordsTotal = ApprovalList.Count,
+                    recordsFiltered = ApprovalList.AsEnumerable().Skip(start).Take(length).ToList().Count
+                },
+                Type = type,
+                ServiceId = 1
+            };
+
+            if (!AllData)
+                return obj;
+            else return type == "Pending" ? new { columns = pendingColumns, data = PendingList } : type == "Approve" ? new { columns = approveColumns, data = ApprovalList } : new { columns = poolColumns, data = PoolList };
         }
-        public dynamic SentApplications(Models.Entities.User Officer)
+        public dynamic SentApplications(Models.Entities.User Officer, int start, int length, string type, bool AllData = false)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
+            int serviceId = 0;
 
             SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
 
@@ -148,38 +239,78 @@ namespace SocialWelfare.Controllers.Officer
 
             var SentApplications = new List<dynamic>();
 
+            var sentColumns = new List<dynamic>
+                {
+                    new { title = "S.No" },
+                    new { title = "Reference Number" },
+                    new { title = "Applicant Name" },
+                    new { title = "Date Of Marriage" },
+                    new { title = "Submission Date" },
+                    new { title = "Action"}
+                };
+
+            int index = 0;
             foreach (var application in applicationList)
             {
-                bool? canPull = false;
-                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific);
+                bool canPull = false;
                 var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
+                var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == application.ServiceId);
+                var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
+                var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
+                var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
+                int DistrictCode = Convert.ToInt32(serviceSpecific!["District"]);
+                string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
+                serviceId = service.ServiceId;
+
                 foreach (var phase in phases!)
                 {
                     if (phase["Officer"] == officerDesignation)
                         canPull = phase["CanPull"];
                 }
-                var data = new
-                {
+
+                List<dynamic> sentData = [
+                    index+1,
                     application.ApplicationId,
                     application.ApplicantName,
-                    dateOfMarriage = serviceSpecific!["DateOfMarriage"],
-                    application.SubmissionDate,
-                    canPull
-                };
-                SentApplications.Add(data);
+                    application.SubmissionDate!,
+                    canPull? $"<button class='btn btn-dark w-100' onclick=PullApplication('${application.ApplicationId}');>Pull</button>":"Cannot Pull"
+                ];
+
+                if (serviceSpecific["DateOfMarriage"] != null)
+                    sentData.Insert(sentData.Count - 1, serviceSpecific["DateOfMarriage"]);
+                else
+                    sentColumns.RemoveAt(sentData.Count - 1);
+
+
+                SentApplications.Add(sentData);
+
+                index++;
             }
 
-            dynamic obj = new System.Dynamic.ExpandoObject();
-            obj.SentApplications = SentApplications;
-            obj.Type = "Sent";
-            return obj;
+            var obj = new
+            {
+
+                SentList = new
+                {
+                    data = SentApplications.AsEnumerable().Skip(start).Take(length),
+                    columns = sentColumns,
+                    recordsTotal = SentApplications.Count,
+                    recordsFiltered = SentApplications.AsEnumerable().Skip(start).Take(length).ToList().Count
+                },
+                Type = type,
+                ServiceId = 1
+            };
+
+            if (!AllData)
+                return obj;
+            else return new { columns = sentColumns, data = SentApplications };
         }
-        public dynamic SanctionApplications(Models.Entities.User Officer)
+        public dynamic SanctionApplications(Models.Entities.User Officer, int start, int length, string type, bool AllData = false)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
-
+            int serviceId = 0;
             SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
 
             switch (accessLevel)
@@ -203,40 +334,79 @@ namespace SocialWelfare.Controllers.Officer
                 AccessLevelCode,
                 new SqlParameter("@ServiceId", 1)).ToList();
 
-            var SantionApplications = new List<dynamic>();
+            var SanctionApplications = new List<dynamic>();
+            var sanctionColumns = new List<dynamic>
+                {
+                    new { title = "S.No" },
+                    new { title = "Reference Number" },
+                    new { title = "Applicant Name" },
+                    new { title = "Date Of Marriage" },
+                    new { title = "Submission Date" },
+                    new { title = "Action"}
+                };
 
+            int index = 0;
             foreach (var application in applicationList)
             {
-                bool? canPull = false;
-                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific);
+                bool canPull = false;
                 var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
+                var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == application.ServiceId);
+                var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
+                var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
+                var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
+                int DistrictCode = Convert.ToInt32(serviceSpecific!["District"]);
+                string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
+                serviceId = service.ServiceId;
+
                 foreach (var phase in phases!)
                 {
                     if (phase["Officer"] == officerDesignation)
                         canPull = phase["CanPull"];
                 }
-                var data = new
-                {
+
+                List<dynamic> sanctionData = [
+                    index+1,
                     application.ApplicationId,
                     application.ApplicantName,
-                    dateOfMarriage = serviceSpecific!["DateOfMarriage"],
-                    application.SubmissionDate,
-                    canPull
-                };
-                SantionApplications.Add(data);
+                    application.SubmissionDate!,
+                    canPull? $"<button class='btn btn-dark w-100' onclick=PullApplication('${application.ApplicationId}');>Pull</button>":"Cannot Pull"
+                ];
+
+                if (serviceSpecific["DateOfMarriage"] != null)
+                    sanctionData.Insert(sanctionData.Count - 1, serviceSpecific["DateOfMarriage"]);
+                else
+                    sanctionColumns.RemoveAt(sanctionData.Count - 1);
+
+
+                SanctionApplications.Add(sanctionData);
+
+                index++;
             }
 
-            dynamic obj = new System.Dynamic.ExpandoObject();
-            obj.MiscellaneousList = SantionApplications;
-            obj.Type = "Sanction";
-            return obj;
+            var obj = new
+            {
+
+                SanctionList = new
+                {
+                    data = SanctionApplications.AsEnumerable().Skip(start).Take(length),
+                    columns = sanctionColumns,
+                    recordsTotal = SanctionApplications.Count,
+                    recordsFiltered = SanctionApplications.AsEnumerable().Skip(start).Take(length).ToList().Count
+                },
+                Type = type,
+                ServiceId = 1
+            };
+
+            if (!AllData)
+                return obj;
+            else return new { columns = sanctionColumns, data = SanctionApplications };
         }
-        public dynamic RejectApplications(Models.Entities.User Officer)
+        public dynamic RejectApplications(Models.Entities.User Officer, int start, int length, string type, bool AllData = false)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
-
+            int serviceId = 0;
             SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
 
             switch (accessLevel)
@@ -262,21 +432,71 @@ namespace SocialWelfare.Controllers.Officer
 
             var RejectApplications = new List<dynamic>();
 
+            var RejectColumns = new List<dynamic>
+                {
+                    new { title = "S.No" },
+                    new { title = "Reference Number" },
+                    new { title = "Applicant Name" },
+                    new { title = "Date Of Marriage" },
+                    new { title = "Submission Date" },
+                    new { title = "Action"}
+                };
+
+            int index = 0;
             foreach (var application in applicationList)
             {
-                var data = new
+                bool canPull = false;
+                var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
+                var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == application.ServiceId);
+                var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
+                var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
+                var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
+                int DistrictCode = Convert.ToInt32(serviceSpecific!["District"]);
+                string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
+                serviceId = service.ServiceId;
+
+                foreach (var phase in phases!)
                 {
+                    if (phase["Officer"] == officerDesignation)
+                        canPull = phase["CanPull"];
+                }
+
+                List<dynamic> RejectData = [
+                    index+1,
                     application.ApplicationId,
                     application.ApplicantName,
-                    application.SubmissionDate,
-                };
-                RejectApplications.Add(data);
+                    application.SubmissionDate!,
+                    canPull? $"<button class='btn btn-dark w-100' onclick=PullApplication('${application.ApplicationId}');>Pull</button>":"Cannot Pull"
+                ];
+
+                if (serviceSpecific["DateOfMarriage"] != null)
+                    RejectData.Insert(RejectData.Count - 1, serviceSpecific["DateOfMarriage"]);
+                else
+                    RejectColumns.RemoveAt(RejectData.Count - 1);
+
+
+                RejectApplications.Add(RejectData);
+
+                index++;
             }
 
-            dynamic obj = new System.Dynamic.ExpandoObject();
-            obj.MiscellaneousList = RejectApplications;
-            obj.Type = "Reject";
-            return obj;
+            var obj = new
+            {
+
+                SanctionList = new
+                {
+                    data = RejectApplications.AsEnumerable().Skip(start).Take(length),
+                    columns = RejectColumns,
+                    recordsTotal = RejectApplications.Count,
+                    recordsFiltered = RejectApplications.AsEnumerable().Skip(start).Take(length).ToList().Count
+                },
+                Type = type,
+                ServiceId = 1
+            };
+
+            if (!AllData)
+                return obj;
+            else return new { columns = RejectColumns, data = RejectApplications };
         }
 
 
@@ -405,6 +625,7 @@ namespace SocialWelfare.Controllers.Officer
             return Json(new { status = true, TotalCount, PendingCount, RejectCount, ForwardCount, SanctionCount, PendingWithCitizenCount });
         }
 
+       
 
     }
 }

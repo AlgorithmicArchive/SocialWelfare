@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -146,23 +147,110 @@ namespace SocialWelfare.Controllers.Officer
 
             return Json(new { status = true, countList });
         }
-        public IActionResult Applications(string? type, int start = 0, int length = 10)
+        public IActionResult Applications(string? type, int start = 0, int length = 1)
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
             Models.Entities.User Officer = dbcontext.Users.Find(userId)!;
             dynamic? ApplicationList = null;
 
-            if (type!.ToString() == "Pending")
-                ApplicationList = PendingApplications(Officer!, start, length);
+            if (type!.ToString() == "Pending" || type.ToString() == "Approve" || type.ToString() == "Pool")
+                ApplicationList = PendingApplications(Officer!, start, length, type);
             else if (type!.ToString() == "Sent")
-                ApplicationList = SentApplications(Officer!);
+                ApplicationList = SentApplications(Officer!, start, length, type);
             else if (type.ToString() == "Sanction")
-                ApplicationList = SanctionApplications(Officer!);
+                ApplicationList = SanctionApplications(Officer!, start, length, type);
             else if (type.ToString() == "Reject")
-                ApplicationList = RejectApplications(Officer!);
+                ApplicationList = RejectApplications(Officer!, start, length, type);
 
             return Json(new { status = true, ApplicationList });
         }
+        [HttpGet]
+        public IActionResult DownloadAllData(string? type, string? activeButtons)
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            Models.Entities.User Officer = dbcontext.Users.Find(userId)!;
+
+            try
+            {
+                List<string> ActiveButtons = new List<string>();
+
+                if (!string.IsNullOrEmpty(activeButtons))
+                {
+                    ActiveButtons = JsonConvert.DeserializeObject<List<string>>(Uri.UnescapeDataString(activeButtons!))!;
+                }
+
+                dynamic? ApplicationList;
+                switch (type)
+                {
+                    case "Pending":
+                    case "Approve":
+                    case "Pool":
+                        ApplicationList = PendingApplications(Officer, 0, 0, type, true);
+                        break;
+                    case "Sent":
+                        ApplicationList = SentApplications(Officer, 0, 0, type, true);
+                        break;
+                    case "Sanction":
+                        ApplicationList = SanctionApplications(Officer, 0, 0, type, true);
+                        break;
+                    case "Reject":
+                        ApplicationList = RejectApplications(Officer, 0, 0, type, true);
+                        break;
+                    default:
+                        _logger.LogError("Invalid application type: {Type}", type);
+                        return BadRequest("Invalid application type.");
+                }
+
+                using var workbook = new XLWorkbook();
+                var worksheet = workbook.Worksheets.Add("Applications");
+                var currentRow = 1;
+
+                int currentColumn = 1;
+                for (int i = 0; i < ApplicationList.columns.Count; i++)
+                {
+                    string header = ApplicationList.columns[i].title.ToString();
+
+                    if (ActiveButtons.Count == 0 || ActiveButtons.Contains(header))
+                    {
+                        worksheet.Cell(currentRow, currentColumn).Value = header;
+                        currentColumn++;
+                    }
+                }
+
+                // Adding Data
+                foreach (var application in ApplicationList.data)
+                {
+                    currentRow++;
+                    currentColumn = 1; // Reset column for each row
+                    for (int i = 0; i < application.Count; i++)
+                    {
+                        string cellValue = application[i]?.ToString()!;
+                        if (ActiveButtons.Count == 0 || ActiveButtons.Contains(ApplicationList.columns[i].title.ToString()))
+                        {
+                            worksheet.Cell(currentRow, currentColumn).Value = cellValue;
+                            currentColumn++;
+                        }
+                    }
+                }
+
+                var fileName = DateTime.Now.ToString("dd MMM yyyy hh:mm tt") + "_Applications.xlsx";
+                var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "exports", fileName);
+
+                // Ensure the directory exists
+                Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+
+                // Save the workbook
+                workbook.SaveAs(filePath);
+
+                return Json(new { filePath = "/exports/" + fileName });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while generating the Excel file.");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpPost]
         public IActionResult GetWorkForceOfficers([FromForm] IFormCollection form)
         {

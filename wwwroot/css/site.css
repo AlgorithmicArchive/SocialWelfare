@@ -1,5 +1,5 @@
-
-html,body{
+html,
+body {
     scroll-behavior: smooth;
     font-family: Metropolis, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
     height: 100%;
@@ -7,24 +7,27 @@ html,body{
     padding: 0;
 }
 
-.margin-center{
+.margin-center {
     margin-top: 10%;
 }
 
-.background-primary{
+.background-primary {
     background-color: #97bdfb;
 }
-svg{
+
+svg {
     fill: #97bdfb;
 }
-.width-25{
+
+.width-25 {
     width: 25%;
 }
+
 .width-50 {
     width: 50%;
 }
 
-.rounded-border{
+.rounded-border {
     border-radius: 0.8rem;
 }
 
@@ -35,20 +38,22 @@ svg{
     overflow-y: auto;
 }
 
-.center-align{
+.center-align {
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-p{
+p {
     font-family: var(--bs-body-font-family);
 }
+
 .font-heading {
     font-size: xx-large;
     font-weight: 500;
 }
-.card img{
+
+.card img {
     border-radius: 20px;
 }
 
@@ -66,10 +71,11 @@ p{
     opacity: 1;
 }
 
-.errorMsg{
+.errorMsg {
     font-size: 12px;
     color: red;
 }
+
 /* Spinner styles */
 #loadingSpinner {
     display: none;
@@ -90,6 +96,7 @@ p{
     /* Ensure it sits on top */
     text-align: center;
 }
+
 #loadingSpinner img {
     position: absolute;
     top: 50%;
@@ -97,21 +104,23 @@ p{
     transform: translate(-50%, -50%);
 }
 
-.main-admin-body{
+.main-admin-body {
     width: 85%;
 }
-.sidebar-admin-section{
+
+.sidebar-admin-section {
     width: 15%;
 }
-.sm-position{
+
+.sm-position {
     position: absolute;
 }
 
-.md-hidden{
+.md-hidden {
     display: none;
 }
 
-.custom-card{
+.custom-card {
     padding: 1.5rem;
     border-radius: 3px;
     box-shadow: 15px 15px 15px rgba(0, 0, 0, 0.1);
@@ -122,60 +131,70 @@ p{
     width: 100%;
 }
 
-.hover-card:hover{
+.hover-card:hover {
     background-color: rgb(156, 156, 156);
 }
 
-.dataTables_filter{
+.dataTables_filter {
     margin-bottom: 10px;
 }
 
-table thead th{
+table thead th {
     min-width: 150px;
     white-space: "nowrap"
 }
 
-th{
+th {
     vertical-align: top;
 }
 
-input:focus{
+input:focus {
     outline: none;
 }
 
 
 /* Webkit browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
-    width: 150px; /* Adjust the width as needed */
+    width: 150px;
+    /* Adjust the width as needed */
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1; /* Track color */
+    background: #f1f1f1;
+    /* Track color */
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #888; /* Thumb color */
-    border-radius: 10px; /* Rounded corners (optional) */
-    border: 3px solid #f1f1f1; /* Border color to match the track */
+    background-color: #888;
+    /* Thumb color */
+    border-radius: 10px;
+    /* Rounded corners (optional) */
+    border: 3px solid #f1f1f1;
+    /* Border color to match the track */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #555; /* Color on hover */
+    background: #555;
+    /* Color on hover */
 }
 
 /* Firefox */
 html {
-    scrollbar-width: auto; /* Thin or auto */
-    scrollbar-color: #878787 #f1f1f1; /* Thumb and track color */
+    scrollbar-width: auto;
+    /* Thin or auto */
+    scrollbar-color: #878787 #f1f1f1;
+    /* Thumb and track color */
 }
 
 /* Internet Explorer 10+ */
 body {
-    -ms-overflow-style: none; /* Hide default scrollbar */
+    -ms-overflow-style: none;
+    /* Hide default scrollbar */
 }
 
 body::-webkit-scrollbar {
-    display: none; /* Hide Webkit scrollbar */
+    display: none;
+    /* Hide Webkit scrollbar */
 }
 
 /* Custom scrollbar for IE and Edge using polyfill or JavaScript */
@@ -183,33 +202,99 @@ body::-webkit-scrollbar {
 /* Custom Scrollbar Polyfill (for browsers that do not support CSS custom properties) */
 
 
+.pagination .page-link {
+    color: black;
+    border: 1px solid black;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: black;
+    color: white;
+    border: 1px solid black;
+}
+
+.custom-colvis-button {
+    background-color: #000000;
+    /* Green background */
+    color: white;
+    /* White text */
+    border: none;
+    padding: 10px 20px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.dt-button-collection {
+    margin-top: 0px !important;
+    border: 1px solid black;
+    width: max-content;
+    padding: 5px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+/* Custom dropdown menu */
+.dt-button-collection .dt-button {
+    color: rgb(255, 255, 255);
+    /* Black text */
+    background-color: rgb(249, 0, 0);
+    /* White background */
+    border: 1px solid #ccc;
+    margin: 2px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    text-align: left;
+}
+
+.dt-button-collection .dt-button.active {
+    color: rgb(255, 255, 255);
+    /* Black text */
+    background-color: rgb(49, 118, 3);
+    /* White background */
+    border: 1px solid #ccc;
+    margin: 2px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+
 
 @media only screen and (max-width: 600px) {
-    .sm-hidden{
+    .sm-hidden {
         display: none;
     }
-    .sm-flex-column{
+
+    .sm-flex-column {
         flex-direction: column;
     }
+
     .font-heading {
         font-size: xx-large;
         font-weight: 500;
     }
-    .sm-height-auto{
+
+    .sm-height-auto {
         height: auto;
     }
+
     .width-25 {
         width: 100%;
     }
+
     .width-50 {
         width: 100%;
     }
+
     .margin-center {
         margin-top: 40%;
     }
+
     .md-hidden {
         display: block;
     }
+
     .sm-position {
         position: relative;
     }
@@ -217,22 +302,26 @@ body::-webkit-scrollbar {
     .main-admin-body {
         width: 100%;
     }
+
     .sidebar-admin-section {
         width: 0;
     }
-    .full-screen-section{
+
+    .full-screen-section {
         margin-top: 150px;
     }
 }
-  
+
 @media only screen and (min-width: 601px) and (max-width: 1024px) {
     .main-admin-body {
         width: 100%;
     }
+
     .sidebar-admin-section {
         width: 0;
     }
-  .margin-center{
-    margin-top: 20%;
-  }
+
+    .margin-center {
+        margin-top: 20%;
+    }
 }

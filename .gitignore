@@ -23,6 +23,7 @@ packages/
 # uploads folder
 /wwwroot/uploads/
 /wwwroot/files/
+/wwwroot/exports/
 
 # Backup files
 *_backup_*/
