@@ -43,7 +43,7 @@ namespace SocialWelfare.Controllers.User
             int? userId = HttpContext.Session.GetInt32("UserId");
             int initiated = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus == "Initiated").ToList().Count;
             int incomplete = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus == "Incomplete").ToList().Count;
-            int sanctioned = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus == "Sanctioned").ToList().Count;
+            int sanctioned = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus == "Sanctioned" || u.ApplicationStatus == "Dispatched").ToList().Count;
             var userDetails = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
 
 

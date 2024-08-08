@@ -1,9 +1,5 @@
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using ClosedXML.Excel;
-using iText.Kernel.Pdf;
-using iText.Signatures;
-using iTextSharp.text.pdf;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -672,32 +668,7 @@ namespace SocialWelfare.Controllers.Officer
             return Json(new { status = true, message = "File Uploaded Successfully." });
         }
 
-        public IActionResult Testing()
-        {
-            string pdfPath = Path.Combine(_webHostEnvironment.WebRootPath, "files", "JMU_2024-2025_3Acknowledgement.pdf");
-            string signedPdfPath = Path.Combine(_webHostEnvironment.WebRootPath, "files", "SignedPDF.pdf");
-            string certificatePath = Path.Combine(_webHostEnvironment.WebRootPath, "resources", "certificate.cer");
-            string certificatePassword = "certificate";
 
-            X509Certificate2 cert = new(certificatePath, certificatePassword);
-            iText.Kernel.Pdf.PdfReader reader = new(pdfPath);
-            iTextSharp.text.pdf.PdfReader reader1 = new(pdfPath);
-            using (FileStream signedPdfStream = new(signedPdfPath, FileMode.Create))
-            {
-                PdfStamper stamper = PdfStamper.CreateSignature(reader1, signedPdfStream, '\0');
-                PdfSigner signer = new(reader, signedPdfStream, new StampingProperties());
-                iTextSharp.text.pdf.PdfSignatureAppearance appearance = stamper.SignatureAppearance;
-                appearance.Reason = "Document Signed Digitally";
-                appearance.Location = "Location";
-                appearance.SetVisibleSignature(new iTextSharp.text.Rectangle(100, 100, 200, 150), 1, "Signature");
-
-                IExternalSignature externalSignature = new X509Certificate2Signature(cert, "SHA-256");
-
-                signer.SignDetached(externalSignature, (iText.Commons.Bouncycastle.Cert.IX509Certificate[])(new X509Certificate[] { cert }), null, null, null, 0, PdfSigner.CryptoStandard.CMS);
-            }
-
-            return Json(new { status = true });
-        }
 
     }
 }
