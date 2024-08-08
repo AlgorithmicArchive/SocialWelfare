@@ -416,6 +416,8 @@ namespace SocialWelfare.Controllers
             return Json(new { status = true, designations });
         }
 
+
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

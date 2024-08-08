@@ -98,12 +98,17 @@ function initializeRecordTables(tableId, url, type, start, length) {
   fetch(url + `?type=${type}&start=${start}&length=${length}`)
     .then((res) => res.json())
     .then((json) => {
+      $("#SanctionContainer").removeClass("d-flex").addClass("d-none");
       let applications;
       if (type == "Pending") applications = json.applicationList.pendingList;
       else if (type == "Approve")
         applications = json.applicationList.approveList;
       else if (type == "Pool") applications = json.applicationList.poolList;
       else if (type == "Sent") applications = json.applicationList.sentList;
+      else if ((type = "Sanction")) {
+        applications = json.applicationList.sanctionList;
+        switchContainer("SanctionContainer", "sendToBank");
+      }
 
       const data = applications.data;
       const columns = applications.columns;

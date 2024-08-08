@@ -1,4 +1,9 @@
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using ClosedXML.Excel;
+using iText.Kernel.Pdf;
+using iText.Signatures;
+using iTextSharp.text.pdf;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -6,6 +11,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Renci.SshNet;
 using SendEmails;
 using SocialWelfare.Models.Entities;
 
@@ -107,7 +113,8 @@ namespace SocialWelfare.Controllers.Officer
                                 ForwardCount++;
                                 break;
                             case "Sanction":
-                                SanctionCount++;
+                                if (application.ApplicationStatus == "Sanctioned")
+                                    SanctionCount++;
                                 break;
                             case "Reject":
                                 RejectCount++;
@@ -585,5 +592,112 @@ namespace SocialWelfare.Controllers.Officer
 
             return Json(new { status = true });
         }
+
+        [HttpPost]
+        public IActionResult UploadCsv([FromForm] IFormCollection form)
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            Models.Entities.User Officer = dbcontext.Users.Find(userId)!;
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
+            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
+            string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
+            SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
+
+            switch (accessLevel)
+            {
+                case "Tehsil":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["TehsilCode"]?.ToString() ?? string.Empty);
+                    break;
+                case "District":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DistrictCode"]?.ToString() ?? string.Empty);
+                    break;
+                case "Division":
+                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DivisionCode"]?.ToString() ?? string.Empty);
+                    break;
+            }
+
+            var applicationList = dbcontext.Applications.FromSqlRaw(
+                "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @AccessLevel, @AccessLevelCode, @ServiceId",
+                new SqlParameter("@OfficerDesignation", officerDesignation),
+                new SqlParameter("@ActionTaken", "Sanction"),
+                new SqlParameter("@AccessLevel", accessLevel),
+                AccessLevelCode,
+                new SqlParameter("@ServiceId", 1)).ToList();
+
+            string ftpHost = form["ftpHost"].ToString();
+            string ftpUser = form["ftpUser"].ToString();
+            string ftpPassword = form["ftpPassword"].ToString();
+
+            var builder = new StringBuilder();
+            foreach (var application in applicationList)
+            {
+                var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
+                int DistrictCode = Convert.ToInt32(serviceSpecific["District"]);
+                string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
+                var obj = new
+                {
+                    referenceNumber = application.ApplicationId,
+                    applicantName = application.ApplicantName,
+                    appliedDistrict,
+                    parentage = application.RelationName + $" ({application.Relation.ToUpper()})",
+                    motherName = serviceSpecific["MotherName"],
+                    dateOfBirth = application.DateOfBirth,
+                    dateOfMarriage = serviceSpecific!["DateOfMarriage"],
+                    bankDetails = $"{bankDetails["BankName"]}/{bankDetails["IfscCode"]}/{bankDetails["AccountNumber"]}",
+                    addressDetails = $"{preAddressDetails.Address!.ToUpper()} TEHSIL:{preAddressDetails.Tehsil!.ToUpper()} DISTRICT:{preAddressDetails.District!.ToUpper()}, PINCODE:{preAddressDetails.Pincode}",
+                    submissionDate = application.SubmissionDate!
+                };
+
+                builder.AppendLine($"{obj.referenceNumber},{obj.applicantName},{obj.appliedDistrict},{obj.parentage},{obj.motherName},{obj.dateOfBirth},{obj.dateOfMarriage},{obj.bankDetails},{obj.addressDetails},{obj.submissionDate}");
+                application.ApplicationStatus = "Dispatched";
+            }
+
+            dbcontext.SaveChanges();
+
+            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "exports", DateTime.Now.ToString("dd_MMM_yyyy") + "_MAS.csv");
+            System.IO.File.WriteAllText(filePath, builder.ToString());
+
+
+            var ftpClient = new SftpClient(ftpHost, 22, ftpUser, ftpPassword);
+            ftpClient.Connect();
+
+            if (!ftpClient.IsConnected) return Json(new { status = false, message = "Unable to connect to the SFTP server." });
+
+            using (var stream = new FileStream(filePath, FileMode.Open))
+            {
+                ftpClient.UploadFile(stream, Path.GetFileName(filePath));
+            }
+            ftpClient.Disconnect();
+
+            return Json(new { status = true, message = "File Uploaded Successfully." });
+        }
+
+        public IActionResult Testing()
+        {
+            string pdfPath = Path.Combine(_webHostEnvironment.WebRootPath, "files", "JMU_2024-2025_3Acknowledgement.pdf");
+            string signedPdfPath = Path.Combine(_webHostEnvironment.WebRootPath, "files", "SignedPDF.pdf");
+            string certificatePath = Path.Combine(_webHostEnvironment.WebRootPath, "resources", "certificate.cer");
+            string certificatePassword = "certificate";
+
+            X509Certificate2 cert = new(certificatePath, certificatePassword);
+            iText.Kernel.Pdf.PdfReader reader = new(pdfPath);
+            iTextSharp.text.pdf.PdfReader reader1 = new(pdfPath);
+            using (FileStream signedPdfStream = new(signedPdfPath, FileMode.Create))
+            {
+                PdfStamper stamper = PdfStamper.CreateSignature(reader1, signedPdfStream, '\0');
+                PdfSigner signer = new(reader, signedPdfStream, new StampingProperties());
+                iTextSharp.text.pdf.PdfSignatureAppearance appearance = stamper.SignatureAppearance;
+                appearance.Reason = "Document Signed Digitally";
+                appearance.Location = "Location";
+                appearance.SetVisibleSignature(new iTextSharp.text.Rectangle(100, 100, 200, 150), 1, "Signature");
+
+                IExternalSignature externalSignature = new X509Certificate2Signature(cert, "SHA-256");
+
+                signer.SignDetached(externalSignature, (iText.Commons.Bouncycastle.Cert.IX509Certificate[])(new X509Certificate[] { cert }), null, null, null, 0, PdfSigner.CryptoStandard.CMS);
+            }
+
+            return Json(new { status = true });
+        }
+
     }
 }

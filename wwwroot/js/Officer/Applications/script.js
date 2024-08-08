@@ -174,6 +174,7 @@ function onSelect(list) {
 
   const hideContainerSwitcher = () => {
     $("#containerSwitcher").hide();
+    $("#MainContainer").hide();
   };
 
   const switchToMainContainer = () => {
@@ -338,5 +339,50 @@ $(document).ready(function () {
       1
     );
     switchContainer("ApproveContainer", "approveButton");
+  });
+
+  $("#sendToBank").on("click", function () {
+    $("#ftpCredentials").modal("show");
+
+    $("#send")
+      .off("click")
+      .on("click", async function () {
+        $("#ftpCredentials input").each(function () {
+          if ($(this).val() == "" && $(this).next("span").length == 0) {
+            $(this).after(
+              '<span class="errorMsg">This field is required</span>'
+            );
+          } else if ($(this).val() != "") {
+            $(this).next("span").remove();
+          }
+        });
+
+        const canProceed = $(".errorMsg").length == 0;
+
+        if (canProceed) {
+          const formdata = new FormData();
+          formdata.append("ftpHost", $("#ftpHost").val());
+          formdata.append("ftpUser", $("#ftpUser").val());
+          formdata.append("ftpPassword", $("#ftpPassword").val());
+          showSpinner();
+          fetch("/Officer/UploadCsv", { method: "POST", body: formdata })
+            .then((res) => res.json())
+            .then((data) => {
+              hideSpinner();
+              if (data.status) {
+                $("#send").after(
+                  `<span class="text-success text-center">${data.message}</span>`
+                );
+                setTimeout(() => {
+                  window.location.href = "/Officer";
+                }, 2000);
+              } else {
+                $("#send").after(
+                  `<span class="errorMsg text-center">${data.message}</span>`
+                );
+              }
+            });
+        }
+      });
   });
 });

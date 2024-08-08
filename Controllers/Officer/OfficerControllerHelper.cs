@@ -327,12 +327,15 @@ namespace SocialWelfare.Controllers.Officer
             }
 
             var applicationList = dbcontext.Applications.FromSqlRaw(
-                "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @AccessLevel, @AccessLevelCode, @ServiceId",
-                new SqlParameter("@OfficerDesignation", officerDesignation),
-                new SqlParameter("@ActionTaken", "Sanction"),
-                new SqlParameter("@AccessLevel", accessLevel),
-                AccessLevelCode,
-                new SqlParameter("@ServiceId", 1)).ToList();
+         "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @AccessLevel, @AccessLevelCode, @ServiceId",
+         new SqlParameter("@OfficerDesignation", officerDesignation),
+         new SqlParameter("@ActionTaken", "Sanction"),
+         new SqlParameter("@AccessLevel", accessLevel),
+         AccessLevelCode,
+         new SqlParameter("@ServiceId", 1)).ToList();
+
+            // Filter the applications in code
+            applicationList = applicationList.Where(app => app.ApplicationStatus == "Sanctioned").ToList();
 
             var SanctionApplications = new List<dynamic>();
             var sanctionColumns = new List<dynamic>
@@ -625,7 +628,7 @@ namespace SocialWelfare.Controllers.Officer
             return Json(new { status = true, TotalCount, PendingCount, RejectCount, ForwardCount, SanctionCount, PendingWithCitizenCount });
         }
 
-       
+
 
     }
 }
