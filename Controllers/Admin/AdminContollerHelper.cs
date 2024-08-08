@@ -26,7 +26,7 @@ namespace SocialWelfare.Controllers.Admin
                     condition1.Append("AND a.ApplicationStatus='Initiated'  AND JSON_VALUE(app.value, '$.ActionTaken') = 'Pending'");
                     break;
                 case "Sanction":
-                    condition1.Append("AND a.ApplicationStatus='Sanctioned'  AND JSON_VALUE(app.value, '$.ActionTaken') = 'Sanction'");
+                    condition1.Append("AND JSON_VALUE(app.value, '$.ActionTaken') = 'Sanction'");
                     break;
                 case "Reject":
                     condition1.Append("AND a.ApplicationStatus='Rejected'  AND JSON_VALUE(app.value, '$.ActionTaken') = 'Reject'");
@@ -50,9 +50,6 @@ namespace SocialWelfare.Controllers.Admin
                     condition2.Append($" AND {condition.Key}='{condition.Value}'");
             }
 
-
-            _logger.LogInformation("=======Conditions===============");
-            _logger.LogInformation($"{condition1.ToString()}========={condition2.ToString()}");
 
             var applications = dbcontext.Applications.FromSqlRaw("EXEC GetApplications @Condition1, @Condition2",
                 new SqlParameter("@Condition1", condition1.ToString()),

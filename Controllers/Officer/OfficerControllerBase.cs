@@ -320,6 +320,12 @@ namespace SocialWelfare.Controllers.Officer
             var serviceContent = dbcontext.Services.FirstOrDefault(u => u.ServiceId == generalDetails.ServiceId);
 
             var applicationHistory = JsonConvert.DeserializeObject<dynamic>(dbcontext.ApplicationsHistories.FirstOrDefault(his => his.ApplicationId == ApplicationId)!.History);
+            List<dynamic> histories = [];
+            foreach (var history in applicationHistory!)
+            {
+                bool isTransfered = history["ActionTaken"].ToString().Contains("Transfered");
+                if (!isTransfered) histories.Add(history);
+            }
             string updateObject = "";
             foreach (var item in applicationHistory!)
             {
@@ -337,7 +343,7 @@ namespace SocialWelfare.Controllers.Officer
                 preAddressDetails,
                 perAddressDetails,
                 canOfficerTakeAction,
-                previousActions = applicationHistory,
+                previousActions = histories,
                 updateObject,
             };
             return View(ApplicationDetails);
@@ -543,21 +549,22 @@ namespace SocialWelfare.Controllers.Officer
 
             var PoolList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.PoolList);
             var ApprovalList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.ApprovalList);
+            string actionTaken = "";
 
             foreach (var item in IdList)
             {
                 if (listType == "Approve")
                 {
-                    if (action == "add" && !ApprovalList!.Contains(item)) ApprovalList.Add(item);
-                    else if (action == "remove" && ApprovalList!.Contains(item)) ApprovalList.Remove(item);
+                    if (action == "add" && !ApprovalList!.Contains(item)) { ApprovalList.Add(item); actionTaken = "Transfered to Appove List From Inbox"; }
+                    else if (action == "remove" && ApprovalList!.Contains(item)) { ApprovalList.Remove(item); actionTaken = "Transfered to Inbox From Approve List"; }
 
                     arrayLists.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
 
                 }
                 else if (listType == "Pool")
                 {
-                    if (action == "add" && !PoolList!.Contains(item)) PoolList.Add(item);
-                    else if (action == "remove" && PoolList!.Contains(item)) PoolList.Remove(item);
+                    if (action == "add" && !PoolList!.Contains(item)) { PoolList.Add(item); actionTaken = "Transfered to Pool List From Approve List"; }
+                    else if (action == "remove" && PoolList!.Contains(item)) { PoolList.Remove(item); actionTaken = "Transfered to Inbox From Pool List"; }
 
                     arrayLists.PoolList = JsonConvert.SerializeObject(PoolList);
                 }
@@ -568,6 +575,7 @@ namespace SocialWelfare.Controllers.Officer
 
                     arrayLists.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
                     arrayLists.PoolList = JsonConvert.SerializeObject(PoolList);
+                    actionTaken = "Transfered to Pool List From Approve List";
                 }
                 else if (listType == "PoolToApprove")
                 {
@@ -576,14 +584,18 @@ namespace SocialWelfare.Controllers.Officer
 
                     arrayLists.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
                     arrayLists.PoolList = JsonConvert.SerializeObject(PoolList);
+                    actionTaken = "Transfered to Approve List From Pool List";
+
                 }
+
+                helper.UpdateApplicationHistory(item, officerDesignation, actionTaken, "NULL");
+
             }
 
 
 
             dbcontext.Entry(arrayLists).State = EntityState.Modified;
             dbcontext.SaveChanges();
-
 
 
             return Json(new { status = true });
@@ -646,6 +658,7 @@ namespace SocialWelfare.Controllers.Officer
 
                 builder.AppendLine($"{obj.referenceNumber},{obj.applicantName},{obj.appliedDistrict},{obj.parentage},{obj.motherName},{obj.dateOfBirth},{obj.dateOfMarriage},{obj.bankDetails},{obj.addressDetails},{obj.submissionDate}");
                 application.ApplicationStatus = "Dispatched";
+                helper.UpdateApplicationHistory(application.ApplicationId, officerDesignation, "Dispatched To Bank", "NULL");
             }
 
             dbcontext.SaveChanges();

@@ -114,9 +114,9 @@ namespace SocialWelfare.Controllers.Officer
                     pendingColumns.RemoveAt(1);
 
                 if (serviceSpecific["DateOfMarriage"] != null)
-                    pendingData.Insert(pendingData.Count - 1, serviceSpecific["DateOfMarriage"]);
+                    pendingData.Insert(pendingData.Count - 2, serviceSpecific["DateOfMarriage"]);
                 else
-                    pendingColumns.RemoveAt(pendingData.Count - 1);
+                    pendingColumns.RemoveAt(pendingData.Count - 2);
 
                 List<dynamic> approveData = [
                     approveIndex,

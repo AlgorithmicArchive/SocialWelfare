@@ -210,8 +210,8 @@ function onSelect(list) {
         Applications.approveList.data.length > 0
       ) {
         showContainerSwitcher();
+        switchToMainContainer();
       }
-      switchToMainContainer();
       break;
     case "Sent":
     case "Sanction":
@@ -237,6 +237,7 @@ $(document).ready(function () {
       approvalIdList = approvalIdList.filter((item) => item !== currentVal);
     }
     toggleTransferButton();
+    switchContainer("MainContainer", "transferToApproveButton");
     selectedCount("transferToApproveButton", approvalIdList);
   });
 
