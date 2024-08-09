@@ -144,26 +144,29 @@ namespace SocialWelfare.Controllers.Officer
                 Reject = RejectCount,
                 Return = ReturnCount,
                 CanSanction = canSanction,
-                CanForward = canForward
+                CanForward = canForward,
+                serviceId
             };
 
 
             return Json(new { status = true, countList });
         }
-        public IActionResult Applications(string? type, int start = 0, int length = 1)
+        public IActionResult Applications(string? type, int start = 0, int length = 1, int serviceId = 0)
         {
+            _logger.LogInformation($"----------- SERVICE ID: {serviceId} -----------------");
+
             int? userId = HttpContext.Session.GetInt32("UserId");
             Models.Entities.User Officer = dbcontext.Users.Find(userId)!;
             dynamic? ApplicationList = null;
 
             if (type!.ToString() == "Pending" || type.ToString() == "Approve" || type.ToString() == "Pool")
-                ApplicationList = PendingApplications(Officer!, start, length, type);
+                ApplicationList = PendingApplications(Officer!, start, length, type, serviceId);
             else if (type!.ToString() == "Sent")
-                ApplicationList = SentApplications(Officer!, start, length, type);
+                ApplicationList = SentApplications(Officer!, start, length, type, serviceId);
             else if (type.ToString() == "Sanction")
-                ApplicationList = SanctionApplications(Officer!, start, length, type);
+                ApplicationList = SanctionApplications(Officer!, start, length, type, serviceId);
             else if (type.ToString() == "Reject")
-                ApplicationList = RejectApplications(Officer!, start, length, type);
+                ApplicationList = RejectApplications(Officer!, start, length, type, serviceId);
 
             return Json(new { status = true, ApplicationList });
         }
@@ -175,7 +178,7 @@ namespace SocialWelfare.Controllers.Officer
 
             try
             {
-                List<string> ActiveButtons = new List<string>();
+                List<string> ActiveButtons = [];
 
                 if (!string.IsNullOrEmpty(activeButtons))
                 {
@@ -188,16 +191,16 @@ namespace SocialWelfare.Controllers.Officer
                     case "Pending":
                     case "Approve":
                     case "Pool":
-                        ApplicationList = PendingApplications(Officer, 0, 0, type, true);
+                        ApplicationList = PendingApplications(Officer, 0, 0, type, 1, true);
                         break;
                     case "Sent":
-                        ApplicationList = SentApplications(Officer, 0, 0, type, true);
+                        ApplicationList = SentApplications(Officer, 0, 0, type, 1, true);
                         break;
                     case "Sanction":
-                        ApplicationList = SanctionApplications(Officer, 0, 0, type, true);
+                        ApplicationList = SanctionApplications(Officer, 0, 0, type, 1, true);
                         break;
                     case "Reject":
-                        ApplicationList = RejectApplications(Officer, 0, 0, type, true);
+                        ApplicationList = RejectApplications(Officer, 0, 0, type, 1, true);
                         break;
                     default:
                         _logger.LogError("Invalid application type: {Type}", type);

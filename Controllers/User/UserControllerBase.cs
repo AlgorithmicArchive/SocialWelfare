@@ -10,23 +10,15 @@ using SocialWelfare.Models.Entities;
 namespace SocialWelfare.Controllers.User
 {
     [Authorize(Roles = "Citizen")]
-    public partial class UserController : Controller
+    public partial class UserController(SocialWelfareDepartmentContext dbcontext, ILogger<UserController> logger, UserHelperFunctions _helper, EmailSender _emailSender, PdfService pdfService, IWebHostEnvironment webHostEnvironment) : Controller
     {
-        protected readonly SocialWelfareDepartmentContext dbcontext;
-        protected readonly ILogger<UserController> _logger;
-        protected readonly UserHelperFunctions helper;
-        protected readonly EmailSender emailSender;
+        protected readonly SocialWelfareDepartmentContext dbcontext = dbcontext;
+        protected readonly ILogger<UserController> _logger = logger;
+        protected readonly UserHelperFunctions helper = _helper;
+        protected readonly EmailSender emailSender = _emailSender;
 
-        protected readonly PdfService _pdfService;
-
-        public UserController(SocialWelfareDepartmentContext dbcontext, ILogger<UserController> logger, UserHelperFunctions _helper, EmailSender _emailSender, PdfService pdfService)
-        {
-            this.dbcontext = dbcontext;
-            _logger = logger;
-            helper = _helper;
-            emailSender = _emailSender;
-            _pdfService = pdfService;
-        }
+        protected readonly PdfService _pdfService = pdfService;
+        private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
 
         public override void OnActionExecuted(ActionExecutedContext context)
         {
@@ -247,5 +239,36 @@ namespace SocialWelfare.Controllers.User
             return RedirectToAction("Index");
         }
 
+        [HttpGet]
+        public IActionResult GetFile(string? filePath)
+        {
+            var fullPath = Path.Combine(_webHostEnvironment.WebRootPath, "resources", "dummyDocs", filePath!);
+            if (!System.IO.File.Exists(fullPath))
+            {
+                return NotFound();
+            }
+
+            var fileBytes = System.IO.File.ReadAllBytes(fullPath);
+            var contentType = GetContentType(fullPath);
+
+            return File(fileBytes, contentType, Path.GetFileName(fullPath));
+        }
+
+        private static string GetContentType(string path)
+        {
+            var types = new Dictionary<string, string>
+            {
+                { ".txt", "text/plain" },
+                { ".pdf", "application/pdf" },
+                { ".jpg", "image/jpeg" },
+                { ".jpeg", "image/jpeg" },
+                { ".png", "image/png" },
+                { ".gif", "image/gif" },
+                { ".bmp", "image/bmp" }
+            };
+
+            var ext = Path.GetExtension(path).ToLowerInvariant();
+            return types.TryGetValue(ext, out string? value) ? value : "application/octet-stream";
+        }
     }
 }

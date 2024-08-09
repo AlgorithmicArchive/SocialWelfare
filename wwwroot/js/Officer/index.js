@@ -55,26 +55,37 @@ $(document).ready(function () {
         $(this).tooltip("hide");
       }, 2000);
     } else if (property == "pending") {
-      fetch("/Officer/Applications?type=Pending")
+      fetch(
+        "/Officer/Applications?type=Pending&serviceId=" +
+          parseInt($("#services").val())
+      )
         .then((res) => res.json())
         .then((data) => {
           if (data.status) onSelect(data.applicationList);
         });
-      // window.location.href = "/Officer/Applications?type=Pending";
     } else if (property == "forward" || property == "return") {
-      fetch("/Officer/Applications?type=Sent")
+      fetch(
+        "/Officer/Applications?type=Sent&serviceId=" +
+          parseInt($("#services").val())
+      )
         .then((res) => res.json())
         .then((data) => {
           if (data.status) onSelect(data.applicationList);
         });
     } else if (property == "sanction") {
-      fetch("/Officer/Applications?type=Sanction")
+      fetch(
+        "/Officer/Applications?type=Sanction&serviceId=" +
+          parseInt($("#services").val())
+      )
         .then((res) => res.json())
         .then((data) => {
           if (data.status) onSelect(data.applicationList);
         });
     } else if (property == "reject") {
-      fetch("/Officer/Applications?type=Reject")
+      fetch(
+        "/Officer/Applications?type=Reject&serviceId=" +
+          parseInt($("#services").val())
+      )
         .then((res) => res.json())
         .then((data) => {
           if (data.status) onSelect(data.applicationList);

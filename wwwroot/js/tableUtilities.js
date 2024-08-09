@@ -88,16 +88,22 @@ function initializeDataTable(
   });
 }
 
-function initializeRecordTables(tableId, url, type, start, length) {
+function initializeRecordTables(tableId, url, serviceId, type, start, length) {
   if ($.fn.DataTable.isDataTable(`#${tableId}`)) {
     $(`#${tableId}`).DataTable().destroy();
     $(`#${tableId} thead`).empty();
     $(`#${tableId} tbody`).empty();
   }
-
-  fetch(url + `?type=${type}&start=${start}&length=${length}`)
+  console.log(type, serviceId);
+  fetch(
+    url +
+      `?type=${type}&start=${start}&length=${length}&serviceId=${parseInt(
+        serviceId
+      )}`
+  )
     .then((res) => res.json())
     .then((json) => {
+      console.log(type);
       $("#SanctionContainer").removeClass("d-flex").addClass("d-none");
       let applications;
       if (type == "Pending") applications = json.applicationList.pendingList;
@@ -105,7 +111,7 @@ function initializeRecordTables(tableId, url, type, start, length) {
         applications = json.applicationList.approveList;
       else if (type == "Pool") applications = json.applicationList.poolList;
       else if (type == "Sent") applications = json.applicationList.sentList;
-      else if ((type = "Sanction")) {
+      else if (type == "Sanction") {
         applications = json.applicationList.sanctionList;
         switchContainer("SanctionContainer", "sendToBank");
       }
@@ -195,7 +201,7 @@ function initializeRecordTables(tableId, url, type, start, length) {
       if (recordsTotal > recordsFiltered) {
         const numOfPages = Math.ceil(recordsTotal / length);
         const ul = $(
-          `<ul class="pagination d-flex justify-content-end mt-2" id="tablePagination" number-of-pages="${numOfPages}" page-length=${table.page.len()} table-type=${type}>`
+          `<ul class="pagination d-flex justify-content-end mt-2" id="tablePagination" number-of-pages="${numOfPages}" page-length=${table.page.len()} table-type=${type} serviceId=${serviceId}>`
         );
         ul.append(
           `<li class="page-item"><a class="page-link" href="#">Previous</a></li>`
@@ -218,7 +224,7 @@ function initializeRecordTables(tableId, url, type, start, length) {
       $(`#${tableId}`).off("length.dt");
 
       $(`#${tableId}`).on("length.dt", function (e, settings, len) {
-        initializeRecordTables(tableId, url, type, 0, len);
+        initializeRecordTables(tableId, url, serviceId, type, 0, len);
       });
 
       // Remove any previous click event handler on #exportAll
@@ -235,8 +241,6 @@ function initializeRecordTables(tableId, url, type, start, length) {
             activeButtons.push($button.text());
           }
         });
-
-        console.log(activeButtons);
 
         // Encode the activeButtons array
         var encodedActiveButtons = encodeURIComponent(
@@ -423,6 +427,7 @@ $(document).ready(function () {
     const pageLength = parseInt($pagination.attr("page-length"));
     $currentPageItem.removeClass("active");
     const tableType = $pagination.attr("table-type");
+    const serviceId = $pagination.attr("serviceId");
 
     let callFunction = true;
 
@@ -445,6 +450,7 @@ $(document).ready(function () {
       initializeRecordTables(
         "applicationsTable",
         "/Officer/Applications",
+        parseInt(serviceId),
         tableType,
         (currentPageNo - 1) * pageLength,
         pageLength

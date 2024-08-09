@@ -10,7 +10,7 @@ namespace SocialWelfare.Controllers.Officer
 {
     public partial class OfficerController : Controller
     {
-        public dynamic PendingApplications(Models.Entities.User Officer, int start, int length, string type, bool AllData = false)
+        public dynamic PendingApplications(Models.Entities.User Officer, int start, int length, string type, int serviceId, bool AllData = false)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer?.UserSpecificDetails!);
 
@@ -46,10 +46,13 @@ namespace SocialWelfare.Controllers.Officer
                 new SqlParameter("@ServiceId", 1)).ToList();
 
 
+            var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == serviceId);
+            var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
+            var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
 
-            bool canSanction = false;
-            bool canUpdate = false;
-            int serviceId = 0;
+            bool canSanction = officer!["canSanction"];
+            bool canUpdate = officer["canUpdate"];
+
             List<dynamic> PoolList = [];
             List<dynamic> ApprovalList = [];
             List<dynamic> PendingList = [];
@@ -81,6 +84,8 @@ namespace SocialWelfare.Controllers.Officer
                     new { title = "Submission Date" },
                 };
 
+            if (!canSanction) pendingColumns.RemoveAt(1);
+
             var poolColumns = new List<dynamic>(pendingColumns);
 
             int pendingIndex = 1;
@@ -89,16 +94,12 @@ namespace SocialWelfare.Controllers.Officer
 
             foreach (var application in applicationList)
             {
-                var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == application.ServiceId);
-                var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
-                var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
+
                 var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
                 int DistrictCode = Convert.ToInt32(serviceSpecific["District"]);
                 string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
-                serviceId = service.ServiceId;
 
-                canSanction = officer!["canSanction"];
-                canUpdate = officer["canUpdate"];
+
 
                 List<dynamic> pendingData = [
                     pendingIndex,
@@ -108,15 +109,15 @@ namespace SocialWelfare.Controllers.Officer
                     $"<button class='btn btn-dark w-100' onclick=UserDetails('{application.ApplicationId}');>View</button>"
                 ];
 
+
                 if (canSanction)
                     pendingData.Insert(1, $"<input type='checkbox' class='form-check pending-element' value='{application.ApplicationId}' name='pending-element' />");
-                else
-                    pendingColumns.RemoveAt(1);
+
 
                 if (serviceSpecific["DateOfMarriage"] != null)
                     pendingData.Insert(pendingData.Count - 2, serviceSpecific["DateOfMarriage"]);
                 else
-                    pendingColumns.RemoveAt(pendingData.Count - 2);
+                    pendingColumns.RemoveAt(pendingColumns.Count - 2);
 
                 List<dynamic> approveData = [
                     approveIndex,
@@ -207,12 +208,11 @@ namespace SocialWelfare.Controllers.Officer
                 return obj;
             else return type == "Pending" ? new { columns = pendingColumns, data = PendingList } : type == "Approve" ? new { columns = approveColumns, data = ApprovalList } : new { columns = poolColumns, data = PoolList };
         }
-        public dynamic SentApplications(Models.Entities.User Officer, int start, int length, string type, bool AllData = false)
+        public dynamic SentApplications(Models.Entities.User Officer, int start, int length, string type, int serviceId, bool AllData = false)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
-            int serviceId = 0;
 
             SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
 
@@ -254,13 +254,12 @@ namespace SocialWelfare.Controllers.Officer
             {
                 bool canPull = false;
                 var phases = JsonConvert.DeserializeObject<dynamic>(application.Phase);
-                var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == application.ServiceId);
+                var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == serviceId);
                 var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
                 var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
                 var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
                 int DistrictCode = Convert.ToInt32(serviceSpecific!["District"]);
                 string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
-                serviceId = service.ServiceId;
 
                 foreach (var phase in phases!)
                 {
@@ -298,19 +297,18 @@ namespace SocialWelfare.Controllers.Officer
                     recordsFiltered = SentApplications.AsEnumerable().Skip(start).Take(length).ToList().Count
                 },
                 Type = type,
-                ServiceId = 1
+                ServiceId = serviceId
             };
 
             if (!AllData)
                 return obj;
             else return new { columns = sentColumns, data = SentApplications };
         }
-        public dynamic SanctionApplications(Models.Entities.User Officer, int start, int length, string type, bool AllData = false)
+        public dynamic SanctionApplications(Models.Entities.User Officer, int start, int length, string type, int serviceId, bool AllData = false)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
-            int serviceId = 0;
             SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
 
             switch (accessLevel)
@@ -404,12 +402,11 @@ namespace SocialWelfare.Controllers.Officer
                 return obj;
             else return new { columns = sanctionColumns, data = SanctionApplications };
         }
-        public dynamic RejectApplications(Models.Entities.User Officer, int start, int length, string type, bool AllData = false)
+        public dynamic RejectApplications(Models.Entities.User Officer, int start, int length, string type, int serviceId, bool AllData = false)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
-            int serviceId = 0;
             SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
 
             switch (accessLevel)
@@ -501,7 +498,6 @@ namespace SocialWelfare.Controllers.Officer
                 return obj;
             else return new { columns = RejectColumns, data = RejectApplications };
         }
-
 
         public bool IsMoreThanSpecifiedDays(string dateString, int value)
         {

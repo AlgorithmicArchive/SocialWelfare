@@ -4,6 +4,7 @@ let approvalApplications;
 let approvalIdList = [];
 let poolIdList = [];
 let finalList = [];
+let serviceId = 0;
 
 function selectedCount(id, arr) {
   let count = Array.isArray(arr) ? arr.length : arr;
@@ -157,11 +158,12 @@ function updateOptionButtons(tableId) {
 
 function onSelect(list) {
   Applications = list;
-
+  serviceId = Applications.serviceId;
   const initializeTable = (type, length) => {
     initializeRecordTables(
       "applicationsTable",
       "/Officer/Applications",
+      serviceId,
       type,
       0,
       length
@@ -313,9 +315,10 @@ $(document).ready(function () {
     initializeRecordTables(
       "applicationsTable",
       "/Officer/Applications",
+      serviceId,
       "Pool",
       0,
-      1
+      10
     );
     switchContainer("PoolContainer", "poolButton");
   });
@@ -324,9 +327,10 @@ $(document).ready(function () {
     initializeRecordTables(
       "applicationsTable",
       "/Officer/Applications",
+      serviceId,
       "Pending",
       0,
-      1
+      10
     );
     switchContainer("MainContainer", "mainButton");
   });
@@ -335,9 +339,10 @@ $(document).ready(function () {
     initializeRecordTables(
       "applicationsTable",
       "/Officer/Applications",
+      serviceId,
       "Approve",
       0,
-      1
+      10
     );
     switchContainer("ApproveContainer", "approveButton");
   });
