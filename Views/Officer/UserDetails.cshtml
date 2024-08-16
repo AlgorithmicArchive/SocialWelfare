@@ -62,18 +62,20 @@
                 </div>
                 <div class="modal-body">
                     <div class="container d-flex flex-column gap-2">
-                        <label for="Choose Action">Choose Action</label>
-                        <select name="action" id="action" class="form-select">
-                        </select>
-                        <div id="extra" style="max-height:240px;overflow-y:auto">
+                        <form id="actionForm" autocomplete="off">
+                            <label for="Choose Action">Choose Action</label>
+                            <select name="action" id="action" class="form-select">
+                            </select>
+                            <div id="extra" style="max-height:240px;overflow-y:auto">
 
-                        </div>
-                        <div id="extraDetails">
+                            </div>
+                            <div id="extraDetails">
 
-                        </div>
-                        <div id="ceritificateDetails" class="shadow rounded-border p-3" style="display: none;">
-                            <p class="fs-3 fw-bold text-center">Certificate Details</p>
-                        </div>
+                            </div>
+                            <div id="ceritificateDetails" class="shadow rounded-border p-3" style="display: none;">
+                                <p class="fs-3 fw-bold text-center">Certificate Details</p>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

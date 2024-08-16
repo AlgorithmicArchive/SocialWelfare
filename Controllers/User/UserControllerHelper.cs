@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using SocialWelfare.Models.Entities;
 
 namespace SocialWelfare.Controllers.User
@@ -35,5 +36,34 @@ namespace SocialWelfare.Controllers.User
             var blocks = dbcontext.Blocks.Where(u => u.DistrictId == DistrictId).ToList();
             return Json(new { status = true, blocks });
         }
+
+        [HttpGet]
+        public IActionResult GetPhases(string applicationId)
+        {
+            int phaseId = dbcontext.Applications.FirstOrDefault(app => app.ApplicationId == applicationId)!.Phase;
+            var phases = new List<dynamic>();
+
+            // Traverse the linked list of phases
+            while (phaseId != 0)
+            {
+                var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.PhaseId == phaseId);
+                if (currentPhase == null)
+                    break;
+
+                phases.Add(new
+                {
+                    currentPhase.ReceivedOn,
+                    currentPhase.Officer,
+                    currentPhase.ActionTaken,
+                    currentPhase.Remarks
+                });
+
+                // Move to the next phase
+                phaseId = currentPhase.Next;
+            }
+
+            return Json(new { phase = JsonConvert.SerializeObject(phases) });
+        }
+
     }
 }

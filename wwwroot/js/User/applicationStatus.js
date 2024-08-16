@@ -22,7 +22,12 @@ function downloadFile(ApplicationId) {
     .catch((error) => console.error("Error downloading file:", error));
 }
 
-function CreateTimeline(phase, ApplicationId) {
+async function CreateTimeline(ApplicationId) {
+  let res = await fetch("/User/GetPhases?ApplicationId=" + ApplicationId);
+  let data = await res.json();
+  let phases = JSON.parse(data.phase);
+  console.log(phases);
+
   let sanctioned = false;
   let returnedToEdit = false;
   $("#timeline").empty();
@@ -33,8 +38,8 @@ function CreateTimeline(phase, ApplicationId) {
     .prepend(
       `<p class="fw-bold text-center" id="ApplicationId">Application Number: ${ApplicationId}</p>`
     );
-  for (let i = 0; i < phase.length; i++) {
-    const item = phase[i];
+  for (let i = 0; i < phases.length; i++) {
+    const item = phases[i];
     const date = item.ReceivedOn;
     sanctioned = item.ActionTaken == "Sanction" ? true : false;
     returnedToEdit = item.ActionTaken == "ReturnToEdit" ? true : false;
@@ -106,22 +111,12 @@ function UpdateRequest(updateRequest, ApplicationId) {
 }
 
 $(document).ready(function () {
-  const Incomplete =
-    window.location.pathname == "/User/IncompleteApplications" ? true : false;
-
-  let list = [];
-  list = applications.map(({ applicationId, applicantName, phase }) => {
-    const Phase = phase !== "" ? JSON.parse(phase) : "";
-    return {
-      applicationId,
-      applicantName,
-      button: Incomplete
-        ? `<button class="btn btn-dark w-100" onclick='EditForm("${applicationId}")'>Edit Form</button>`
-        : `<button class="btn btn-dark w-100" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick='CreateTimeline(${JSON.stringify(
-            Phase
-          )},"${applicationId}")'>View</button>`,
-    };
-  });
-
-  initializeDataTable("statusTable", "userDetails", list);
+  initializeRecordTables(
+    "statusTable",
+    "/User/GetApplicationStatus",
+    null,
+    ApplicationType,
+    0,
+    10
+  );
 });

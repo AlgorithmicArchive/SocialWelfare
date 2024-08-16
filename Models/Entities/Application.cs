@@ -7,7 +7,7 @@ public partial class Application
 {
     public string ApplicationId { get; set; } = null!;
 
-    public int? CitizenId { get; set; }
+    public int CitizenId { get; set; }
 
     public int ServiceId { get; set; }
 
@@ -25,25 +25,25 @@ public partial class Application
 
     public string DateOfBirth { get; set; } = null!;
 
-    public string? Category { get; set; }
+    public string Category { get; set; } = null!;
 
     public string ServiceSpecific { get; set; } = null!;
 
-    public string? PresentAddressId { get; set; }
+    public string PresentAddressId { get; set; } = null!;
 
-    public string? PermanentAddressId { get; set; }
+    public string PermanentAddressId { get; set; } = null!;
 
     public string BankDetails { get; set; } = null!;
 
     public string Documents { get; set; } = null!;
 
-    public string? EditList { get; set; }
+    public string EditList { get; set; } = null!;
 
-    public string Phase { get; set; } = null!;
+    public int Phase { get; set; }
 
     public string ApplicationStatus { get; set; } = null!;
 
-    public string? SubmissionDate { get; set; }
+    public string SubmissionDate { get; set; } = null!;
 
     public virtual ICollection<ApplicationsHistory> ApplicationsHistories { get; set; } = new List<ApplicationsHistory>();
 

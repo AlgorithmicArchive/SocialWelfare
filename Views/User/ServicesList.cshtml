@@ -1,13 +1,7 @@
 <div class="full-screen-section center-align flex-column">
     <div class="container">
-        <table class="table table-striped table-hover rounded-0" id="serviceList">
+        <table class="table table-striped table-bordered table-hover rounded-0" id="serviceList">
             <thead class="bg-dark text-white">
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Service Name <i class="fa-solid fa-sort"></i></th>
-                    <th scope="col">Department <i class="fa-solid fa-sort"></i></th>
-                    <th scope="col">Option</th>
-                </tr>
             </thead>
             <tbody id="tableBody">
             </tbody>
@@ -16,8 +10,7 @@
 </div>
 
 <script>
-    const serviceList = @Html.Raw(Json.Serialize(Model));
+    @* const serviceList = @Html.Raw(Json.Serialize(Model)); *@
 </script>
 
 <script src="/js/User/serviceList.js"></script>
-@* <script src="/js/pagination.js"></script> *@

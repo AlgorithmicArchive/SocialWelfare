@@ -186,81 +186,84 @@ function formatDate() {
 function ProceedAction(applicationId, officer, letterUpdateDetails) {
   const action = $("#action").val();
   const remarks = $("#remarks").val();
-  if (remarks.length == 0) {
-    $("#remarks").after(`<span class="text-danger">This is required.</span>`);
-    return;
+  const serviceId = ApplicationDetails.serviceContent.serviceId;
+  const url = "/Officer/HandleAction";
+
+  const formData = new FormData();
+  formData.append("ApplicationId", applicationId);
+  formData.append("Officer", officer);
+  formData.append("Remarks", remarks);
+  formData.append("ServiceId", serviceId);
+  formData.append("Action", action);
+
+  switch (action) {
+    case "ReturnToEdit":
+      const editList = $(".editColumn:checked")
+        .map(function () {
+          return $(this).val();
+        })
+        .get();
+      formData.append("editList", JSON.stringify(editList));
+      break;
+
+    case "Update":
+      const updateInput = $("#extra input");
+      formData.append("UpdateColumn", updateInput.attr("name"));
+      formData.append("UpdateColumnValue", updateInput.val());
+      const updateFile = $("#" + updateInput.attr("name") + "File")[0].files[0];
+      if (updateFile) formData.append("UpdateColumnFile", updateFile);
+      break;
+
+    case "Sanction":
+      const updateDetails = {};
+      letterUpdateDetails.forEach((item) => {
+        updateDetails[item.name] = {
+          OldValue: $("#" + item.name).val(),
+          NewValue: $("#new" + item.name).val(),
+          UpdatedBy: ApplicationDetails.currentOfficer,
+          UpdatedAt: formatDate(),
+        };
+      });
+      formData.append("letterUpdateDetails", JSON.stringify(updateDetails));
+      break;
+
+    case "Forward":
+      const forwardFile = $("#" + officer.replace(/\s+/g, "_") + "_Document");
+      if (forwardFile.length != 0)
+        formData.append("ForwardFile", forwardFile[0].files[0]);
+      break;
+
+    default:
+      break;
   }
+
   showSpinner();
-  const formdata = new FormData();
-  formdata.append("ApplicationId", applicationId);
-  formdata.append("Officer", officer);
-  formdata.append("Action", action);
-  formdata.append("Remarks", remarks);
-
-  const editList = [];
-
-  if (action == "ReturnToEdit") {
-    $(".editColumn:checked").each(function () {
-      editList.push($(this).val());
-    });
-
-    formdata.append("editList", JSON.stringify(editList));
-  } else if (action == "Update") {
-    const updateColumn = {
-      name: $("#extra input").attr("name"),
-      value: $("#extra input").val(),
-    };
-    formdata.append("UpdateColumn", updateColumn.name);
-    formdata.append("UpdateColumnValue", updateColumn.value);
-    formdata.append(
-      "UpdateColumnFile",
-      $("#" + updateColumn.name + "File")[0].files[0]
-    );
-  } else if (action == "Sanction") {
-    const obj = {};
-    letterUpdateDetails.forEach((item) => {
-      const value = $("#new" + item.name).val();
-      obj[item.name] = {
-        OldValue: $("#" + item.name).val(),
-        NewValue: value,
-        UpdatedBy: ApplicationDetails.currentOfficer,
-        UpdatedAt: formatDate(),
-      };
-    });
-    formdata.append("letterUpdateDetails", JSON.stringify(obj));
-  } else if (
-    action == "Forward" &&
-    $("#" + officer.split(" ").join("_") + "_Document").length != 0
-  ) {
-    formdata.append(
-      "ForwardFile",
-      $("#" + officer.split(" ").join("_") + "_Document")[0].files[0]
-    );
-  }
-  fetch("/Officer/Action", { method: "post", body: formdata })
+  fetch(url, { method: "post", body: formData })
     .then((res) => res.json())
     .then((data) => {
       hideSpinner();
       if (data.status) {
-        if (action == "Sanction") {
-          const filePath =
-            "/files/" +
-            data.applicationId.replace(/\//g, "_") +
-            "SanctionLetter.pdf";
-
+        if (action === "Sanction") {
+          const filePath = `/files/${data.applicationId.replace(
+            /\//g,
+            "_"
+          )}SanctionLetter.pdf`;
+          $("#sanctionFrame").attr("src", filePath);
           $("#showSanctionLetter").modal("show");
 
-          $("#sanctionFrame").attr("src", filePath);
           $("#approve")
             .off("click")
-            .on("click", async function () {
+            .on("click", () => {
               $("#showSanctionLetter").modal("hide");
               window.location.href = "/Officer/Index";
             });
-        } else window.location.href = data.url;
+        } else {
+          window.location.href = "/Officer/Index";
+        }
       }
     });
 }
+
 function getWorkForceOfficer(
   serviceContent,
   currentOfficer,
@@ -307,10 +310,19 @@ function getWorkForceOfficer(
         required: true,
       }),
       $("<button>")
-        .addClass("btn btn-dark")
+        .addClass("btn btn-dark d-flex mx-auto mt-2")
         .text("Proceed")
-        .on("click", function () {
-          ProceedAction(applicationId, currentOfficer, letterUpdateDetails);
+        .attr("type", "submit")
+        .on("click", function (e) {
+          e.preventDefault(); // Prevent form submission
+
+          let form = $("#actionForm")[0]; // Get the form element
+          if (!form.checkValidity()) {
+            form.reportValidity(); // Trigger HTML5 validation
+          } else {
+            // All fields are valid, perform custom actions instead of form submission
+            ProceedAction(applicationId, currentOfficer, letterUpdateDetails);
+          }
         })
     );
 }

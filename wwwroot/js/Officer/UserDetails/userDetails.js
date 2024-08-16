@@ -27,16 +27,18 @@ $(document).ready(function () {
     updateColumn != null
   ) {
     $("#extra").empty();
-    $("#extra").append(`
+    $("#extra").append(
+      `
         <label title="${updateColumn.label} Certificate by TSWO">${
-      updateColumn.label
-    } Certificate by TSWO</label>
+        updateColumn.label
+      } Certificate by TSWO</label>
         <input class="form-control" type="file" name="${ApplicationDetails.currentOfficer
           .split(" ")
           .join("_")}_Document" id="${ApplicationDetails.currentOfficer
-      .split(" ")
-      .join("_")}_Document" />
-    `);
+        .split(" ")
+        .join("_")}_Document" required>
+    `
+    );
   }
 
   const excludedProperties = [
@@ -78,7 +80,6 @@ $(document).ready(function () {
       const formElements = JSON.parse(
         ApplicationDetails.serviceContent.formElement
       );
-
       const addedLabels = new Set();
 
       $("#extra").addClass("border border-dark p-3");

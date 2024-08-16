@@ -29,6 +29,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<Certificate> Certificates { get; set; }
 
+    public virtual DbSet<CurrentPhase> CurrentPhases { get; set; }
+
     public virtual DbSet<District> Districts { get; set; }
 
     public virtual DbSet<Feedback> Feedbacks { get; set; }
@@ -50,13 +52,17 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Village> Villages { get; set; }
 
     public virtual DbSet<Ward> Wards { get; set; }
+
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("name=DefaultConnection");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+
         modelBuilder.Entity<AddressJoin>().HasNoKey();
+        
         modelBuilder.Entity<Address>(entity =>
         {
             entity.ToTable("Address");
@@ -84,6 +90,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.DateOfBirth)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.Documents).HasDefaultValue("[]");
+            entity.Property(e => e.EditList).HasDefaultValue("[]");
             entity.Property(e => e.Email)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -93,7 +101,6 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.PermanentAddressId)
                 .HasMaxLength(10)
                 .IsFixedLength();
-            entity.Property(e => e.Phase).HasDefaultValue("[]");
             entity.Property(e => e.PresentAddressId)
                 .HasMaxLength(10)
                 .IsFixedLength();
@@ -182,6 +189,26 @@ public partial class SocialWelfareDepartmentContext : DbContext
                 .HasColumnType("datetime");
         });
 
+        modelBuilder.Entity<CurrentPhase>(entity =>
+        {
+            entity.HasKey(e => e.PhaseId);
+
+            entity.ToTable("CurrentPhase");
+
+            entity.Property(e => e.ActionTaken)
+                .HasMaxLength(10)
+                .IsFixedLength();
+            entity.Property(e => e.ApplicationId).HasMaxLength(50);
+            entity.Property(e => e.File).HasMaxLength(50);
+            entity.Property(e => e.Officer)
+                .HasMaxLength(150)
+                .IsUnicode(false);
+            entity.Property(e => e.ReceivedOn)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Remarks).HasColumnType("text");
+        });
+
         modelBuilder.Entity<District>(entity =>
         {
             entity.HasKey(e => e.Uuid);
@@ -245,6 +272,7 @@ public partial class SocialWelfareDepartmentContext : DbContext
         {
             entity.HasKey(e => e.ServiceId).HasName("PK__tmp_ms_x__C51BB00A0C58849B");
 
+            entity.Property(e => e.BankDispatchFile).HasDefaultValue("");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");

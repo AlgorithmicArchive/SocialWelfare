@@ -139,7 +139,7 @@ p {
     margin-bottom: 10px;
 }
 
-table thead th {
+.table thead th {
     min-width: 150px;
     white-space: "nowrap"
 }
@@ -196,10 +196,6 @@ body::-webkit-scrollbar {
     display: none;
     /* Hide Webkit scrollbar */
 }
-
-/* Custom scrollbar for IE and Edge using polyfill or JavaScript */
-
-/* Custom Scrollbar Polyfill (for browsers that do not support CSS custom properties) */
 
 
 .pagination .page-link {
@@ -258,6 +254,8 @@ body::-webkit-scrollbar {
     border-radius: 4px;
     transition: background-color 0.3s;
 }
+
+
 
 
 

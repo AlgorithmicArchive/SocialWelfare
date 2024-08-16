@@ -23,7 +23,8 @@ public class UserHelperFunctions
     {
         string docPath = "";
         string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
-        string uniqueName = Guid.NewGuid().ToString() + "_" + docFile?.FileName;
+        string shortGuid = Guid.NewGuid().ToString("N")[..8];
+        string uniqueName = shortGuid + "_" + docFile?.FileName;
 
         if (!Directory.Exists(uploadsFolder))
         {

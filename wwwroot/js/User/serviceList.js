@@ -12,6 +12,12 @@ function OpenForm(serviceId) {
 }
 
 $(document).ready(function () {
-  const list = serviceList.map(({serviceName,department,serviceId})=>({serviceName,department,button:`<button class="btn btn-dark w-100" onclick='OpenForm(${serviceId})'>View</button>`}));
-  initializeDataTable('serviceList', "tableBody", list);
+  initializeRecordTables(
+    "serviceList",
+    "/User/GetServices",
+    null,
+    "Services",
+    0,
+    10
+  );
 });

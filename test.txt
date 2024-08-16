@@ -4,3 +4,39 @@
 
 
 
+public Dictionary<string, object> getDocumentHash(String outputFilePath, String userName, byte[] pdfbytes, bool RequestVisibleSignature)
+        {
+
+                string _date = System.DateTime.Now.ToString("ddd, dd MMM yyy HH:mm:ss IST");
+                //string _location = "CIB&RC, NH4, CGO Complex, Faridabad";
+                string _Reason = "Digital Signing";
+            Dictionary<string, object> respdocment = new Dictionary<string, object>();
+            PdfSignatureAppearance appearance = null;
+            PdfReader reader = new PdfReader(pdfbytes);
+            int pageno = reader.NumberOfPages;
+            os = System.IO.File.OpenWrite(outputFilePath);
+
+            PdfStamper stamper = PdfStamper.CreateSignature(reader, os, '\0');
+            appearance = stamper.SignatureAppearance;
+
+            appearance.Layer2Text = String.Format("Digitally Signed By {0}\nSign Datetime:{1}\nReason: {2}", userName, _date, _Reason);
+            appearance.Acro6Layers = false;
+            appearance.Image = null;
+            appearance.SignatureRenderingMode = PdfSignatureAppearance.RenderingMode.DESCRIPTION;
+            appearance.CertificationLevel = PdfSignatureAppearance.NOT_CERTIFIED;
+            if (RequestVisibleSignature) { appearance.SetVisibleSignature(new iTextSharp.text.Rectangle(380, 70, 580, 20), pageno, "Secretary Signature"); }
+            int contentEstimated = 8192;
+            Dictionary<PdfName, int> exc = new Dictionary<PdfName, int>();
+            exc.Add(PdfName.CONTENTS, contentEstimated * 2 + 2);
+            PdfSignature dic = new PdfSignature(PdfName.ADOBE_PPKLITE, PdfName.ADBE_PKCS7_DETACHED);
+            dic.Date = new PdfDate(appearance.SignDate);
+            appearance.CryptoDictionary = dic;
+            appearance.PreClose(exc);
+            byte[] SignedHash = SHA256Managed.Create().ComputeHash(appearance.GetRangeStream());
+            string encodeDocumentHash = Convert.ToBase64String(SignedHash);
+            respdocment.Add("encodeDocumentHash", encodeDocumentHash);
+            respdocment.Add("appearance", appearance);
+            Session["appearance"] = appearance;
+            //os.Dispose();
+            return respdocment;
+        }

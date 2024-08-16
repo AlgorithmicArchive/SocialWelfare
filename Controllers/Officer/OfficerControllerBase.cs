@@ -3,6 +3,7 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -14,15 +15,15 @@ using SocialWelfare.Models.Entities;
 namespace SocialWelfare.Controllers.Officer
 {
     [Authorize(Roles = "Officer")]
-    public partial class OfficerController(SocialWelfareDepartmentContext dbcontext, ILogger<OfficerController> logger, UserHelperFunctions _helper, EmailSender _emailSender, PdfService pdfService, IWebHostEnvironment webHostEnvironment) : Controller
+    public partial class OfficerController(SocialWelfareDepartmentContext dbcontext, ILogger<OfficerController> logger, UserHelperFunctions helper, EmailSender emailSender, PdfService pdfService, IWebHostEnvironment webHostEnvironment, IHubContext<ProgressHub> hubContext) : Controller
     {
         protected readonly SocialWelfareDepartmentContext dbcontext = dbcontext;
         protected readonly ILogger<OfficerController> _logger = logger;
-        protected readonly EmailSender emailSender = _emailSender;
-        protected readonly UserHelperFunctions helper = _helper;
+        protected readonly EmailSender emailSender = emailSender;
+        protected readonly UserHelperFunctions helper = helper;
         protected readonly PdfService _pdfService = pdfService;
         private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
-
+        private readonly IHubContext<ProgressHub> hubContext = hubContext;
 
         public override void OnActionExecuted(ActionExecutedContext context)
         {
@@ -67,62 +68,106 @@ namespace SocialWelfare.Controllers.Officer
             int serviceId = Convert.ToInt32(ServiceId);
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails["AccessLevel"]?.ToString() ?? string.Empty;
-
+            string accessCode = "";
             SqlParameter AccessLevelCode = new("@AccessLevelCode", DBNull.Value);
             switch (accessLevel)
             {
                 case "Tehsil":
+                    accessCode = UserSpecificDetails["TehsilCode"]?.ToString()!;
                     AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails["TehsilCode"]?.ToString() ?? string.Empty);
                     break;
                 case "District":
+                    accessCode = UserSpecificDetails["DistrictCode"]?.ToString()!;
                     AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails["DistrictCode"]?.ToString() ?? string.Empty);
                     break;
                 case "Division":
+                    accessCode = UserSpecificDetails["DivisionCode"]?.ToString()!;
                     AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails["DivisionCode"]?.ToString() ?? string.Empty);
                     break;
             }
 
-            int PendingCount = 0, ForwardCount = 0, SanctionCount = 0, RejectCount = 0, ReturnCount = 0;
 
-            var applications = dbcontext.Applications.FromSqlRaw(
-                "EXEC GetApplicationCountForOfficer @OfficerDesignation, @AccessLevel, @AccessLevelCode,@ServiceId",
-                new SqlParameter("@OfficerDesignation", officerDesignation),
-                new SqlParameter("@AccessLevel", accessLevel),
-                AccessLevelCode,
-                new SqlParameter("@ServiceId", serviceId)
-            ).ToList();
-
-            foreach (var application in applications)
+            int PendingCount = dbcontext.CurrentPhases
+            .Join(dbcontext.Applications,
+                cp => cp.ApplicationId,
+                a => a.ApplicationId,
+                (cp, a) => new { CurrentPhase = cp, Application = a })
+            .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Pending" && x.CurrentPhase.Officer == officerDesignation)
+            .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
+            .Where(x =>
             {
-                var Phases = JsonConvert.DeserializeObject<List<Dictionary<string, dynamic>>>(application.Phase);
+                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
+                string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
+                return locationCode == accessCode;
+            })
+            .Select(x => x.CurrentPhase)
+            .ToList().Count;
 
-                foreach (var phase in Phases!)
-                {
-                    if (officerDesignation == phase["Officer"])
-                    {
-                        switch (phase["ActionTaken"])
-                        {
-                            case "Pending":
-                                PendingCount++;
-                                break;
-                            case "Forward":
-                                ForwardCount++;
-                                break;
-                            case "Sanction":
-                                if (application.ApplicationStatus == "Sanctioned")
-                                    SanctionCount++;
-                                break;
-                            case "Reject":
-                                RejectCount++;
-                                break;
-                            case "Return":
-                            case "ReturnToEdit":
-                                ReturnCount++;
-                                break;
-                        }
-                    }
-                }
-            }
+            int ForwardCount = dbcontext.CurrentPhases
+           .Join(dbcontext.Applications,
+               cp => cp.ApplicationId,
+               a => a.ApplicationId,
+               (cp, a) => new { CurrentPhase = cp, Application = a })
+           .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Forward" && x.CurrentPhase.Officer == officerDesignation)
+           .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
+            .Where(x =>
+            {
+                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
+                string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
+                return locationCode == accessCode;
+            })
+            .Select(x => x.CurrentPhase)
+            .ToList().Count;
+
+            int SanctionCount = dbcontext.CurrentPhases
+           .Join(dbcontext.Applications,
+               cp => cp.ApplicationId,
+               a => a.ApplicationId,
+               (cp, a) => new { CurrentPhase = cp, Application = a })
+           .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Sanction" && x.CurrentPhase.Officer == officerDesignation)
+           .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
+            .Where(x =>
+            {
+                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
+                string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
+                return locationCode == accessCode;
+            })
+            .Select(x => x.CurrentPhase)
+            .ToList().Count;
+
+            int RejectCount = dbcontext.CurrentPhases
+            .Join(dbcontext.Applications,
+                cp => cp.ApplicationId,
+                a => a.ApplicationId,
+                (cp, a) => new { CurrentPhase = cp, Application = a })
+            .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Reject" && x.CurrentPhase.Officer == officerDesignation)
+           .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
+            .Where(x =>
+            {
+                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
+                string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
+                return locationCode == accessCode;
+            })
+            .Select(x => x.CurrentPhase)
+            .ToList().Count;
+
+            int ReturnCount = dbcontext.CurrentPhases
+           .Join(dbcontext.Applications,
+               cp => cp.ApplicationId,
+               a => a.ApplicationId,
+               (cp, a) => new { CurrentPhase = cp, Application = a })
+           .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Return" && x.CurrentPhase.Officer == officerDesignation)
+           .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
+            .Where(x =>
+            {
+                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
+                string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
+                return locationCode == accessCode;
+            })
+            .Select(x => x.CurrentPhase)
+            .ToList().Count;
+
+
 
             var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(dbcontext.Services.FirstOrDefault(service => service.ServiceId == serviceId)!.WorkForceOfficers!);
 
@@ -153,7 +198,6 @@ namespace SocialWelfare.Controllers.Officer
         }
         public IActionResult Applications(string? type, int start = 0, int length = 1, int serviceId = 0)
         {
-            _logger.LogInformation($"----------- SERVICE ID: {serviceId} -----------------");
 
             int? userId = HttpContext.Session.GetInt32("UserId");
             Models.Entities.User Officer = dbcontext.Users.Find(userId)!;
@@ -170,6 +214,9 @@ namespace SocialWelfare.Controllers.Officer
 
             return Json(new { status = true, ApplicationList });
         }
+
+
+
         [HttpGet]
         public IActionResult DownloadAllData(string? type, string? activeButtons)
         {
@@ -210,6 +257,8 @@ namespace SocialWelfare.Controllers.Officer
                 using var workbook = new XLWorkbook();
                 var worksheet = workbook.Worksheets.Add("Applications");
                 var currentRow = 1;
+
+                _logger.LogInformation($"-------------ACTIVE BUTOONS: {activeButtons}-------------------");
 
                 int currentColumn = 1;
                 for (int i = 0; i < ApplicationList.columns.Count; i++)
@@ -286,36 +335,37 @@ namespace SocialWelfare.Controllers.Officer
             string districtCode = UserSpecificDetails["DistrictCode"];
 
             var generalDetails = dbcontext.Applications.Where(u => u.ApplicationId == ApplicationId).ToList()[0];
-            var phases = JsonConvert.DeserializeObject<List<dynamic>>(generalDetails.Phase);
             bool canOfficerTakeAction = true;
 
-            for (int i = 0; i < phases!.Count; i++)
+            CurrentPhase currentPhase, nextPhase, previousPhase;
+
+
+            currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == generalDetails.ApplicationId && cur.Officer == officerDesignation)!;
+
+            _logger.LogInformation($"=========NEXT:{currentPhase.Next}  PREVIOUS:{currentPhase.Previous}-=================================");
+
+
+            if (currentPhase.Next != 0)
             {
-                var currentItem = phases[i];
-                var previousItem = i > 0 ? phases[i - 1] : null;
-                var nextItem = i < phases.Count - 1 ? phases[i + 1] : null;
+                nextPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.PhaseId == currentPhase.Next)!;
+                nextPhase.CanPull = false;
 
-                if (currentItem["Officer"] == officerDesignation)
-                {
-                    if (previousItem != null && previousItem!["CanPull"] != null)
-                    {
-                        previousItem!["CanPull"] = false;
-                    }
-
-                    if (nextItem != null && nextItem!["CanPull"] != null)
-                    {
-                        nextItem!["CanPull"] = false;
-                    }
-                    if (IsMoreThanSpecifiedDays(currentItem["ReceivedOn"].ToString(), 15)) canOfficerTakeAction = false;
-
-                    break;
-                }
             }
 
+
+            if (currentPhase.Previous != 0)
+            {
+                previousPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.PhaseId == currentPhase.Previous)!;
+                _logger.LogInformation($"===============CAN PULL:{previousPhase.CanPull}==============================");
+                previousPhase.CanPull = false;
+                _logger.LogInformation($"===============CAN PULL:{previousPhase.CanPull}==============================");
+
+            }
+
+            dbcontext.SaveChanges();
+
+            if (IsMoreThanSpecifiedDays(currentPhase.ReceivedOn.ToString(), 15)) canOfficerTakeAction = false;
             if (IsMoreThanSpecifiedDays(generalDetails.SubmissionDate!.ToString(), 45)) canOfficerTakeAction = false;
-
-
-            helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", ApplicationId));
 
 
             var preAddressDetails = dbcontext.AddressJoins.FromSqlRaw("EXEC GetAddressDetails @AddressId", new SqlParameter("@AddressId", generalDetails!.PresentAddressId)).ToList()[0];
@@ -407,45 +457,33 @@ namespace SocialWelfare.Controllers.Officer
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"];
             string districtCode = UserSpecificDetails["DistrictCode"];
-            string otherOfficer = "";
-
             var generalDetails = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == ApplicationId);
-            var phases = JsonConvert.DeserializeObject<List<dynamic>>(generalDetails!.Phase);
+            var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == ApplicationId && cur.Officer == officerDesignation);
+            CurrentPhase? otherPhase = null;
+            string ActionTaken = currentPhase!.ActionTaken;
 
-            for (var i = 0; i < phases!.Count; i++)
+
+            currentPhase.ActionTaken = "Pending";
+            currentPhase.Remarks = "";
+            currentPhase.CanPull = false;
+            if (ActionTaken != "Sanction")
             {
-                if (phases[i]["Officer"] == officerDesignation)
-                {
-                    if (phases[i]["ActionTaken"] == "Forward")
-                    {
-                        otherOfficer = phases[i + 1]["Officer"];
-                        phases[i + 1]["HasApplication"] = false;
-                        phases[i + 1]["ActionTaken"] = "";
-                    }
-                    else if (phases[i]["ActionTaken"] == "Return")
-                    {
-                        otherOfficer = phases[i - 1]["Officer"];
-                        phases[i - 1]["HasApplication"] = false;
-                        phases[i + 1]["ActionTaken"] = "Forward";
-                    }
-                    else if (phases[i]["ActionTaken"] == "Sanction")
-                    {
-                        helper.UpdateApplication("ApplicationStatus", "Initiated", new SqlParameter("@ApplicationId", ApplicationId));
-                        string sourceFile = Path.Combine(_webHostEnvironment.WebRootPath, "files", ApplicationId.Replace("/", "_") + "SanctionLetter.pdf");
-                        string destinationFile = Path.Combine(_webHostEnvironment.WebRootPath, "files", ApplicationId.Replace("/", "_") + "BAK" + DateTime.Now.ToString("dd MMM yyyy hh:mm tt") + "SanctionLetter.pdf");
-                        if (System.IO.File.Exists(sourceFile))
-                            System.IO.File.Move(sourceFile, destinationFile);
-                    }
-                    phases[i]["ActionTaken"] = "Pending";
-                    phases[i]["HasApplication"] = true;
-                    phases[i]["Remarks"] = "";
-                    phases[i]["CanPull"] = false;
-                    break;
-                }
+                otherPhase = dbcontext.CurrentPhases.FirstOrDefault(curr => curr.ApplicationId == ApplicationId && curr.PhaseId == (ActionTaken == "Forward" ? currentPhase.Next : currentPhase.Previous))!;
+                otherPhase!.ActionTaken = ActionTaken == "Forward" ? "" : "Forward";
             }
 
-            helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", ApplicationId));
-            helper.UpdateApplicationHistory(ApplicationId, officerDesignation, "Pulled Back From " + otherOfficer == "" ? "Sanctioned Phase" : otherOfficer, "");
+            dbcontext.SaveChanges();
+
+            if (ActionTaken == "Sanction")
+            {
+                helper.UpdateApplication("ApplicationStatus", "Initiated", new SqlParameter("@ApplicationId", ApplicationId));
+                string sourceFile = Path.Combine(_webHostEnvironment.WebRootPath, "files", ApplicationId.Replace("/", "_") + "SanctionLetter.pdf");
+                string destinationFile = Path.Combine(_webHostEnvironment.WebRootPath, "files", ApplicationId.Replace("/", "_") + "BAK" + DateTime.Now.ToString("dd MMM yyyy hh:mm tt") + "SanctionLetter.pdf");
+                if (System.IO.File.Exists(sourceFile))
+                    System.IO.File.Move(sourceFile, destinationFile);
+            }
+
+            helper.UpdateApplicationHistory(ApplicationId, officerDesignation, "Pulled Back From " + otherPhase == null ? "Sanction Phase" : otherPhase!.Officer, "");
             return Json(new { status = true, PullApplication = "YES" });
         }
         public IActionResult UpdateRequests()
@@ -523,30 +561,21 @@ namespace SocialWelfare.Controllers.Officer
             foreach (var item in IdList!)
             {
                 var generalDetails = dbcontext.Applications.Where(u => u.ApplicationId == item).ToList()[0];
-                var phases = JsonConvert.DeserializeObject<List<dynamic>>(generalDetails.Phase);
 
-                for (int i = 0; i < phases!.Count; i++)
+                var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(curr => curr.ApplicationId == item && curr.Officer == officerDesignation);
+                if (currentPhase!.Next != 0)
                 {
-                    var currentItem = phases[i];
-                    var previousItem = i > 0 ? phases[i - 1] : null;
-                    var nextItem = i < phases.Count - 1 ? phases[i + 1] : null;
-
-                    if (currentItem["Officer"] == officerDesignation)
-                    {
-                        if (previousItem != null && previousItem!["CanPull"] != null)
-                        {
-                            previousItem!["CanPull"] = false;
-                        }
-
-                        if (nextItem != null && nextItem!["CanPull"] != null)
-                        {
-                            nextItem!["CanPull"] = false;
-                        }
-                    }
-
+                    var previousPhase = dbcontext.CurrentPhases.FirstOrDefault(curr => curr.PhaseId == currentPhase.Next);
+                    previousPhase!.CanPull = false;
                 }
-                helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), new SqlParameter("@ApplicationId", item));
+                if (currentPhase!.Previous != 0)
+                {
+                    var nextPhase = dbcontext.CurrentPhases.FirstOrDefault(curr => curr.PhaseId == currentPhase.Previous);
+                    nextPhase!.CanPull = false;
+                }
+
             }
+            dbcontext.SaveChanges();
 
             var arrayLists = dbcontext.ApplicationLists.FirstOrDefault(list => list.ServiceId == serviceId && list.Officer == officerDesignation && list.AccessLevel == accessLevel && list.AccessCode == Convert.ToInt32(accessCode));
 
@@ -648,25 +677,23 @@ namespace SocialWelfare.Controllers.Officer
                 var obj = new
                 {
                     referenceNumber = application.ApplicationId,
-                    applicantName = application.ApplicantName,
                     appliedDistrict,
+                    submissionDate = application.SubmissionDate!,
+                    applicantName = application.ApplicantName,
                     parentage = application.RelationName + $" ({application.Relation.ToUpper()})",
-                    motherName = serviceSpecific["MotherName"],
-                    dateOfBirth = application.DateOfBirth,
+                    accountNumber = bankDetails["AccountNumber"],
+                    amount = "500000",
                     dateOfMarriage = serviceSpecific!["DateOfMarriage"],
-                    bankDetails = $"{bankDetails["BankName"]}/{bankDetails["IfscCode"]}/{bankDetails["AccountNumber"]}",
-                    addressDetails = $"{preAddressDetails.Address!.ToUpper()} TEHSIL:{preAddressDetails.Tehsil!.ToUpper()} DISTRICT:{preAddressDetails.District!.ToUpper()}, PINCODE:{preAddressDetails.Pincode}",
-                    submissionDate = application.SubmissionDate!
                 };
 
-                builder.AppendLine($"{obj.referenceNumber},{obj.applicantName},{obj.appliedDistrict},{obj.parentage},{obj.motherName},{obj.dateOfBirth},{obj.dateOfMarriage},{obj.bankDetails},{obj.addressDetails},{obj.submissionDate}");
+                builder.AppendLine($"{obj.referenceNumber},{obj.appliedDistrict},{obj.submissionDate},{obj.applicantName},{obj.accountNumber},{obj.amount},{obj.dateOfMarriage}");
                 application.ApplicationStatus = "Dispatched";
                 helper.UpdateApplicationHistory(application.ApplicationId, officerDesignation, "Dispatched To Bank", "NULL");
             }
 
             dbcontext.SaveChanges();
 
-            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "exports", DateTime.Now.ToString("dd_MMM_yyyy") + "_MAS.csv");
+            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "exports", DateTime.Now.ToString("dd_MMM_yyyy_hh:mm_tt") + "_MAS.csv");
             System.IO.File.WriteAllText(filePath, builder.ToString());
 
 

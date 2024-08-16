@@ -22,7 +22,8 @@ async function SanctionAll(poolList, finalList, ServiceId) {
     formdata.append("ApplicationId", id);
     formdata.append("Action", "Sanction");
     formdata.append("Remarks", "Sanctioned");
-    const response = await fetch("/Officer/Action", {
+    formdata.append("serviceId", ServiceId);
+    const response = await fetch("/Officer/HandleAction", {
       method: "post",
       body: formdata,
     });
@@ -48,6 +49,7 @@ async function SanctionAll(poolList, finalList, ServiceId) {
     formdata.append("IdList", JSON.stringify(finalList));
     formdata.append("serviceId", ServiceId);
     formdata.append("listType", "Pool");
+    formdata.append("action", "remove");
     fetch("/Officer/UpdatePool", { method: "post", body: formdata })
       .then((res) => res.json())
       .then((data) => {

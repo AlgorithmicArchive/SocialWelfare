@@ -5,6 +5,7 @@ let approvalIdList = [];
 let poolIdList = [];
 let finalList = [];
 let serviceId = 0;
+let bankDispatchFile = "";
 
 function selectedCount(id, arr) {
   let count = Array.isArray(arr) ? arr.length : arr;
@@ -45,7 +46,7 @@ function transferToApproveList() {
   approvalIdList = [];
   selectedCount("transferToApproveButton", approvalIdList);
   toggleTransferButton();
-  $("#mainButton").click();
+  $("#approveButton").click();
 }
 
 function transferBackFromApproveList() {
@@ -95,7 +96,7 @@ function transferFromPoolToApproveList() {
   selectedCount("transferBackFromPool", finalList);
   selectedCount("transferBackToInbox", finalList);
   toggleSanctionButtons();
-  $("approveButton").click();
+  $("#approveButton").click();
 }
 
 function transferBackFromPoolList() {
@@ -219,6 +220,8 @@ function onSelect(list) {
     case "Sanction":
       hideContainerSwitcher();
       initializeTable(Applications.type, 10);
+      bankDispatchFile =
+        Applications.type == "Sanction" ? Applications.bankFile : "";
       break;
   }
 
@@ -227,8 +230,45 @@ function onSelect(list) {
   processApplications(Applications.poolList, poolIdList, true);
   processApplications(Applications.approveList, poolIdList, true);
 }
+function startFileCreation(serviceId) {
+  fetch("/Officer/BankCsvFile?serviceId=" + serviceId)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.json(); // Assuming the server returns JSON
+    })
+    .then((data) => {
+      alert("File created successfully!");
+      // Handle the success case here, possibly using the returned `data`
+    })
+    .catch((error) => {
+      alert("Error creating file.");
+      console.error("There was a problem with the fetch operation:", error);
+    });
+}
 
 $(document).ready(function () {
+  const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/progressHub")
+    .build();
+
+  connection.on(" ", function (progress) {
+    $("#progress-container").show();
+    $("#progress-bar").css("width", progress + "%");
+    $("#progress-bar").attr("aria-valuenow", progress);
+    $("#progress-bar").text(progress + "%");
+  });
+
+  connection
+    .start()
+    .then(function () {
+      console.log("Connected to progress hub");
+    })
+    .catch(function (err) {
+      return console.error(err.toString());
+    });
+
   $(document).on("change", ".pending-element", function () {
     const currentVal = $(this).val();
     if ($(this).is(":checked")) {
@@ -308,7 +348,7 @@ $(document).ready(function () {
   });
 
   $("#sanctionAll").on("click", () =>
-    SanctionAll(poolIdList, finalList, Applications.ServiceId)
+    SanctionAll(poolIdList, finalList, serviceId)
   );
 
   $("#poolButton").on("click", function () {
@@ -347,48 +387,56 @@ $(document).ready(function () {
     switchContainer("ApproveContainer", "approveButton");
   });
 
-  $("#sendToBank").on("click", function () {
+  $("#generateBankFile").on("click", function () {
     $("#ftpCredentials").modal("show");
+    if (bankDispatchFile == "") {
+      $("#bankFileContainer").append(
+        `<button class="btn btn-dark d-flex mx-auto" id="createFile">Create File</button>`
+      );
+    }
 
-    $("#send")
-      .off("click")
-      .on("click", async function () {
-        $("#ftpCredentials input").each(function () {
-          if ($(this).val() == "" && $(this).next("span").length == 0) {
-            $(this).after(
-              '<span class="errorMsg">This field is required</span>'
-            );
-          } else if ($(this).val() != "") {
-            $(this).next("span").remove();
-          }
-        });
+    $("#createFile").click(function () {
+      startFileCreation(serviceId);
+    });
+    // $("#send")
+    //   .off("click")
+    //   .on("click", async function () {
+    //     $("#ftpCredentials input").each(function () {
+    //       if ($(this).val() == "" && $(this).next("span").length == 0) {
+    //         $(this).after(
+    //           '<span class="errorMsg">This field is required</span>'
+    //         );
+    //       } else if ($(this).val() != "") {
+    //         $(this).next("span").remove();
+    //       }
+    //     });
 
-        const canProceed = $(".errorMsg").length == 0;
+    //     const canProceed = $(".errorMsg").length == 0;
 
-        if (canProceed) {
-          const formdata = new FormData();
-          formdata.append("ftpHost", $("#ftpHost").val());
-          formdata.append("ftpUser", $("#ftpUser").val());
-          formdata.append("ftpPassword", $("#ftpPassword").val());
-          showSpinner();
-          fetch("/Officer/UploadCsv", { method: "POST", body: formdata })
-            .then((res) => res.json())
-            .then((data) => {
-              hideSpinner();
-              if (data.status) {
-                $("#send").after(
-                  `<span class="text-success text-center">${data.message}</span>`
-                );
-                setTimeout(() => {
-                  window.location.href = "/Officer";
-                }, 2000);
-              } else {
-                $("#send").after(
-                  `<span class="errorMsg text-center">${data.message}</span>`
-                );
-              }
-            });
-        }
-      });
+    //     if (canProceed) {
+    //       const formdata = new FormData();
+    //       formdata.append("ftpHost", $("#ftpHost").val());
+    //       formdata.append("ftpUser", $("#ftpUser").val());
+    //       formdata.append("ftpPassword", $("#ftpPassword").val());
+    //       showSpinner();
+    //       fetch("/Officer/UploadCsv", { method: "POST", body: formdata })
+    //         .then((res) => res.json())
+    //         .then((data) => {
+    //           hideSpinner();
+    //           if (data.status) {
+    //             $("#send").after(
+    //               `<p class="text-success text-center">${data.message}</p>`
+    //             );
+    //             setTimeout(() => {
+    //               window.location.href = "/Officer";
+    //             }, 2000);
+    //           } else {
+    //             $("#send").after(
+    //               `<p class="errorMsg text-center">${data.message}</p>`
+    //             );
+    //           }
+    //         });
+    //     }
+    //   });
   });
 });

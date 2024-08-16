@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -135,7 +136,6 @@ namespace SocialWelfare.Controllers.User
         public async Task<IActionResult> InsertDocuments([FromForm] IFormCollection form)
         {
             var applicationId = form["ApplicationId"].ToString();
-            var ApplicationId = new SqlParameter("@ApplicationId", applicationId);
             var docs = new List<Document>();
             var addedLabels = new HashSet<string>();
             string[] labels = JsonConvert.DeserializeObject<string[]>(form["labels"].ToString()) ?? Array.Empty<string>();
@@ -162,22 +162,27 @@ namespace SocialWelfare.Controllers.User
 
             var documents = JsonConvert.SerializeObject(docs);
             var workForceOfficers = JsonConvert.DeserializeObject<List<dynamic>>(form["workForceOfficers"].ToString()) ?? new List<dynamic>();
-
-            var phases = workForceOfficers.Select((officer, index) => new
+            var newPhase = new CurrentPhase
             {
-                ReceivedOn = index == 0 ? DateTime.Now.ToString("dd MMM yyyy hh:mm tt") : string.Empty,
-                Officer = officer.Designation,
-                HasApplication = index == 0,
-                ActionTaken = index == 0 ? "Pending" : string.Empty,
-                Remarks = string.Empty,
+                ApplicationId = applicationId,
+                ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt"),
+                Officer = workForceOfficers[0].Designation,
+                ActionTaken = "Pending",
+                Remarks = "",
+                File = "",
                 CanPull = false,
-            }).ToList();
+                Previous = 0,
+                Next = 0
+            };
+            dbcontext.CurrentPhases.Add(newPhase);
+            dbcontext.SaveChanges();
+            int PhaseId = newPhase.PhaseId;
 
             // Update Phase, Documents, and ApplicationStatus in Applications Table
-            helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), ApplicationId);
-            helper.UpdateApplication("Documents", documents, ApplicationId);
-            helper.UpdateApplication("ApplicationStatus", "Initiated", ApplicationId);
-            helper.UpdateApplication("SubmissionDate", DateTime.Now.ToString("dd MMM yyyy hh:mm tt"), ApplicationId);
+            helper.UpdateApplication("Phase", JsonConvert.SerializeObject(PhaseId), new SqlParameter("@ApplicationId", applicationId));
+            helper.UpdateApplication("Documents", documents, new SqlParameter("@ApplicationId", applicationId));
+            helper.UpdateApplication("ApplicationStatus", "Initiated", new SqlParameter("@ApplicationId", applicationId));
+            helper.UpdateApplication("SubmissionDate", DateTime.Now.ToString("dd MMM yyyy hh:mm tt"), new SqlParameter("@ApplicationId", applicationId));
 
             if (!form.ContainsKey("returnToEdit"))
             {
@@ -203,10 +208,9 @@ namespace SocialWelfare.Controllers.User
                 _pdfService.CreateAcknowledgement(details, userDetails.ApplicationId);
             }
 
-
             if (form.ContainsKey("returnToEdit"))
             {
-                helper.UpdateApplication("EditList", "[]", ApplicationId);
+                helper.UpdateApplication("EditList", "[]", new SqlParameter("@ApplicationId", applicationId));
                 helper.UpdateApplicationHistory(applicationId, "Citizen", "Edited and returned to " + workForceOfficers[0].Designation, "NULL");
             }
             else
@@ -214,7 +218,7 @@ namespace SocialWelfare.Controllers.User
                 helper.UpdateApplicationHistory(applicationId, "Citizen", "Application Submitted.", "NULL");
             }
 
-            string email = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == applicationId)!.Email;
+            string email = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == applicationId)?.Email!;
 
             if (email != null)
             {
@@ -223,6 +227,7 @@ namespace SocialWelfare.Controllers.User
 
             return Json(new { status = true, ApplicationId = applicationId, complete = true });
         }
+
 
         public async Task<IActionResult> UpdateGeneralDetails([FromForm] IFormCollection form)
         {
@@ -331,6 +336,40 @@ namespace SocialWelfare.Controllers.User
                 };
                 Phases.Add(phase);
             }
+
+
+            var receivedOnParam = new SqlParameter("@ReceivedOn", SqlDbType.VarChar)
+            {
+                Value = DateTime.Now.ToString("dd MMM yyyy hh:mm tt")
+            };
+            var officerParam = new SqlParameter("@Officer", SqlDbType.VarChar)
+            {
+                Value = workForceOfficers[0].Designation
+            };
+            var actionTakenParam = new SqlParameter("@ActionTaken", SqlDbType.NChar)
+            {
+                Value = "Pending"
+            };
+            var remarksParam = new SqlParameter("@Remarks", SqlDbType.NVarChar)
+            {
+                Value = string.Empty
+            };
+            var canPullParam = new SqlParameter("@CanPull", SqlDbType.Bit)
+            {
+                Value = false
+            };
+
+            dbcontext.Database.ExecuteSqlRaw(
+               "EXEC UpsertCurrentPhase @ApplicationId, @ReceivedOn, @Officer, @ActionTaken, @Remarks, @CanPull",
+               new SqlParameter("@ApplicationId", SqlDbType.VarChar) { Value = form["ApplicationId"].ToString() },
+               receivedOnParam,
+               officerParam,
+               actionTakenParam,
+               remarksParam,
+               canPullParam
+           );
+
+
 
             helper.UpdateApplication("Phase", JsonConvert.SerializeObject(Phases.ToArray()), new SqlParameter("@ApplicationId", form["ApplicationId"].ToString()));
             helper.UpdateApplication("EditList", "[]", new SqlParameter("@ApplicationId", form["ApplicationId"].ToString()));

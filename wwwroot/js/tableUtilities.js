@@ -94,16 +94,13 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
     $(`#${tableId} thead`).empty();
     $(`#${tableId} tbody`).empty();
   }
-  console.log(type, serviceId);
-  fetch(
-    url +
-      `?type=${type}&start=${start}&length=${length}&serviceId=${parseInt(
-        serviceId
-      )}`
-  )
+  let Url = url + `?type=${type}&start=${start}&length=${length}`;
+  if (serviceId != null && serviceId != 0)
+    Url += `&serviceId=${parseInt(serviceId)}`;
+
+  fetch(Url)
     .then((res) => res.json())
     .then((json) => {
-      console.log(type);
       $("#SanctionContainer").removeClass("d-flex").addClass("d-none");
       let applications;
       if (type == "Pending") applications = json.applicationList.pendingList;
@@ -114,12 +111,18 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
       else if (type == "Sanction") {
         applications = json.applicationList.sanctionList;
         switchContainer("SanctionContainer", "sendToBank");
-      }
+      } else if (
+        type == "Services" ||
+        type == "ApplicationStatus" ||
+        type == "Incomplete"
+      )
+        applications = json.obj;
 
       const data = applications.data;
       const columns = applications.columns;
       const recordsTotal = applications.recordsTotal;
       const recordsFiltered = applications.recordsFiltered;
+      let activeButtons = [];
       const table = $(`#${tableId}`).DataTable({
         data: data,
         columns: columns,
@@ -148,8 +151,25 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
                   column.header().innerText
                 );
 
+                activeButtons.push(label.text());
+
                 colvisCheckbox.on("change", function () {
+                  // Toggle column visibility
                   column.visible(!column.visible());
+
+                  // Get the header text of the column and normalize it
+                  const headerText = column.header().innerText.trim();
+
+                  // If the column is now hidden, remove the header text from activeButtons
+                  if (!column.visible()) {
+                    activeButtons = activeButtons.filter(
+                      (item) => item.trim() !== headerText
+                    );
+                  }
+                  // If the column is visible and not already in activeButtons, add it
+                  else if (!activeButtons.includes(headerText)) {
+                    activeButtons.push(headerText);
+                  }
                 });
 
                 // Append checkbox and label directly
@@ -198,20 +218,34 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
       });
 
       $(`#${tableId}_paginate`).remove();
+
       if (recordsTotal > recordsFiltered) {
         const numOfPages = Math.ceil(recordsTotal / length);
         const ul = $(
-          `<ul class="pagination d-flex justify-content-end mt-2" id="tablePagination" number-of-pages="${numOfPages}" page-length=${table.page.len()} table-type=${type} serviceId=${serviceId}>`
+          `<ul
+            class="pagination d-flex justify-content-end mt-2"
+            id="tablePagination"
+            data-number-of-pages="${numOfPages}"
+            data-page-length="${table.page.len()}"
+            data-table-type="${type}"
+            data-service-id="${serviceId}"
+            data-table-id="${tableId}"
+            data-url-link="${url}"
+          ></ul>`
         );
         ul.append(
           `<li class="page-item"><a class="page-link" href="#">Previous</a></li>`
         );
+
         for (let i = 0; i < numOfPages; i++) {
-          start = start == numOfPages ? start - 1 : start;
+          // Determine if the current page should be active
+          const isActive = start / length === i ? " active" : "";
+
+          // Append the pagination item
           ul.append(
-            `<li class="page-item${
-              i === start ? " active" : ""
-            }" style="cursor:pointer"><a class="page-link">${i + 1}</a></li>`
+            `<li class="page-item${isActive}" style="cursor:pointer">
+            <a class="page-link">${i + 1}</a>
+        </li>`
           );
         }
         ul.append(
@@ -231,24 +265,12 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
       $("#exportAll").off("click");
 
       $("#exportAll").on("click", function () {
-        var activeButtons = [];
-        // Select all button elements in the DataTable
-        $(".dt-buttons button").each(function () {
-          var $button = $(this);
-          // Check if the button is active (you can define your own active condition)
-          if ($button.hasClass("active")) {
-            // Example condition
-            activeButtons.push($button.text());
-          }
-        });
-
         // Encode the activeButtons array
-        var encodedActiveButtons = encodeURIComponent(
-          JSON.stringify(activeButtons)
-        );
 
         fetch(
-          `/Officer/DownloadAllData?type=${type}&activeButtons=${encodedActiveButtons}`
+          `/Officer/DownloadAllData?type=${type}&activeButtons=${JSON.stringify(
+            activeButtons
+          )}`
         )
           .then((response) => {
             if (!response.ok) {
@@ -260,7 +282,6 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
           })
           .then((data) => {
             if (data.filePath) {
-              console.log(data);
               const a = document.createElement("a");
               a.href = data.filePath;
               a.download = data.filePath;
@@ -278,6 +299,11 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
             )
           );
       });
+
+      // $(`#${tableId}_filter`).addClass("w-100");
+      $(`#${tableId}_filter`).after(
+        `<div class="d-flex justify-content-center gap-3 w-100 mt-3"><p><b>Total Records</b>:${recordsTotal}</p> <p><b>Filtered Records</b>:${recordsFiltered}</p></div>`
+      );
     });
 }
 
@@ -420,14 +446,16 @@ function exportTableToExcel(tableId, filename = "exported_table.xlsx") {
 $(document).ready(function () {
   $(document).on("click", ".page-link", function () {
     const $pagination = $(this).closest(".pagination");
-    const totalPages = parseInt($pagination.attr("number-of-pages"));
+    const totalPages = parseInt($pagination.attr("data-number-of-pages"));
     const $currentPageItem = $(".page-item.active", $pagination);
     let currentPageNo = parseInt($currentPageItem.text());
     const pageNumber = $(this).text();
-    const pageLength = parseInt($pagination.attr("page-length"));
+    const pageLength = parseInt($pagination.attr("data-page-length"));
     $currentPageItem.removeClass("active");
-    const tableType = $pagination.attr("table-type");
-    const serviceId = $pagination.attr("serviceId");
+    const tableType = $pagination.attr("data-table-type");
+    const serviceId = $pagination.attr("data-serviceId");
+    const tableId = $pagination.attr("data-table-Id");
+    const url = $pagination.attr("data-url-link");
 
     let callFunction = true;
 
@@ -448,9 +476,9 @@ $(document).ready(function () {
 
     if (callFunction) {
       initializeRecordTables(
-        "applicationsTable",
-        "/Officer/Applications",
-        parseInt(serviceId),
+        tableId,
+        url,
+        parseInt(serviceId) == NaN ? null : parseInt(serviceId),
         tableType,
         (currentPageNo - 1) * pageLength,
         pageLength

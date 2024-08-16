@@ -51,10 +51,38 @@ namespace SocialWelfare.Controllers.User
             return View(details);
         }
 
-        public IActionResult ServicesList()
+        public dynamic ServicesList()
+        {
+            return View();
+        }
+
+        public IActionResult GetServices()
         {
             var services = dbcontext.Services.Where(u => u.Active == true).ToList();
-            return View(services);
+            var columns = new List<dynamic>{
+                new {title="S.No."},
+                new {title="Service Name"},
+                new {title="Department"},
+                new {title="Action"},
+            };
+            List<dynamic> Services = [];
+            int index = 1;
+            foreach (var item in services)
+            {
+                List<dynamic> data = [index, item.ServiceName, item.Department, $"<button class='btn btn-dark w-100' onclick=OpenForm({item.ServiceId})>View</button>"];
+                Services.Add(data);
+                index++;
+            }
+
+            var obj = new
+            {
+                columns,
+                data = Services.AsEnumerable().Skip(0).Take(10),
+                recordsTotal = Services.Count,
+                recordsFiltered = Services.AsEnumerable().Skip(0).Take(10).ToList().Count
+            };
+
+            return Json(new { status = true, obj });
         }
 
         public IActionResult ServiceForm(string? ApplicationId, bool? returnToEdit)
@@ -105,11 +133,55 @@ namespace SocialWelfare.Controllers.User
 
         public IActionResult ApplicationStatus()
         {
-            int? userId = HttpContext.Session.GetInt32("UserId");
-            var applications = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus != "Incomplete").ToList();
-
-            return View(applications);
+            return View();
         }
+
+        public IActionResult GetApplicationStatus(int start, int length, string type = "")
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            List<Application> applications = [];
+
+            bool Incomplete = type == "Incomplete";
+
+            if (type == "ApplicationStatus")
+                applications = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus != "Incomplete").ToList();
+            else if (type == "Incomplete")
+                applications = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus == "Incomplete").ToList();
+
+
+            var columns = new List<dynamic>{
+                new{title = "S.No."},
+                new{title = "Reference Number"},
+                new{title = "Applicant Name"},
+                new{title = "Action"},
+            };
+            List<dynamic> Applications = [];
+            int index = 1;
+            foreach (var item in applications)
+            {
+                List<dynamic> data =
+                [
+                    index,
+                    item.ApplicationId,
+                    item.ApplicantName,
+                   !Incomplete?$"<button class='btn btn-dark w-100' data-bs-toggle='modal' data-bs-target='#exampleModal' onclick=CreateTimeline('{item.ApplicationId}')>View</button>":$"<button class='btn btn-dark w-100' onclick=EditForm('{item.ApplicationId}')>Edit Form</button>"
+                ];
+
+                Applications.Add(data);
+                index++;
+            }
+            var obj = new
+            {
+                columns,
+                data = Applications.AsEnumerable().Skip(start).Take(length),
+                recordsTotal = Applications.Count,
+                recordsFiltered = Applications.AsEnumerable().Skip(start).Take(length).ToList().Count,
+            };
+
+            return Json(new { status = true, obj });
+        }
+
+
 
         public IActionResult IncompleteApplications()
         {
@@ -173,7 +245,6 @@ namespace SocialWelfare.Controllers.User
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
             int ServiceId = Convert.ToInt32(serviceId);
-            _logger.LogInformation($"SERVICE ID: {ServiceId}");
             var applications = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ServiceId == ServiceId).ToList();
 
             var Ids = new List<string>();

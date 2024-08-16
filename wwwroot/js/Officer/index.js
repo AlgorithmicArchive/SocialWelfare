@@ -27,69 +27,58 @@ $(document).ready(function () {
   });
 
   $("#getRecords").on("click", function () {
-    if ($("#services").val() == "") {
-      $("#services").after(
-        `<span class="text-danger" style="font-size:12px;">This field is required</span>`
-      );
+    const servicesInput = $("#services");
+    const serviceId = servicesInput.val();
+
+    if (!serviceId) {
+      if (!servicesInput.next("span.text-danger").length) {
+        servicesInput.after(
+          `<span class="text-danger" style="font-size:12px;">This field is required</span>`
+        );
+      }
     } else {
-      $("#services").siblings("span").remove();
-      const serviceId = $("#services").val();
-      fetch("/Officer/GetApplicationsList?serviceId=" + serviceId)
+      servicesInput.siblings("span").remove();
+      showSpinner();
+      fetch(`/Officer/GetApplicationsList?serviceId=${serviceId}`)
         .then((res) => res.json())
-        .then((data) => SetCards(data.countList));
+        .then((data) => {
+          hideSpinner();
+          SetCards(data.countList);
+        });
     }
   });
+
   $(".card").on("click", function () {
     const property = $(this).find(".value").attr("id");
     const value = $(this).find(".value").text();
+
     if (value == 0) {
-      $(this)
-        .attr(
-          "data-bs-original-title",
-          property.charAt(0).toUpperCase() +
-            property.slice(1) +
-            " has no records."
+      const tooltipMessage = `${
+        property.charAt(0).toUpperCase() + property.slice(1)
+      } has no records.`;
+      $(this).attr("data-bs-original-title", tooltipMessage).tooltip("show");
+      setTimeout(() => $(this).tooltip("hide"), 2000);
+    } else {
+      const propertyTypeMap = {
+        pending: "Pending",
+        forward: "Sent",
+        return: "Sent",
+        sanction: "Sanction",
+        reject: "Reject",
+      };
+
+      const type = propertyTypeMap[property];
+      if (type) {
+        fetch(
+          `/Officer/Applications?type=${type}&serviceId=${parseInt(
+            $("#services").val()
+          )}`
         )
-        .tooltip("show");
-      setTimeout(() => {
-        $(this).tooltip("hide");
-      }, 2000);
-    } else if (property == "pending") {
-      fetch(
-        "/Officer/Applications?type=Pending&serviceId=" +
-          parseInt($("#services").val())
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status) onSelect(data.applicationList);
-        });
-    } else if (property == "forward" || property == "return") {
-      fetch(
-        "/Officer/Applications?type=Sent&serviceId=" +
-          parseInt($("#services").val())
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status) onSelect(data.applicationList);
-        });
-    } else if (property == "sanction") {
-      fetch(
-        "/Officer/Applications?type=Sanction&serviceId=" +
-          parseInt($("#services").val())
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status) onSelect(data.applicationList);
-        });
-    } else if (property == "reject") {
-      fetch(
-        "/Officer/Applications?type=Reject&serviceId=" +
-          parseInt($("#services").val())
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status) onSelect(data.applicationList);
-        });
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.status) onSelect(data.applicationList);
+          });
+      }
     }
   });
 });
