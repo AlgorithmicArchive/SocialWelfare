@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Encryption;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using SendEmails;
@@ -46,6 +47,7 @@ builder.Services.AddScoped<OtpStore>();
 builder.Services.AddScoped<EmailSender>();
 builder.Services.AddScoped<UserHelperFunctions>();
 builder.Services.AddTransient<PdfService>();
+builder.Services.AddSingleton<IEncryptionService, EncryptionHelper>();
 
 var app = builder.Build();
 

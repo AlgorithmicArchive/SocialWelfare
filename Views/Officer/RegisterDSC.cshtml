@@ -1,0 +1,21 @@
+<div class="full-screen-section center-align py-5 flex-column">
+    <form class="w-100" id="certificateForm">
+        <div
+            class="container d-flex flex-column justify-content-center align-items-center p-5 gap-2  border rounded-border">
+            <label for="Certificate File">Certificate File</label>
+            <input type="file" class="form-control" name="dscFile" required />
+            <label for="Certificate Password">Certificate Password</label>
+            <input type="password" class="form-control" name="password" id="password" required>
+            <button class="btn btn-dark d-flex mx-auto">Upload</button>
+        </div>
+    </form>
+
+</div>
+
+<script>
+    const isCertificate = @Html.Raw(Json.Serialize(Model));
+    @* if (isCertificate != null) { *@
+    @* $("#certificateForm").hide(); *@
+    @* } *@
+</script>
+<script src="~/js/Officer/registerDSC.js"></script>

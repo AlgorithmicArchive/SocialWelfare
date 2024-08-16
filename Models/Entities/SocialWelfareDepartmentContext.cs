@@ -54,15 +54,13 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Ward> Wards { get; set; }
 
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("name=DefaultConnection");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-
         modelBuilder.Entity<AddressJoin>().HasNoKey();
-        
+
         modelBuilder.Entity<Address>(entity =>
         {
             entity.ToTable("Address");
@@ -183,7 +181,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.HasKey(e => e.Uuid);
 
             entity.Property(e => e.Uuid).HasColumnName("UUID");
-            entity.Property(e => e.CertificateName).HasMaxLength(50);
+            entity.Property(e => e.EncryptionIv).HasColumnName("encryptionIV");
+            entity.Property(e => e.EncryptionKey).HasColumnName("encryptionKey");
             entity.Property(e => e.RegisteredDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");

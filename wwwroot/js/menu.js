@@ -43,24 +43,21 @@ $(document).ready(function () {
       ],
     },
     officer: {
-      left: [
-        { label: "Home", link: "/Officer/Index" },
-        // {
-        //   label: "Message Inbox",
-        //   dropdown: [
-        //     {
-        //       label: "Recieved Applications",
-        //       link: "/Officer/Applications?type=Pending",
-        //     },
-        //     {
-        //       label: "Sent Applications",
-        //       link: "/Officer/Applications?type=Sent",
-        //     },
-        //   ],
-        // },
-      ],
+      left: [{ label: "Home", link: "/Officer/Index" }],
       right: [
-        { label: "DSC Management", link: "/Officer/DSCManagement" },
+        {
+          label: "DSC Management",
+          dropdown: [
+            {
+              label: "Register DSC",
+              link: "/Officer/RegisterDSC",
+            },
+            {
+              label: "Unregister DSC",
+              link: "/Officer/UnregisterDSC",
+            },
+          ],
+        },
         { label: "Reports", link: "/Officer/Reports" },
       ],
       profile: [

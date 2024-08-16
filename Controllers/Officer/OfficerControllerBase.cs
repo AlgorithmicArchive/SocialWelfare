@@ -1,5 +1,6 @@
 using System.Text;
 using ClosedXML.Excel;
+using Encryption;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -15,7 +16,16 @@ using SocialWelfare.Models.Entities;
 namespace SocialWelfare.Controllers.Officer
 {
     [Authorize(Roles = "Officer")]
-    public partial class OfficerController(SocialWelfareDepartmentContext dbcontext, ILogger<OfficerController> logger, UserHelperFunctions helper, EmailSender emailSender, PdfService pdfService, IWebHostEnvironment webHostEnvironment, IHubContext<ProgressHub> hubContext) : Controller
+    public partial class OfficerController(
+        SocialWelfareDepartmentContext dbcontext,
+        ILogger<OfficerController> logger,
+        UserHelperFunctions helper,
+        EmailSender emailSender,
+        PdfService pdfService,
+        IWebHostEnvironment webHostEnvironment,
+        IHubContext<ProgressHub> hubContext,
+        IEncryptionService encryptionService
+            ) : Controller
     {
         protected readonly SocialWelfareDepartmentContext dbcontext = dbcontext;
         protected readonly ILogger<OfficerController> _logger = logger;
@@ -24,6 +34,8 @@ namespace SocialWelfare.Controllers.Officer
         protected readonly PdfService _pdfService = pdfService;
         private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
         private readonly IHubContext<ProgressHub> hubContext = hubContext;
+
+        protected readonly IEncryptionService encryptionService = encryptionService;
 
         public override void OnActionExecuted(ActionExecutedContext context)
         {
@@ -214,8 +226,6 @@ namespace SocialWelfare.Controllers.Officer
 
             return Json(new { status = true, ApplicationList });
         }
-
-
 
         [HttpGet]
         public IActionResult DownloadAllData(string? type, string? activeButtons)
@@ -712,6 +722,13 @@ namespace SocialWelfare.Controllers.Officer
         }
 
 
+        [HttpGet]
+        public IActionResult RegisterDSC()
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            var alreadyCertificate = dbcontext.Certificates.FirstOrDefault(cer => cer.OfficerId == userId);
+            return View(alreadyCertificate);
+        }
 
     }
 }

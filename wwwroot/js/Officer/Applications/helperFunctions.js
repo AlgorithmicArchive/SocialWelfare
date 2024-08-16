@@ -41,6 +41,10 @@ async function SanctionAll(poolList, finalList, ServiceId) {
     $("#approve")
       .off("click")
       .on("click", async function () {
+        fetch("/Officer/SignPdf?ApplicationId=" + id)
+          .then((res) => res.json())
+          .then((data) => console.log(data));
+
         $("#showSanctionLetter").modal("hide");
         SanctionAll(poolList, finalList, ServiceId); // Recall the function with the modified array
       });
