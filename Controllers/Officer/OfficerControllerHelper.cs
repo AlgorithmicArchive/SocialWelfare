@@ -18,6 +18,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using iText.Forms.Form.Element;
 using iText.Forms.Fields.Properties;
+using iText.Kernel.Font;
+using iText.IO.Font.Constants;
+using iText.Kernel.Colors;
 
 namespace SocialWelfare.Controllers.Officer
 {
@@ -857,16 +860,44 @@ namespace SocialWelfare.Controllers.Officer
             using PdfReader reader = new(src);
             using FileStream fs = new(dest, FileMode.Open);
 
-            PdfSigner signer = new(reader, fs, new StampingProperties());
+            PdfSigner signer = new PdfSigner(reader, fs, new StampingProperties());
 
-            signer.SetFieldName("sig");
+            // Set the name of the signature field
+            signer.SetFieldName("SignatureFieldName");
 
-            signer.SetReason("Specimen");
-            signer.SetLocation("Boston");
+            // Set the position and page number for the signature
+            signer.SetPageRect(new iText.Kernel.Geom.Rectangle(380, 20, 200, 100));  // Rectangle(x, y, width, height)
+            signer.SetPageNumber(1);
 
-            SignatureFieldAppearance appearance = new SignatureFieldAppearance("app");
-            appearance.SetContent("", new SignedAppearanceText());
+
+
+            // Set reason and location for the signature
+            signer.SetReason("Digital Signing");
+            signer.SetLocation("Social Welfare Department");
+
+            SignedAppearanceText appearanceText = new();
+            appearanceText.SetReasonLine("Reason: " + signer.GetReason());
+            appearanceText.SetLocationLine("Department: " + signer.GetLocation());
+
+            // Initialize the appearance object
+            SignatureFieldAppearance appearance = new("app");
+
+            // Set up the appearance content
+            appearance.SetContent(appearanceText);
+
+            // Set font, color, and size for the appearance text
+            appearance.SetFontSize(10);
+            appearance.SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD));
+            appearance.SetFontColor(new DeviceRgb(0, 0, 0)); // Black color
+
+
+
+            // Apply the appearance to the signer
             signer.SetSignatureAppearance(appearance);
+
+
+
+
 
             IExternalSignature pks = new PrivateKeySignature(new PrivateKeyBC(pk), digestAlgorithm);
             IX509Certificate[] certificateWrappers = new IX509Certificate[chain.Length];
