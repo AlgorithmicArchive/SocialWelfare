@@ -41,8 +41,8 @@ async function CreateTimeline(ApplicationId) {
   for (let i = 0; i < phases.length; i++) {
     const item = phases[i];
     const date = item.ReceivedOn;
-    sanctioned = item.ActionTaken == "Sanction" ? true : false;
-    returnedToEdit = item.ActionTaken == "ReturnToEdit" ? true : false;
+    sanctioned = item.ActionTaken.trim() == "Sanction" ? true : false;
+    returnedToEdit = item.ActionTaken.trim() == "ReturnToEdit" ? true : false;
     const tr = $("<tr/>");
     tr.append(`
         <td>${date}</td>

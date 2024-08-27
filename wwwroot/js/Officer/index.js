@@ -1,4 +1,5 @@
 function SetCards(countList) {
+  console.log(countList);
   $("#detailsCards").show();
   $("#pending").text(countList.pending);
   $("#forward").text(countList.forward);
@@ -42,6 +43,7 @@ $(document).ready(function () {
       fetch(`/Officer/GetApplicationsList?serviceId=${serviceId}`)
         .then((res) => res.json())
         .then((data) => {
+          console.log(data);
           hideSpinner();
           SetCards(data.countList);
         });

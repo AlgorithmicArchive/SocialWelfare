@@ -11,6 +11,7 @@ function PullApplication(applicationId) {
 }
 
 function UserDetails(applicationId) {
+  console.log(applicationId);
   window.location.href = "/Officer/UserDetails?ApplicationId=" + applicationId;
 }
 

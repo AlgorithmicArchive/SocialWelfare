@@ -39,10 +39,10 @@ function transferToApproveList() {
   updatePool("Approve", approvalIdList, "add");
   $("#pending-parent").prop("checked", false).trigger("change");
   Applications.pendingList.recordsTotal -= approvalIdList.length;
-  Applications.approveList.recordsTotal += approvalIdList.length;
+  Applications.approveCount += approvalIdList.length;
   selectedCount("mainButton", Applications.pendingList.recordsTotal);
-  selectedCount("approveButton", Applications.approveList.recordsTotal);
-  selectedCount("poolButton", Applications.poolList.recordsTotal);
+  selectedCount("approveButton", Applications.approveCount);
+  selectedCount("poolButton", Applications.poolCount);
   approvalIdList = [];
   selectedCount("transferToApproveButton", approvalIdList);
   toggleTransferButton();
@@ -55,10 +55,10 @@ function transferBackFromApproveList() {
   $("#approve-parent").prop("checked", false).trigger("change");
 
   Applications.pendingList.recordsTotal += finalList.length;
-  Applications.approveList.recordsTotal -= finalList.length;
+  Applications.approveCount -= finalList.length;
   selectedCount("mainButton", Applications.pendingList.recordsTotal);
-  selectedCount("approveButton", Applications.approveList.recordsTotal);
-  selectedCount("poolButton", Applications.poolList.recordsTotal);
+  selectedCount("approveButton", Applications.approveCount);
+  selectedCount("poolButton", Applications.poolCount);
   finalList = [];
   selectedCount("transferToPoolButton", finalList);
   selectedCount("transferBackFromApprove", finalList);
@@ -70,11 +70,11 @@ function transferToPoolList() {
   $("#containerSwitcher").show();
   updatePool("ApproveToPool", finalList, "add");
   $("#approve-parent").prop("checked", false).trigger("change");
-  Applications.approveList.recordsTotal -= finalList.length;
-  Applications.poolList.recordsTotal += finalList.length;
+  Applications.approveCount -= finalList.length;
+  Applications.poolCount += finalList.length;
   selectedCount("mainButton", Applications.pendingList.recordsTotal);
-  selectedCount("approveButton", Applications.approveList.recordsTotal);
-  selectedCount("poolButton", Applications.poolList.recordsTotal);
+  selectedCount("approveButton", Applications.approveCount);
+  selectedCount("poolButton", Applications.poolCount);
   finalList = [];
   selectedCount("transferToPoolButton", finalList);
   selectedCount("transferBackFromApprove", finalList);
@@ -86,11 +86,11 @@ function transferFromPoolToApproveList() {
   $("#containerSwitcher").show();
   updatePool("PoolToApprove", finalList, "add");
   $("#approve-parent").prop("checked", false).trigger("change");
-  Applications.poolList.recordsTotal -= finalList.length;
-  Applications.approveList.recordsTotal += finalList.length;
+  Applications.poolCount -= finalList.length;
+  Applications.approveCount += finalList.length;
   selectedCount("mainButton", Applications.pendingList.recordsTotal);
-  selectedCount("approveButton", Applications.approveList.recordsTotal);
-  selectedCount("poolButton", Applications.poolList.recordsTotal);
+  selectedCount("approveButton", Applications.approveCount);
+  selectedCount("poolButton", Applications.poolCount);
   finalList = [];
   selectedCount("sanctionAll", finalList);
   selectedCount("transferBackFromPool", finalList);
@@ -104,10 +104,10 @@ function transferBackFromPoolList() {
   updatePool("Pool", finalList, "remove");
   $("#poolList-parent").prop("checked", false).trigger("change");
   Applications.pendingList.recordsTotal += finalList.length;
-  Applications.poolList.recordsTotal -= finalList.length;
+  Applications.poolCount -= finalList.length;
   selectedCount("mainButton", Applications.pendingList.recordsTotal);
-  selectedCount("approveButton", Applications.approveList.recordsTotal);
-  selectedCount("poolButton", Applications.poolList.recordsTotal);
+  selectedCount("approveButton", Applications.approveCount);
+  selectedCount("poolButton", Applications.poolCount);
   finalList = [];
   selectedCount("sanctionAll", finalList);
   selectedCount("transferBackFromPool", finalList);
@@ -116,6 +116,7 @@ function transferBackFromPoolList() {
 }
 
 function updatePool(listType, idList, action) {
+  console.log(listType, idList, action);
   const formData = new FormData();
   formData.append("serviceId", Applications.serviceId);
   formData.append("listType", listType);
@@ -159,6 +160,7 @@ function updateOptionButtons(tableId) {
 
 function onSelect(list) {
   Applications = list;
+  console.log(Applications);
   serviceId = Applications.serviceId;
   const initializeTable = (type, length) => {
     initializeRecordTables(
@@ -193,25 +195,20 @@ function onSelect(list) {
     idList,
     containerSwitcherVisibility
   ) => {
-    if (applications && applications.data.length > 0) {
-      applications.data.forEach((element) =>
-        idList.push(element.applicationId)
-      );
+    console.log("Process Applications", applications);
+    if (applications > 0) {
       if (containerSwitcherVisibility) showContainerSwitcher();
       $("#mainButton").removeClass("btn-secondary").addClass("btn-dark");
       selectedCount("mainButton", Applications.pendingList.recordsTotal);
-      selectedCount("approveButton", Applications.approveList.recordsTotal);
-      selectedCount("poolButton", Applications.poolList.recordsTotal);
+      selectedCount("approveButton", Applications.approveCount);
+      selectedCount("poolButton", Applications.poolCount);
     }
   };
 
   switch (Applications.type) {
     case "Pending":
       initializeTable(Applications.type, 10);
-      if (
-        Applications.poolList.data.length > 0 ||
-        Applications.approveList.data.length > 0
-      ) {
+      if (Applications.poolCount > 0 || Applications.approveCount > 0) {
         showContainerSwitcher();
         switchToMainContainer();
       }
@@ -227,8 +224,8 @@ function onSelect(list) {
 
   showListTable();
 
-  processApplications(Applications.poolList, poolIdList, true);
-  processApplications(Applications.approveList, poolIdList, true);
+  processApplications(Applications.poolCount, poolIdList, true);
+  processApplications(Applications.approveCount, poolIdList, true);
 }
 function startFileCreation(serviceId) {
   fetch("/Officer/BankCsvFile?serviceId=" + serviceId)

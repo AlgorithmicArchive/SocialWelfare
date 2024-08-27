@@ -242,21 +242,27 @@ function ProceedAction(applicationId, officer, letterUpdateDetails) {
     .then((res) => res.json())
     .then((data) => {
       hideSpinner();
+      console.log(data);
       if (data.status) {
         if (action === "Sanction") {
-          const filePath = `/files/${data.applicationId.replace(
-            /\//g,
-            "_"
-          )}SanctionLetter.pdf`;
-          $("#sanctionFrame").attr("src", filePath);
-          $("#showSanctionLetter").modal("show");
+          const id = data.applicationId;
+          const filePath = `/files/${id.replace(/\//g, "_")}SanctionLetter.pdf`;
 
-          $("#approve")
-            .off("click")
-            .on("click", () => {
-              $("#showSanctionLetter").modal("hide");
-              window.location.href = "/Officer/Index";
-            });
+          console.log(filePath);
+          $("#showSanctionLetter").modal("show");
+          $("#sanctionFrame").attr("src", filePath);
+
+          console.log("LENGTH", $("#approveSingle").length);
+
+          $("#approveSingle").on("click", async function () {
+            console.log("click", id);
+            fetch("/Officer/SignPdf?ApplicationId=" + id)
+              .then((res) => res.json())
+              .then((data) => console.log(data));
+
+            $("#showSanctionLetter").modal("hide");
+            window.location.href = "/Officer/Index";
+          });
         } else {
           window.location.href = "/Officer/Index";
         }

@@ -97,10 +97,12 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
   let Url = url + `?type=${type}&start=${start}&length=${length}`;
   if (serviceId != null && serviceId != 0)
     Url += `&serviceId=${parseInt(serviceId)}`;
-
+  showSpinner();
   fetch(Url)
     .then((res) => res.json())
     .then((json) => {
+      console.log(json);
+      hideSpinner();
       $("#SanctionContainer").removeClass("d-flex").addClass("d-none");
       let applications;
       if (type == "Pending") applications = json.applicationList.pendingList;

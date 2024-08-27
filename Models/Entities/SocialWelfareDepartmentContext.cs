@@ -41,6 +41,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<Pincode> Pincodes { get; set; }
 
+    public virtual DbSet<RecordCount> RecordCounts { get; set; }
+
     public virtual DbSet<Service> Services { get; set; }
 
     public virtual DbSet<Tehsil> Tehsils { get; set; }
@@ -52,14 +54,11 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Village> Villages { get; set; }
 
     public virtual DbSet<Ward> Wards { get; set; }
-
-    public virtual DbSet<AddressJoin> AddressJoins { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("name=DefaultConnection");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<AddressJoin>().HasNoKey();
 
         modelBuilder.Entity<Address>(entity =>
         {
@@ -198,7 +197,9 @@ public partial class SocialWelfareDepartmentContext : DbContext
                 .HasMaxLength(10)
                 .IsFixedLength();
             entity.Property(e => e.ApplicationId).HasMaxLength(50);
-            entity.Property(e => e.File).HasMaxLength(50);
+            entity.Property(e => e.File)
+                .HasMaxLength(50)
+                .HasDefaultValue("");
             entity.Property(e => e.Officer)
                 .HasMaxLength(150)
                 .IsUnicode(false);
@@ -255,6 +256,9 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.HasKey(e => e.Uuid);
 
             entity.Property(e => e.Uuid).HasColumnName("UUID");
+            entity.Property(e => e.AccessLevel)
+                .HasMaxLength(20)
+                .IsFixedLength();
             entity.Property(e => e.Designation).IsUnicode(false);
             entity.Property(e => e.DesignationShort).HasMaxLength(50);
         });
@@ -265,6 +269,17 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
             entity.Property(e => e.PincodeId).HasColumnName("pincode_id");
             entity.Property(e => e.Pincode1).HasColumnName("Pincode");
+        });
+
+        modelBuilder.Entity<RecordCount>(entity =>
+        {
+            entity.HasKey(e => e.RecordId).HasName("PK_NewTable");
+
+            entity.ToTable("RecordCount");
+
+            entity.Property(e => e.Officer)
+                .HasMaxLength(100)
+                .IsUnicode(false);
         });
 
         modelBuilder.Entity<Service>(entity =>

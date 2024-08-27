@@ -11,7 +11,11 @@ public partial class CurrentPhase
 
     public string ReceivedOn { get; set; } = null!;
 
+    public int OfficerId { get; set; }
+
     public string Officer { get; set; } = null!;
+
+    public int AccessCode { get; set; }
 
     public string ActionTaken { get; set; } = null!;
 

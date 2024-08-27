@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SocialWelfare.Models.Entities;
@@ -9,7 +10,6 @@ namespace SocialWelfare.Controllers.Officer
 {
     public partial class OfficerController : Controller
     {
-
 
         public static string ConvertCamelCaseToUppercaseWithSpaces(string input)
         {
@@ -79,278 +79,161 @@ namespace SocialWelfare.Controllers.Officer
             _pdfService.CreateSanctionPdf(sanctionObject, Officer, ApplicationId);
         }
 
+        private static void UpdateRecordCounts(RecordCount recordsCount, int pendingCount = 0, int forwardCount = 0, int returnCount = 0, int sanctionCount = 0, int rejectCount = 0)
+        {
+            if (recordsCount == null) return;
+            recordsCount.Pending += pendingCount;
+            recordsCount.Forward += forwardCount;
+            recordsCount.Return += returnCount;
+            recordsCount.Sanction += sanctionCount;
+            recordsCount.Reject += rejectCount;
+        }
 
-        // [HttpPost]
-        // public async Task<IActionResult> Action([FromForm] IFormCollection form)
-        // {
-        //     int? userId = HttpContext.Session.GetInt32("UserId");
-        //     var officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
-        //     string updateObject = "";
+        private async Task UpdateRelatedRecordsCount(string officer, int serviceId, int forwardCount = 0, int returnCount = 0)
+        {
+            var recordsCount = await dbcontext.RecordCounts.FirstOrDefaultAsync(rc => rc.ServiceId == serviceId && rc.Officer == officer);
+            _logger.LogInformation($"--------------------FORWARD: {forwardCount} RETURN :{returnCount}----------------------------------");
 
-        //     var userSpecificDetails = JsonConvert.DeserializeObject<dynamic>(officer!.UserSpecificDetails);
-        //     string officerDesignation = userSpecificDetails!.Designation;
-        //     string districtCode = userSpecificDetails.DistrictCode;
+            if (recordsCount != null)
+            {
+                recordsCount.Forward += forwardCount;
+                recordsCount.Return += returnCount;
+                recordsCount.Pending++;
+            }
+        }
 
-        //     string applicationId = form["ApplicationId"].ToString();
-        //     var applicationIdParam = new SqlParameter("@ApplicationId", applicationId);
-        //     string action = form["Action"].ToString();
-        //     string remarks = form["Remarks"].ToString();
-
-        //     string nextOfficer = "";
-
-        //     var application = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == applicationId);
-        //     var workForceOfficers = JsonConvert.DeserializeObject<dynamic>(dbcontext.Services.FirstOrDefault(s => s.ServiceId == application!.ServiceId)!.WorkForceOfficers!);
-        //     var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(s => s.PhaseId == application!.Phase);
-
-        //     string email = application!.Email;
-        //     // var phases = JsonConvert.DeserializeObject<List<dynamic>>(application.Phase);
-
-        //     string file = await helper.GetFilePath(form.Files["ForwardFile"]);
-
-        //     int currentOfficerIndex = 0;
-        //     foreach (var wofficer in workForceOfficers!)
-        //     {
-        //         if (wofficer["Designation"] == officerDesignation)
-        //             break;
-        //         currentOfficerIndex++;
-        //     }
-
-
-        //     if (action == "Forward")
-        //     {
-        //         var newPhase = new CurrentPhase
-        //         {
-        //             ApplicationId = application.ApplicationId,
-        //             ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt"),
-        //             Officer = workForceOfficers[currentOfficerIndex + 1]["Designation"],
-        //             ActionTaken = "Pending",
-        //             Remarks = "",
-        //             CanPull = workForceOfficers[currentOfficerIndex + 1]["Designation"] != "Director Finance",
-        //             Next = 0,
-        //             Previous = currentPhase!.PhaseId,
-        //         };
-
-        //         dbcontext.CurrentPhases.Add(newPhase);
-        //         await dbcontext.SaveChangesAsync();
-        //         currentPhase.ActionTaken = action == "Update" ? "Forward" : action;
-        //         currentPhase.Remarks = remarks;
-        //         currentPhase.Next = newPhase.PhaseId;
-
-        //     }
-        //     else if (action == "Return")
-        //     {
-        //         var previousPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.PhaseId == currentPhase!.Previous);
-        //         previousPhase!.ActionTaken = "Pending";
-        //         previousPhase.Next = 0;
-        //         previousPhase.CanPull = false;
-        //         dbcontext.CurrentPhases.Remove(currentPhase!);
-        //         await dbcontext.SaveChangesAsync();
-        //     }
-        //     else if (action == "ReturnToEdit")
-        //     {
-        //         currentPhase!.ActionTaken = action;
-        //     }
-        //     else if (action == "Sanction")
-        //     {
-        //         currentPhase!.ActionTaken = action;
-        //         currentPhase.CanPull = true;
-        //     }
-
-        //     dbcontext.SaveChanges();
-
-        //     // for (int i = 0; i < phases!.Count; i++)
-        //     // {
-        //     //     if (phases[i].Officer == officerDesignation)
-        //     //     {
-        //     //         phases[i].HasApplication = false;
-        //     //         phases[i].ActionTaken = action == "Update" ? "Forward" : action;
-        //     //         phases[i].Remarks = remarks;
-        //     //         phases[i].CanPull = action == "ReturnToEdit";
-
-        //     //         if (action == "Forward")
-        //     //         {
-        //     //             phases[i].CanPull = phases[i + 1].Officer != "Director Finance";
-        //     //             if (i + 1 < phases.Count)
-        //     //             {
-        //     //                 phases[i + 1].HasApplication = true;
-        //     //                 phases[i + 1].ActionTaken = "Pending";
-        //     //                 phases[i + 1].ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt");
-        //     //                 nextOfficer = phases[i + 1].Officer;
-        //     //             }
-        //     //         }
-        //     //         else if (action == "ReturnToEdit")
-        //     //         {
-        //     //             phases[i].ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt");
-        //     //         }
-        //     //         else if (action == "Update")
-        //     //         {
-        //     //             string Field = form["UpdateColumn"].ToString();
-        //     //             string OldValue = "";
-        //     //             string NewValue = "";
-        //     //             string UpdateColumn = "";
-        //     //             string UpdateColumnValue = "";
-        //     //             string UpdateColumnFile = await helper.GetFilePath(form.Files["UpdateColumnFile"]);
-
-        //     //             var entityType = dbcontext.Model.FindEntityType(typeof(Application));
-        //     //             if (entityType!.GetProperties().Any(p => p.Name == Field))
-        //     //             {
-        //     //                 var propertyInfo = typeof(Application).GetProperty(Field);
-        //     //                 OldValue = propertyInfo!.GetValue(application)?.ToString()!;
-        //     //                 NewValue = form["UpdateColumnValue"].ToString();
-        //     //                 UpdateColumn = Field;
-        //     //                 UpdateColumnValue = NewValue;
-        //     //             }
-        //     //             else
-        //     //             {
-        //     //                 var ServiceSpecific = JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific);
-        //     //                 foreach (var item in ServiceSpecific!)
-        //     //                 {
-
-        //     //                     if (item.Name == Field)
-        //     //                     {
-        //     //                         OldValue = item.Value.ToString();
-        //     //                         NewValue = form["UpdateColumnValue"].ToString();
-        //     //                         item.Value = NewValue;
-        //     //                         UpdateColumn = "ServiceSpecific";
-        //     //                         UpdateColumnValue = JsonConvert.SerializeObject(ServiceSpecific);
-        //     //                     }
-        //     //                 }
-        //     //             }
-
-        //     //             string desigShort = dbcontext.OfficersDesignations.FirstOrDefault(of => of.Designation == officerDesignation)!.DesignationShort;
-        //     //             updateObject = JsonConvert.SerializeObject(new { Officer = desigShort, ColumnName = Field, OldValue, NewValue, File = UpdateColumnFile });
-
-        //     //             phases[i].CanPull = true;
-        //     //             if (i + 1 < phases.Count)
-        //     //             {
-        //     //                 phases[i + 1].HasApplication = true;
-        //     //                 phases[i + 1].ActionTaken = "Pending";
-        //     //                 phases[i + 1].ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt");
-        //     //                 nextOfficer = phases[i + 1].Officer;
-        //     //             }
-        //     //             helper.UpdateApplication(UpdateColumn, UpdateColumnValue, applicationIdParam);
-        //     //         }
-        //     //         else if (action == "Return" && i - 1 >= 0)
-        //     //         {
-        //     //             phases[i - 1].HasApplication = true;
-        //     //             phases[i - 1].ActionTaken = "Pending";
-        //     //             nextOfficer = phases[i - 1].Officer;
-        //     //         }
-        //     //         else if (action == "Sanction")
-        //     //         {
-        //     //             phases[i].CanPull = true;
-        //     //         }
-        //     //     }
-        //     // }
-
-        //     string emailAction = action == "Update" ? "Forwarded" : action + "ed";
-        //     await emailSender.SendEmail(
-        //         email,
-        //         "Acknowledgement",
-        //         $"Your Application with Reference Number {applicationId} is {emailAction} by {officerDesignation}" +
-        //         (nextOfficer != "" ? $" to {nextOfficer}" : "") +
-        //         $" at {DateTime.Now:dd MMM yyyy hh:mm tt}"
-        //     );
-
-        //     // helper.UpdateApplication("Phase", JsonConvert.SerializeObject(phases), applicationIdParam);
-        //     helper.UpdateApplication("EditList", form["editList"].ToString(), applicationIdParam);
-        //     helper.UpdateApplicationHistory(applicationId, officerDesignation, action, remarks, updateObject, file);
-
-        //     if (action == "Sanction")
-        //     {
-        //         var newLetterUpdateDetails = JsonConvert.DeserializeObject<dynamic>(form["letterUpdateDetails"].ToString());
-
-        //         if (newLetterUpdateDetails != null)
-        //         {
-        //             var letterUpdateDetails = dbcontext.UpdatedLetterDetails.FirstOrDefault(up => up.ApplicationId == applicationId);
-
-        //             if (letterUpdateDetails != null)
-        //             {
-        //                 var existingLetterUpdateDetails = JsonConvert.DeserializeObject<List<dynamic>>(letterUpdateDetails!.UpdatedDetails.ToString());
-        //                 existingLetterUpdateDetails!.Add(newLetterUpdateDetails);
-        //                 letterUpdateDetails.UpdatedDetails = JsonConvert.SerializeObject(existingLetterUpdateDetails);
-        //                 dbcontext.UpdatedLetterDetails.Update(letterUpdateDetails);
-        //                 dbcontext.SaveChanges();
-        //             }
-        //             else
-        //             {
-        //                 letterUpdateDetails = new UpdatedLetterDetail
-        //                 {
-        //                     ApplicationId = applicationId,
-        //                     UpdatedDetails = JsonConvert.SerializeObject(new List<dynamic> { newLetterUpdateDetails })
-        //                 };
-
-        //                 dbcontext.UpdatedLetterDetails.Add(letterUpdateDetails);
-        //                 dbcontext.SaveChanges();  // Ensure to save the changes here as well
-        //             }
-        //         }
-
-        //         Sanction(applicationId, officerDesignation);
-        //     }
-
-        //     if (action == "Sanction" || action == "Reject")
-        //     {
-        //         helper.UpdateApplication("ApplicationStatus", $"{action}ed", applicationIdParam);
-        //     }
-
-        //     return Json(new { status = true, url = "/Officer/Index", ApplicationId = applicationId });
-        // }
 
         [HttpPost]
         public async Task<IActionResult> HandleAction([FromForm] IFormCollection form)
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
-            var currentOfficer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
-            var userSpecificDetails = JsonConvert.DeserializeObject<dynamic>(currentOfficer!.UserSpecificDetails);
-            string officerDesignation = userSpecificDetails!.Designation;
-
+            var currentOfficer = await dbcontext.Users.FindAsync(userId);
             string applicationId = form["ApplicationId"].ToString();
             var applicationIdParam = new SqlParameter("@ApplicationId", applicationId);
             string remarks = form["Remarks"].ToString();
             string action = form["Action"].ToString();
             int serviceId = Convert.ToInt32(form["ServiceId"].ToString());
-            var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == applicationId && cur.Officer == officerDesignation);
 
-            switch (action)
-            {
-                case "Forward":
-                    await HandleForward(form, currentPhase, officerDesignation, serviceId, remarks, applicationId);
-                    break;
+            if (currentOfficer == null) return NotFound();
 
-                case "Return":
-                    HandleReturn(currentPhase, remarks);
-                    break;
-
-                case "ReturnToEdit":
-                    HandleReturnToEdit(currentPhase, form, applicationIdParam, officerDesignation, remarks);
-                    break;
-
-                case "Sanction":
-                    HandleSanction(form, currentPhase, applicationId, officerDesignation, remarks);
-                    break;
-
-                case "Update":
-                    await HandleUpdate(form, currentPhase, officerDesignation, remarks, serviceId, applicationId);
-                    break;
-
-                case "Reject":
-                    HandleReject(currentPhase, applicationIdParam, officerDesignation, remarks);
-                    break;
-            }
-
-            dbcontext.SaveChanges();
-            return Json(new { status = true });
-        }
-
-        private async Task HandleForward(IFormCollection form, CurrentPhase? currentPhase, string officerDesignation, int serviceId, string remarks, string applicationId, bool update = false)
-        {
-            string file = await helper.GetFilePath(form.Files["ForwardFile"]);
+            var userSpecificDetails = JsonConvert.DeserializeObject<dynamic>(currentOfficer.UserSpecificDetails);
+            string officerDesignation = userSpecificDetails!.Designation;
             var workForceOfficers = JsonConvert.DeserializeObject<List<dynamic>>(dbcontext.Services.FirstOrDefault(s => s.ServiceId == serviceId)!.WorkForceOfficers!);
             var currentOfficerIndex = workForceOfficers!.FindIndex(o => o["Designation"] == officerDesignation);
             string nextOfficer = (currentOfficerIndex >= 0 && currentOfficerIndex + 1 < workForceOfficers.Count)
                 ? workForceOfficers[currentOfficerIndex + 1]["Designation"]
                 : string.Empty;
 
+            string accessLevel = userSpecificDetails.AccessLevel?.ToString() ?? string.Empty;
+            int accessCode = Convert.ToInt32(userSpecificDetails.AccessCode.ToString());
+
+            // Fetch current, next, and previous phases in a single query
+            var currentPhase = await dbcontext.CurrentPhases
+      .FirstOrDefaultAsync(cur => cur.ApplicationId == applicationId && cur.Officer == officerDesignation);
+
+            var nextPhase = await dbcontext.CurrentPhases
+                .FirstOrDefaultAsync(n => n.PhaseId == currentPhase!.Next);
+
+            var previousPhase = await dbcontext.CurrentPhases
+                .FirstOrDefaultAsync(p => p.PhaseId == currentPhase!.Previous);
+
+
+
+
+            var recordsCount = await dbcontext.RecordCounts
+                .FirstOrDefaultAsync(rc => rc.ServiceId == serviceId && rc.Officer == officerDesignation && rc.AccessCode == accessCode);
+
+            var nextRecordCount = await dbcontext.RecordCounts.FirstOrDefaultAsync(rc => rc.ServiceId == serviceId && rc.Officer == nextOfficer && (rc.AccessCode == accessCode || rc.AccessCode == 0));
+
+            _logger.LogInformation($"--------------NEXT PHASE: {nextPhase == null} NEXTRECORDCoUNT:{nextRecordCount == null}--------------------");
+
+            switch (action)
+            {
+                case "Forward":
+                    UpdateRecordCounts(recordsCount!, pendingCount: -1, forwardCount: 1);
+                    if (nextPhase == null && nextRecordCount == null)
+                    {
+                        dbcontext.RecordCounts.Add(new RecordCount
+                        {
+                            ServiceId = serviceId,
+                            Officer = nextOfficer,
+                            AccessCode = nextOfficer == "Director Finance" ? 0 : accessCode,
+                            Pending = 1
+                        });
+                    }
+                    else if (nextPhase == null && nextRecordCount != null)
+                    {
+                        await UpdateRelatedRecordsCount(nextOfficer, serviceId);
+                    }
+                    else if (nextPhase!.ActionTaken.Trim().Equals("Return", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await UpdateRelatedRecordsCount(nextPhase!.Officer, serviceId, returnCount: -1);
+                    }
+                    else
+                    {
+                        await UpdateRelatedRecordsCount(nextPhase!.Officer, serviceId);
+                    }
+                    await HandleForward(form, currentPhase, officerDesignation, serviceId, remarks, applicationId, accessCode);
+                    break;
+
+                case "Return":
+                    UpdateRecordCounts(recordsCount!, pendingCount: -1, returnCount: 1);
+
+                    _logger.LogInformation($"-----------------ACTION TAKEN IN RETURN: {previousPhase!.ActionTaken}---------------");
+
+                    if (previousPhase!.ActionTaken.Trim().Equals("Forward", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogInformation($"-----------------ACTION TAKEN: {previousPhase!.ActionTaken}");
+                        await UpdateRelatedRecordsCount(previousPhase.Officer, serviceId, forwardCount: -1);
+                    }
+                    HandleReturn(currentPhase, remarks);
+                    break;
+
+                case "ReturnToEdit":
+                    HandleReturnToEdit(currentPhase, form, applicationIdParam, officerDesignation, remarks);
+                    UpdateRecordCounts(recordsCount!, pendingCount: -1, returnCount: 1);
+                    break;
+
+                case "Sanction":
+                    UpdateRecordCounts(recordsCount!, pendingCount: -1, sanctionCount: 1);
+                    HandleSanction(form, currentPhase, applicationId, officerDesignation, remarks);
+                    break;
+
+                case "Update":
+                    await HandleUpdate(form, currentPhase, officerDesignation, remarks, serviceId, applicationId, accessCode);
+                    break;
+
+                case "Reject":
+                    HandleReject(currentPhase, applicationIdParam, officerDesignation, remarks);
+                    UpdateRecordCounts(recordsCount!, -1, rejectCount: 1);
+                    break;
+            }
+
+            // await dbcontext.SaveChangesAsync();
+            return Json(new { status = true, applicationId });
+        }
+
+
+
+        private async Task HandleForward(IFormCollection form, CurrentPhase? currentPhase, string officerDesignation, int serviceId, string remarks, string applicationId, int accessCode, bool update = false)
+        {
+            string file = await helper.GetFilePath(form.Files["ForwardFile"]);
+            var workForceOfficers = JsonConvert.DeserializeObject<List<dynamic>>(dbcontext.Services.FirstOrDefault(s => s.ServiceId == serviceId)?.WorkForceOfficers ?? "[]");
+            var currentOfficerIndex = workForceOfficers?.FindIndex(o => o["Designation"] == officerDesignation) ?? -1;
+
+            string nextOfficer = (currentOfficerIndex >= 0 && currentOfficerIndex + 1 < workForceOfficers!.Count)
+                ? workForceOfficers[currentOfficerIndex + 1]["Designation"].ToString()
+                : string.Empty;
+
+            var nextOfficerDetails = dbcontext.Users.AsEnumerable().FirstOrDefault(u =>
+            {
+                var userSpecificDetail = JsonConvert.DeserializeObject<dynamic>(u.UserSpecificDetails);
+                return userSpecificDetail!["Designation"] == nextOfficer &&
+                       (userSpecificDetail["AccessCode"] == accessCode || userSpecificDetail["AccessCode"] == 0);
+            });
+
+            var userSpecificDetail = JsonConvert.DeserializeObject<dynamic>(nextOfficerDetails!.UserSpecificDetails);
+            int AccessCode = Convert.ToInt32(userSpecificDetail!["AccessCode"]);
             if (currentPhase != null)
             {
                 if (currentPhase.Next == 0)
@@ -359,7 +242,9 @@ namespace SocialWelfare.Controllers.Officer
                     {
                         ApplicationId = applicationId,
                         ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt"),
+                        OfficerId = nextOfficerDetails!.UserId,
                         Officer = nextOfficer,
+                        AccessCode = AccessCode,
                         ActionTaken = "Pending",
                         Remarks = string.Empty,
                         File = string.Empty,
@@ -390,8 +275,10 @@ namespace SocialWelfare.Controllers.Officer
                 await dbcontext.SaveChangesAsync();
             }
 
+
             if (!update)
                 helper.UpdateApplicationHistory(applicationId, officerDesignation, "Forward", remarks, string.Empty, file);
+
         }
 
         private void HandleReturn(CurrentPhase? currentPhase, string remarks)
@@ -465,9 +352,9 @@ namespace SocialWelfare.Controllers.Officer
             helper.UpdateApplicationHistory(applicationId, officerDesignation, "Sanction", remarks, string.Empty, string.Empty);
         }
 
-        private async Task HandleUpdate(IFormCollection form, CurrentPhase? currentPhase, string officerDesignation, string remarks, int serviceId, string applicationId)
+        private async Task HandleUpdate(IFormCollection form, CurrentPhase? currentPhase, string officerDesignation, string remarks, int serviceId, string applicationId, int accessCode)
         {
-            await HandleForward(form, currentPhase, officerDesignation, serviceId, remarks, applicationId);
+            await HandleForward(form, currentPhase, officerDesignation, serviceId, remarks, applicationId, accessCode);
 
             string field = form["UpdateColumn"].ToString();
             string oldValue = "";

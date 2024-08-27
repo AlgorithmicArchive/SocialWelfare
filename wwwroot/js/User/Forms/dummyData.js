@@ -244,5 +244,7 @@ async function appendDummyData(formNo) {
         if (key.toLowerCase().includes("district")) $("#" + key).change();
       }
     }
+
+    if (formNo == 2) $("#SameAsPresent").click();
   }
 }

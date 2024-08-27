@@ -10,4 +10,6 @@ public partial class OfficersDesignation
     public string Designation { get; set; } = null!;
 
     public string DesignationShort { get; set; } = null!;
+
+    public string? AccessLevel { get; set; }
 }

@@ -31,26 +31,135 @@ namespace SocialWelfare.Controllers.Officer
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer?.UserSpecificDetails!);
 
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
-            string districtCode = UserSpecificDetails?["DistrictCode"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
-            string accessCode = "0";
+            string accessCode = UserSpecificDetails["AccessCode"].ToString();
 
-            SqlParameter AccessLevelCode = new("@AccessLevelCode", DBNull.Value);
 
-            switch (accessLevel)
+
+            var recordsCount = dbcontext.RecordCounts.FirstOrDefault(rc => rc.ServiceId == serviceId && rc.Officer == officerDesignation && rc.AccessCode == Convert.ToInt32(accessCode));
+            int totalPending = recordsCount!.Pending;
+            var arrayLists = dbcontext.ApplicationLists.FirstOrDefault(list => list.ServiceId == serviceId && list.Officer == officerDesignation && list.AccessLevel == accessLevel && list.AccessCode == Convert.ToInt32(accessCode));
+            List<string> poolList = [];
+            List<string> approveList = [];
+
+            if (arrayLists != null)
             {
-                case "Tehsil":
-                    accessCode = UserSpecificDetails!["TehsilCode"].ToString();
-                    break;
-                case "District":
-                    accessCode = UserSpecificDetails!["DistrictCode"].ToString();
-                    break;
-                case "Division":
-                    accessCode = UserSpecificDetails!["DivisionCode"].ToString();
-                    break;
+                poolList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.PoolList)!;
+                approveList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.ApprovalList)!;
+                totalPending -= poolList.Count - approveList.Count;
             }
 
-            AccessLevelCode = new SqlParameter("@AccessLevelCode", accessCode ?? string.Empty);
+            var applicationList = dbcontext.CurrentPhases
+                .Join(dbcontext.Applications,
+                    cp => cp.ApplicationId,
+                    a => a.ApplicationId,
+                    (cp, a) => new { CurrentPhase = cp, Application = a })
+                .Where(x =>
+                    x.Application.ServiceId == serviceId &&
+                    x.CurrentPhase.ActionTaken == "Pending" &&
+                    x.CurrentPhase.Officer == officerDesignation &&
+                    (arrayLists == null ||
+                    (!poolList.Contains(x.Application.ApplicationId) &&
+                     !approveList.Contains(x.Application.ApplicationId)))
+                )
+                .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
+                .Where(x =>
+                {
+                    if (accessLevel != "State")
+                    {
+                        var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
+                        string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
+                        return locationCode == accessCode;
+                    }
+                    return true; // If accessLevel is "State", do not filter out the item.
+                })
+                .Select(x => x.Application)
+                .Skip(start)
+                .Take(length)
+                .ToList();
+
+            var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == serviceId);
+            var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
+            var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
+
+            bool canSanction = officer!["canSanction"];
+
+            var pendingColumns = new List<dynamic>
+                {
+                    new { title = "S.No" },
+                    new { title = "Choose <input type='checkbox' class='form-check pending-parent' name='pending-parent' />" },
+                    new { title = "Reference Number" },
+                    new { title = "Applicant Name" },
+                    new { title = "Date Of Marriage" },
+                    new { title = "Submission Date" },
+                    new { title = "Action" }
+                };
+
+            if (!canSanction) pendingColumns.RemoveAt(1);
+
+            List<dynamic> PendingList = [];
+
+            int pendingIndex = 1;
+
+            foreach (var application in applicationList)
+            {
+                var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
+                int DistrictCode = Convert.ToInt32(serviceSpecific["District"]);
+                string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
+
+                List<dynamic> pendingData =
+                    [
+                        pendingIndex,
+                        $"<input type='checkbox' class='form-check pending-element' value='{application.ApplicationId}' name='pending-element' />",
+                        application.ApplicationId,
+                        application.ApplicantName,
+                        serviceSpecific["DateOfMarriage"],
+                        application.SubmissionDate!,
+                        $"<button class='btn btn-dark w-100' onclick=UserDetails('{application.ApplicationId}');>View</button>"
+                    ];
+                if (!canSanction) pendingData.RemoveAt(1);
+                if (serviceSpecific["DateOfMarriage"] == null)
+                    pendingColumns.RemoveAt(pendingColumns.Count - 2);
+
+                PendingList.Add(pendingData);
+                pendingIndex++;
+            }
+
+            var obj = new
+            {
+                PendingList = new
+                {
+                    data = PendingList,
+                    columns = pendingColumns,
+                    recordsTotal = totalPending,
+                    recordsFiltered = PendingList.Count
+                },
+                PoolCount = poolList.Count,
+                ApproveCount = approveList.Count,
+                Type = type,
+                ServiceId = serviceId
+            };
+
+            return !AllData ? obj : new
+            {
+                columns = pendingColumns,
+                data = PendingList
+            };
+        }
+
+
+        public dynamic PoolApplications(Models.Entities.User Officer, int start, int length, string type, int serviceId, bool AllData = false)
+        {
+
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer?.UserSpecificDetails!);
+
+            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
+            string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
+            string accessCode = UserSpecificDetails!["AccessCode"].ToString();
+
+
+            var arrayLists = dbcontext.ApplicationLists.FirstOrDefault(list => list.ServiceId == serviceId && list.Officer == officerDesignation && list.AccessLevel == accessLevel && list.AccessCode == Convert.ToInt32(accessCode));
+            var poolList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.PoolList) ?? [];
 
 
             var applicationList = dbcontext.CurrentPhases
@@ -58,7 +167,11 @@ namespace SocialWelfare.Controllers.Officer
                 cp => cp.ApplicationId,
                 a => a.ApplicationId,
                 (cp, a) => new { CurrentPhase = cp, Application = a })
-            .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Pending" && x.CurrentPhase.Officer == officerDesignation)
+            .Where(x =>
+                poolList.Contains(x.Application.ApplicationId) &&
+                x.Application.ServiceId == serviceId &&
+                x.CurrentPhase.ActionTaken == "Pending" &&
+                x.CurrentPhase.Officer == officerDesignation)
             .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
             .Where(x =>
             {
@@ -71,9 +184,9 @@ namespace SocialWelfare.Controllers.Officer
                 return true; // If accessLevel is "State", do not filter out the item.
             })
             .Select(x => x.Application)
+            .Skip(start)
+            .Take(length)
             .ToList();
-
-
 
             var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == serviceId);
             var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
@@ -83,13 +196,11 @@ namespace SocialWelfare.Controllers.Officer
             bool canUpdate = officer["canUpdate"];
 
             List<dynamic> PoolList = [];
-            List<dynamic> ApprovalList = [];
-            List<dynamic> PendingList = [];
             JArray pool = [];
-            var pendingColumns = new List<dynamic>
+            var poolColumns = new List<dynamic>
                 {
                     new { title = "S.No" },
-                    new { title = "Choose <input type='checkbox' class='form-check pending-parent' name='pending-parent' />" },
+                    new { title = "Choose <input type='checkbox' class='form-check poolList-parent' value='' name='poolList-parent' />" },
                     new { title = "Reference Number" },
                     new { title = "Applicant Name" },
                     new { title = "Date Of Marriage" },
@@ -97,139 +208,44 @@ namespace SocialWelfare.Controllers.Officer
                     new { title = "Action"}
                 };
 
-            var approveColumns = new List<dynamic>
-                {
-                    new { title = "S.No" },
-                    new { title = "Choose <input type='checkbox' class='form-check approve-parent' name='approve-parent' />" },
-                    new { title = "Reference Number" },
-                    new { title = "Applicant Name" },
-                    new { title = "Submission Location" },
-                    new { title = "Parentage" },
-                    new { title = "Mother's Name" },
-                    new { title = "Date Of Birth" },
-                    new { title = "Date Of Marriage" },
-                    new { title = "Bank Details" },
-                    new { title = "Address" },
-                    new { title = "Submission Date" },
-                };
 
-            if (!canSanction) pendingColumns.RemoveAt(1);
-
-            var poolColumns = new List<dynamic>(pendingColumns);
-
-            int pendingIndex = 1;
-            int approveIndex = 1;
             int poolIndex = 1;
 
             foreach (var application in applicationList)
             {
-                _logger.LogInformation($"--------------------ID: {application.ApplicationId}------------------------");
-
-
                 var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
                 int DistrictCode = Convert.ToInt32(serviceSpecific["District"]);
                 string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
 
 
-
-                List<dynamic> pendingData = [
-                    pendingIndex,
+                List<dynamic> poolData = [
+                    poolIndex,
+                    $"<input type='checkbox' class='form-check poolList-element' value='{application.ApplicationId}' name='poolList-element' />",
                     application.ApplicationId,
                     application.ApplicantName,
                     application.SubmissionDate!,
                     $"<button class='btn btn-dark w-100' onclick=UserDetails('{application.ApplicationId}');>View</button>"
                 ];
 
-
-                if (canSanction)
-                    pendingData.Insert(1, $"<input type='checkbox' class='form-check pending-element' value='{application.ApplicationId}' name='pending-element' />");
-
-
                 if (serviceSpecific["DateOfMarriage"] != null)
-                    pendingData.Insert(pendingData.Count - 2, serviceSpecific["DateOfMarriage"]);
+                    poolData.Insert(poolData.Count - 2, serviceSpecific["DateOfMarriage"]);
                 else
-                    pendingColumns.RemoveAt(pendingColumns.Count - 2);
+                    poolColumns.RemoveAt(poolColumns.Count - 2);
 
-                List<dynamic> approveData = [
-                    approveIndex,
-                    $"<input type='checkbox' class='form-check approve-element' value='{application.ApplicationId}' name='pending-element' />",
-                    application.ApplicationId,
-                    application.ApplicantName,
-                    appliedDistrict,
-                    application.RelationName + $" ({application.Relation.ToUpper()})",
-                    serviceSpecific["MotherName"],
-                    application.DateOfBirth,
-                    serviceSpecific!["DateOfMarriage"],
-                    $"{bankDetails["BankName"]}/{bankDetails["IfscCode"]}/{bankDetails["AccountNumber"]}",
-                    $"{preAddressDetails.Address!.ToUpper()}, TEHSIL:{preAddressDetails.Tehsil!.ToUpper()}, DISTRICT:{preAddressDetails.District!.ToUpper()}, PINCODE:{preAddressDetails.Pincode}",
-                    application.SubmissionDate!
-                ];
 
-                var arrayLists = dbcontext.ApplicationLists.FirstOrDefault(list => list.ServiceId == serviceId && list.Officer == officerDesignation && list.AccessLevel == accessLevel && list.AccessCode == Convert.ToInt32(accessCode));
+                PoolList.Add(poolData);
 
-                if (canSanction)
-                {
-                    if (arrayLists == null)
-                    {
-                        dbcontext.Database.ExecuteSqlRaw("EXEC InsertApplicationListTable @ServiceId,@Officer,@AccessLevel,@AccessCode", new SqlParameter("@ServiceId", serviceId), new SqlParameter("@Officer", officerDesignation), new SqlParameter("@AccessLevel", accessLevel), new SqlParameter("@AccessCode", Convert.ToInt32(accessCode)));
-                        PendingList.Add(pendingData);
-                        pendingIndex++;
-                    }
-                    else
-                    {
-                        var poolList = JsonConvert.DeserializeObject<List<string>>(arrayLists.PoolList);
-                        var approvalList = JsonConvert.DeserializeObject<List<string>>(arrayLists.ApprovalList);
-
-                        if (approvalList!.Contains(application.ApplicationId))
-                        {
-                            ApprovalList.Add(approveData);
-                            approveIndex++;
-                        }
-                        else if (poolList!.Contains(application.ApplicationId))
-                        {
-                            poolColumns[1] = new { title = "<input type='checkbox' class='form-check poolList-parent' value='' name='poolList-parent' />" };
-                            pendingData[1] = $"<input type='checkbox' class='form-check poolList-element' value='{application.ApplicationId}' name='poolList-element' />";
-                            PoolList.Add(pendingData);
-                            poolIndex++;
-                        }
-                        else
-                        {
-                            PendingList.Add(pendingData);
-                            pendingIndex++;
-                        }
-                    }
-                }
-                else
-                {
-                    PendingList.Add(pendingData);
-                    pendingIndex++;
-                }
             }
-
-
 
             var obj = new
             {
-                PendingList = new
-                {
-                    data = PendingList.AsEnumerable().Skip(start).Take(length),
-                    columns = pendingColumns,
-                    recordsTotal = PendingList.Count,
-                    recordsFiltered = PendingList.AsEnumerable().Skip(start).Take(length).ToList().Count,
-                },
+
                 PoolList = new
                 {
-                    data = PoolList.AsEnumerable().Skip(start).Take(length),
+                    data = PoolList,
                     columns = poolColumns,
-                    recordsTotal = PoolList.Count,
-                    recordsFiltered = PoolList.AsEnumerable().Skip(start).Take(length).ToList().Count
-                },
-                ApproveList = new
-                {
-                    data = ApprovalList.AsEnumerable().Skip(start).Take(length),
-                    columns = approveColumns,
-                    recordsTotal = ApprovalList.Count,
-                    recordsFiltered = ApprovalList.AsEnumerable().Skip(start).Take(length).ToList().Count
+                    recordsTotal = poolList.Count,
+                    recordsFiltered = PoolList.Count
                 },
                 Type = type,
                 ServiceId = 1
@@ -237,32 +253,144 @@ namespace SocialWelfare.Controllers.Officer
 
             if (!AllData)
                 return obj;
-            else return type == "Pending" ? new { columns = pendingColumns, data = PendingList } : type == "Approve" ? new { columns = approveColumns, data = ApprovalList } : new { columns = poolColumns, data = PoolList };
+            else return new { columns = poolColumns, data = PoolList };
         }
+
+        public dynamic ApproveApplications(Models.Entities.User Officer, int start, int length, string type, int serviceId, bool AllData = false)
+        {
+
+            _logger.LogInformation($"-----------H E R E  I N  A P P R O V E  L I S T  ALLDATA:{AllData}-------------");
+
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer?.UserSpecificDetails!);
+
+            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
+            string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
+            string accessCode = UserSpecificDetails!["AccessCode"].ToString();
+
+
+            var arrayLists = dbcontext.ApplicationLists.FirstOrDefault(list =>
+                list.ServiceId == serviceId &&
+                list.Officer == officerDesignation &&
+                list.AccessLevel == accessLevel &&
+                list.AccessCode == Convert.ToInt32(accessCode));
+
+
+            var approvalList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.ApprovalList) ?? [];
+
+            var applicationList = dbcontext.CurrentPhases
+                .Join(dbcontext.Applications,
+                    cp => cp.ApplicationId,
+                    a => a.ApplicationId,
+                    (cp, a) => new { CurrentPhase = cp, Application = a })
+                .Where(x =>
+                    approvalList.Contains(x.Application.ApplicationId) &&
+                    x.Application.ServiceId == serviceId &&
+                    x.CurrentPhase.ActionTaken == "Pending" &&
+                    x.CurrentPhase.Officer == officerDesignation)
+                .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
+                .Where(x =>
+                {
+                    if (accessLevel != "State")
+                    {
+                        var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
+                        string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
+                        return locationCode == accessCode;
+                    }
+                    return true; // If accessLevel is "State", do not filter out the item.
+                })
+                .Select(x => x.Application)
+                .Skip(start)
+                .Take(length)
+                .ToList();
+
+            var service = dbcontext.Services.FirstOrDefault(u => u.ServiceId == serviceId);
+            var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
+            var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
+
+            bool canSanction = officer!["canSanction"];
+            bool canUpdate = officer["canUpdate"];
+
+            List<dynamic> ApproveList = [];
+            var approveColumns = new List<dynamic>
+            {
+                new { title = "S.No" },
+                new { title = "Choose <input type='checkbox' class='form-check approve-parent' name='approve-parent' />" },
+                new { title = "Reference Number" },
+                new { title = "Applicant Name" },
+                new { title = "Submission Location" },
+                new { title = "Parentage" },
+                new { title = "Mother's Name" },
+                new { title = "Date Of Birth" },
+                new { title = "Date Of Marriage" },
+                new { title = "Bank Details" },
+                new { title = "Address" },
+                new { title = "Submission Date" }
+            };
+
+            int approveIndex = 1;
+
+            foreach (var application in applicationList)
+            {
+                var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
+                int DistrictCode = Convert.ToInt32(serviceSpecific["District"]);
+                string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
+
+                List<dynamic> approveData =
+                [
+                    approveIndex,
+                    $"<input type='checkbox' class='form-check approve-element' value='{application.ApplicationId}' name='approve-element' />",
+                    application.ApplicationId,
+                    application.ApplicantName,
+                    appliedDistrict,
+                    application.RelationName + $" ({application.Relation.ToUpper()})",
+                    serviceSpecific["MotherName"],
+                    application.DateOfBirth,
+                    serviceSpecific["DateOfMarriage"],
+                    $"{bankDetails["BankName"]}/{bankDetails["IfscCode"]}/{bankDetails["AccountNumber"]}",
+                    $"{preAddressDetails.Address!.ToUpper()}, TEHSIL:{preAddressDetails.Tehsil!.ToUpper()}, DISTRICT:{preAddressDetails.District!.ToUpper()}, PINCODE:{preAddressDetails.Pincode}",
+                    application.SubmissionDate!
+                ];
+
+                if (serviceSpecific["DateOfMarriage"] != null)
+                    approveData.Insert(approveData.Count - 2, serviceSpecific["DateOfMarriage"]);
+                else
+                    approveColumns.RemoveAt(approveColumns.Count - 2);
+
+                ApproveList.Add(approveData);
+                approveIndex++;
+            }
+
+            var obj = new
+            {
+                ApproveList = new
+                {
+                    data = ApproveList,
+                    columns = approveColumns,
+                    recordsTotal = approvalList.Count,
+                    recordsFiltered = ApproveList.Count
+                },
+                Type = type,
+                ServiceId = serviceId
+            };
+
+            _logger.LogInformation($"------------AllDATA: {AllData}-----------------------------");
+
+
+            if (!AllData)
+                return obj;
+            else
+                return new { columns = approveColumns, data = ApproveList };
+        }
+
+
+
         public dynamic SentApplications(Models.Entities.User Officer, int start, int length, string type, int serviceId, bool AllData = false)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
 
-            string accessCode = "0";
-
-            SqlParameter AccessLevelCode = new("@AccessLevelCode", DBNull.Value);
-
-            switch (accessLevel)
-            {
-                case "Tehsil":
-                    accessCode = UserSpecificDetails!["TehsilCode"].ToString();
-                    break;
-                case "District":
-                    accessCode = UserSpecificDetails!["DistrictCode"].ToString();
-                    break;
-                case "Division":
-                    accessCode = UserSpecificDetails!["DivisionCode"].ToString();
-                    break;
-            }
-
-            AccessLevelCode = new SqlParameter("@AccessLevelCode", accessCode ?? string.Empty);
+            string accessCode = UserSpecificDetails!["AccessCode"].ToString();
 
             var applicationList = dbcontext.CurrentPhases
            .Join(dbcontext.Applications,
@@ -347,6 +475,8 @@ namespace SocialWelfare.Controllers.Officer
                 return obj;
             else return new { columns = sentColumns, data = SentApplications };
         }
+
+
         public dynamic SanctionApplications(Models.Entities.User Officer, int start, int length, string type, int serviceId, bool AllData = false)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
@@ -357,24 +487,9 @@ namespace SocialWelfare.Controllers.Officer
             var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
             var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
 
-            string accessCode = "0";
+            string accessCode = UserSpecificDetails!["AccessCode"].ToString();
+            var recordsCount = dbcontext.RecordCounts.FirstOrDefault(rc => rc.ServiceId == serviceId && rc.Officer == officerDesignation && rc.AccessCode == Convert.ToInt32(accessCode));
 
-            SqlParameter AccessLevelCode = new("@AccessLevelCode", DBNull.Value);
-
-            switch (accessLevel)
-            {
-                case "Tehsil":
-                    accessCode = UserSpecificDetails!["TehsilCode"].ToString();
-                    break;
-                case "District":
-                    accessCode = UserSpecificDetails!["DistrictCode"].ToString();
-                    break;
-                case "Division":
-                    accessCode = UserSpecificDetails!["DivisionCode"].ToString();
-                    break;
-            }
-
-            AccessLevelCode = new SqlParameter("@AccessLevelCode", accessCode ?? string.Empty);
 
             var applicationList = dbcontext.CurrentPhases
           .Join(dbcontext.Applications,
@@ -382,7 +497,7 @@ namespace SocialWelfare.Controllers.Officer
               a => a.ApplicationId,
               (cp, a) => new { CurrentPhase = cp, Application = a })
           .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Sanction" && x.CurrentPhase.Officer == officerDesignation)
-          .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
+          .AsEnumerable().Skip(start).Take(length) // Switch to LINQ to Objects for JSON deserialization
           .Where(x =>
           {
               if (accessLevel != "State")
@@ -447,8 +562,8 @@ namespace SocialWelfare.Controllers.Officer
                 {
                     data = SanctionApplications.AsEnumerable().Skip(start).Take(length),
                     columns = sanctionColumns,
-                    recordsTotal = SanctionApplications.Count,
-                    recordsFiltered = SanctionApplications.AsEnumerable().Skip(start).Take(length).ToList().Count
+                    recordsTotal = recordsCount,
+                    recordsFiltered = applicationList.Count,
                 },
                 Type = type,
                 ServiceId = serviceId,
@@ -464,24 +579,8 @@ namespace SocialWelfare.Controllers.Officer
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
-            string accessCode = "0";
+            string accessCode = UserSpecificDetails!["AccessCode"].ToString();
 
-            SqlParameter AccessLevelCode = new("@AccessLevelCode", DBNull.Value);
-
-            switch (accessLevel)
-            {
-                case "Tehsil":
-                    accessCode = UserSpecificDetails!["TehsilCode"].ToString();
-                    break;
-                case "District":
-                    accessCode = UserSpecificDetails!["DistrictCode"].ToString();
-                    break;
-                case "Division":
-                    accessCode = UserSpecificDetails!["DivisionCode"].ToString();
-                    break;
-            }
-
-            AccessLevelCode = new SqlParameter("@AccessLevelCode", accessCode ?? string.Empty);
 
             var applicationList = dbcontext.CurrentPhases
           .Join(dbcontext.Applications,
@@ -675,7 +774,7 @@ namespace SocialWelfare.Controllers.Officer
             return Json(new { status = true, TotalCount, PendingCount, RejectCount, ForwardCount, SanctionCount, PendingWithCitizenCount });
         }
 
-        public async Task<IActionResult> BankCsvFile(string serviceId)
+        public IActionResult BankCsvFile(string serviceId)
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
             Models.Entities.User Officer = dbcontext.Users.Find(userId)!;
@@ -685,80 +784,34 @@ namespace SocialWelfare.Controllers.Officer
             SqlParameter AccessLevelCode = new("@AccessLevelCode", DBNull.Value);
             int ServiceId = Convert.ToInt32(serviceId);
 
-            switch (accessLevel)
-            {
-                case "Tehsil":
-                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["TehsilCode"]?.ToString() ?? string.Empty);
-                    break;
-                case "District":
-                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DistrictCode"]?.ToString() ?? string.Empty);
-                    break;
-                case "Division":
-                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DivisionCode"]?.ToString() ?? string.Empty);
-                    break;
-            }
-
-            var applicationList = dbcontext.Applications.FromSqlRaw(
-                "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @AccessLevel, @AccessLevelCode, @ServiceId",
-                new SqlParameter("@OfficerDesignation", officerDesignation),
-                new SqlParameter("@ActionTaken", "Sanction"),
-                new SqlParameter("@AccessLevel", accessLevel),
-                AccessLevelCode,
-                new SqlParameter("@ServiceId", ServiceId)).ToList();
-
-            // Filter the applications in code and expand the list
-
-            var builder = new StringBuilder();
-            int totalApplications = applicationList.Count;
-            int processedApplications = 0;
-            int previousProgress = 0;
-            int updateInterval = 5; // Update every 5%
-
-            for (int i = 0; i < applicationList.Count; i++)
-            {
-                var application = applicationList[i];
-                var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
-                int DistrictCode = Convert.ToInt32(serviceSpecific["District"]);
-                string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
-                var obj = new
+            var applicationList = dbcontext.Applications
+                .Where(app => app.ServiceId == ServiceId && app.ApplicationStatus == "Sanctioned")
+                .AsEnumerable() // Switch to LINQ to Objects for custom logic
+                .Select(app =>
                 {
-                    referenceNumber = application.ApplicationId,
-                    appliedDistrict,
-                    submissionDate = application.SubmissionDate!,
-                    applicantName = application.ApplicantName,
-                    parentage = application.RelationName + $" ({application.Relation.ToUpper()})",
-                    accountNumber = bankDetails["AccountNumber"],
-                    ifscCode = bankDetails["IfscCode"],
-                    amount = "500000",
-                    dateOfMarriage = serviceSpecific!["DateOfMarriage"],
-                };
+                    // Get additional details for each application
+                    var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(app.ApplicationId);
 
-                builder.AppendLine($"{obj.referenceNumber},{obj.appliedDistrict},{obj.submissionDate},{obj.applicantName},{obj.accountNumber},{obj.ifscCode},{obj.amount},{obj.dateOfMarriage}");
-                application.ApplicationStatus = "Dispatched";
-                helper.UpdateApplicationHistory(application.ApplicationId, officerDesignation, "Dispatched To Bank", "NULL");
+                    int districtCode = Convert.ToInt32(serviceSpecific["District"]);
+                    string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.DistrictName.ToUpper() ?? "UNKNOWN";
 
-                processedApplications++;
-                int progress = processedApplications * 100 / totalApplications;
+                    // Return a new BankFile object
+                    return new BankFile
+                    {
+                        ApplicationId = app.ApplicationId,
+                        AppliedDistrict = appliedDistrict,
+                        SubmissionDate = app.SubmissionDate,
+                        ApplicantName = app.ApplicantName,
+                        Parentage = $"{app.RelationName} ({app.Relation.ToUpper()})",
+                        AccountNumber = bankDetails["AccountNumber"],
+                        IfscCode = bankDetails["IfscCode"],
+                        Amount = serviceSpecific["Amount"].ToString(),  // Assuming Amount is a field in serviceSpecific
+                        DateOfMarriage = serviceSpecific["DateOfMarriage"]?.ToString()
+                    };
+                })
+                .ToList();
 
-                if (progress >= previousProgress + updateInterval || progress == 100)
-                {
-                    previousProgress = progress;
-                    await hubContext.Clients.All.SendAsync("UpdateProgress", progress); // Send progress update
-                }
-            }
 
-            dbcontext.SaveChanges();
-
-            string fileName = DateTime.Now.ToString("dd_MMM_yyyy_hh:mm_tt") + "_MAS.csv";
-            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "exports", fileName);
-            System.IO.File.WriteAllText(filePath, builder.ToString());
-            Service? service = dbcontext.Services.FirstOrDefault(service => service.ServiceId == ServiceId);
-            if (service != null)
-                service.BankDispatchFile = "/exports/" + fileName;
-
-            dbcontext.SaveChanges();
-
-            await hubContext.Clients.All.SendAsync("UpdateProgress", 100); // Final update to 100%
 
             return Json(new { status = true });
         }
@@ -767,6 +820,7 @@ namespace SocialWelfare.Controllers.Officer
 
         [HttpPost]
         public async Task<IActionResult> UploadDSC([FromForm] IFormCollection form)
+
         {
             var file = form.Files["dscFile"];
             string password = form["password"].ToString();
@@ -802,9 +856,6 @@ namespace SocialWelfare.Controllers.Officer
                 byte[] encryptionIV = encryptionService.GenerateIV();
                 byte[] encryptedCertificate = encryptionService.EncryptData(certificateBytes, encryptionKey, encryptionIV);
                 byte[] encryptedPassword = encryptionService.EncryptData(Encoding.UTF8.GetBytes(password), encryptionKey, encryptionIV);
-
-                _logger.LogInformation($"============IN UPLOAD KEY: {encryptionKey.Length}  IV: {encryptionIV.Length}==========================");
-
 
 
                 SaveDSCToDatabase(encryptedCertificate, encryptedPassword, encryptionKey, encryptionIV);
@@ -860,7 +911,7 @@ namespace SocialWelfare.Controllers.Officer
             using PdfReader reader = new(src);
             using FileStream fs = new(dest, FileMode.Open);
 
-            PdfSigner signer = new PdfSigner(reader, fs, new StampingProperties());
+            PdfSigner signer = new(reader, fs, new StampingProperties());
 
             // Set the name of the signature field
             signer.SetFieldName("SignatureFieldName");
@@ -913,6 +964,8 @@ namespace SocialWelfare.Controllers.Officer
 
         public IActionResult SignPdf(string ApplicationId)
         {
+            _logger.LogInformation($"-----------------HERE IN SIGN PDF FUNCTION------------------------");
+
             int userId = (int)HttpContext.Session.GetInt32("UserId")!;
             string inputPdfPath = Path.Combine(_webHostEnvironment.WebRootPath, "files", ApplicationId.Replace("/", "_") + "SanctionLetter.pdf");
 

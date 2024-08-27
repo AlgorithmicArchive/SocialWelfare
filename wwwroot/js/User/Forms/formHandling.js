@@ -85,6 +85,8 @@ function handleFormAppend(formNo) {
       const documents = JSON.parse(serviceContent.formElement)[4].fields;
       const labels = documents.map((item) => item.label.split(" ").join(""));
       currentForm.append("ApplicationId", ApplicationId.split(",")[0]);
+      currentForm.append("ServiceId", serviceContent.serviceId);
+      currentForm.append("AccessCode", $("#District").val());
       currentForm.append(
         "workForceOfficers",
         JSON.stringify(workForceOfficers)
@@ -156,18 +158,17 @@ function handleFormData(
       });
   } else if (formNo == 4) {
     showSpinner();
-    const formdata = new FormData();
-    formdata.append("ApplicationId", ApplicationId);
-    fetch("/User/IncompleteApplication", { method: "post", body: formdata })
+    originalForm.append("ServiceId", serviceContent.serviceId);
+    originalForm.append("AccessCode", $("#District").val());
+    fetch("/User/IncompleteApplication?ApplicationId=" + ApplicationId)
       .then((res) => res.json())
       .then((data) => {
         hideSpinner();
-        if (data.status) window.location.href = "/User/ApplicationStatus";
+        processApplication(originalForm, urlInsert);
       });
   }
 }
 function processApplication(originalForm, url) {
-  console.log(originalForm);
   showSpinner();
   fetch(url, { method: "post", body: originalForm })
     .then((res) => res.json())

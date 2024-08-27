@@ -69,142 +69,58 @@ namespace SocialWelfare.Controllers.Officer
             return View(ServiceList);
         }
 
-        public IActionResult GetApplicationsList(string ServiceId)
+        public async Task<IActionResult> GetApplicationsList(string ServiceId)
         {
-
             int? userId = HttpContext.Session.GetInt32("UserId");
             var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
-            bool canSanction = true;
-            bool canForward = true;
-            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
+
+
+            if (Officer == null)
+            {
+                return Json(new { status = false, message = "Officer not found." });
+            }
+
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer.UserSpecificDetails);
             int serviceId = Convert.ToInt32(ServiceId);
-            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
-            string accessLevel = UserSpecificDetails["AccessLevel"]?.ToString() ?? string.Empty;
-            string accessCode = "";
-            SqlParameter AccessLevelCode = new("@AccessLevelCode", DBNull.Value);
-            switch (accessLevel)
+            string officerDesignation = UserSpecificDetails?["Designation"]?.ToString() ?? string.Empty;
+            string accessLevel = UserSpecificDetails?["AccessLevel"]?.ToString() ?? string.Empty;
+            int accessCode = Convert.ToInt32(UserSpecificDetails?["AccessCode"]?.ToString());
+
+
+            var counts = await dbcontext.RecordCounts.FirstOrDefaultAsync(rc => rc.ServiceId == serviceId && rc.Officer == officerDesignation && rc.AccessCode == accessCode);
+            if (counts == null)
             {
-                case "Tehsil":
-                    accessCode = UserSpecificDetails["TehsilCode"]?.ToString()!;
-                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails["TehsilCode"]?.ToString() ?? string.Empty);
-                    break;
-                case "District":
-                    accessCode = UserSpecificDetails["DistrictCode"]?.ToString()!;
-                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails["DistrictCode"]?.ToString() ?? string.Empty);
-                    break;
-                case "Division":
-                    accessCode = UserSpecificDetails["DivisionCode"]?.ToString()!;
-                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails["DivisionCode"]?.ToString() ?? string.Empty);
-                    break;
-            }
-
-
-            int PendingCount = dbcontext.CurrentPhases
-            .Join(dbcontext.Applications,
-                cp => cp.ApplicationId,
-                a => a.ApplicationId,
-                (cp, a) => new { CurrentPhase = cp, Application = a })
-            .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Pending" && x.CurrentPhase.Officer == officerDesignation)
-            .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
-            .Where(x =>
-            {
-                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
-                string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
-                return locationCode == accessCode;
-            })
-            .Select(x => x.CurrentPhase)
-            .ToList().Count;
-
-            int ForwardCount = dbcontext.CurrentPhases
-           .Join(dbcontext.Applications,
-               cp => cp.ApplicationId,
-               a => a.ApplicationId,
-               (cp, a) => new { CurrentPhase = cp, Application = a })
-           .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Forward" && x.CurrentPhase.Officer == officerDesignation)
-           .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
-            .Where(x =>
-            {
-                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
-                string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
-                return locationCode == accessCode;
-            })
-            .Select(x => x.CurrentPhase)
-            .ToList().Count;
-
-            int SanctionCount = dbcontext.CurrentPhases
-           .Join(dbcontext.Applications,
-               cp => cp.ApplicationId,
-               a => a.ApplicationId,
-               (cp, a) => new { CurrentPhase = cp, Application = a })
-           .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Sanction" && x.CurrentPhase.Officer == officerDesignation)
-           .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
-            .Where(x =>
-            {
-                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
-                string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
-                return locationCode == accessCode;
-            })
-            .Select(x => x.CurrentPhase)
-            .ToList().Count;
-
-            int RejectCount = dbcontext.CurrentPhases
-            .Join(dbcontext.Applications,
-                cp => cp.ApplicationId,
-                a => a.ApplicationId,
-                (cp, a) => new { CurrentPhase = cp, Application = a })
-            .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Reject" && x.CurrentPhase.Officer == officerDesignation)
-           .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
-            .Where(x =>
-            {
-                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
-                string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
-                return locationCode == accessCode;
-            })
-            .Select(x => x.CurrentPhase)
-            .ToList().Count;
-
-            int ReturnCount = dbcontext.CurrentPhases
-           .Join(dbcontext.Applications,
-               cp => cp.ApplicationId,
-               a => a.ApplicationId,
-               (cp, a) => new { CurrentPhase = cp, Application = a })
-           .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Return" && x.CurrentPhase.Officer == officerDesignation)
-           .AsEnumerable() // Switch to LINQ to Objects for JSON deserialization
-            .Where(x =>
-            {
-                var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
-                string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
-                return locationCode == accessCode;
-            })
-            .Select(x => x.CurrentPhase)
-            .ToList().Count;
-
-
-
-            var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(dbcontext.Services.FirstOrDefault(service => service.ServiceId == serviceId)!.WorkForceOfficers!);
-
-
-
-            foreach (var officer in WorkForceOfficers!)
-            {
-                if (officer["Designation"] == officerDesignation)
+                dbcontext.RecordCounts.Add(new RecordCount
                 {
-                    canSanction = officer["canSanction"];
-                    canForward = officer["canForward"];
-                }
+                    ServiceId = serviceId,
+                    Officer = officerDesignation,
+                    AccessCode = accessCode,
+                    Pending = 1
+                });
             }
+
+            await dbcontext.SaveChangesAsync();
+
+
+            var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(
+                dbcontext.Services.FirstOrDefault(service => service.ServiceId == serviceId)?.WorkForceOfficers ?? "[]"
+            );
+            var officersList = ((IEnumerable<dynamic>)WorkForceOfficers!).ToList();
+
+            bool canSanction = officersList.Any(officer => officer["Designation"] == officerDesignation && (bool)officer["canSanction"]);
+            bool canForward = officersList.Any(officer => officer["Designation"] == officerDesignation && (bool)officer["canForward"]);
+
             var countList = new
             {
-                Pending = PendingCount,
-                Forward = ForwardCount,
-                Sanction = SanctionCount,
-                Reject = RejectCount,
-                Return = ReturnCount,
+                Pending = counts?.Pending ?? 0,
+                Forward = counts?.Forward ?? 0,
+                Sanction = counts?.Sanction ?? 0,
+                Reject = counts?.Reject ?? 0,
+                Return = counts?.Return ?? 0,
                 CanSanction = canSanction,
                 CanForward = canForward,
-                serviceId
+                ServiceId = serviceId
             };
-
 
             return Json(new { status = true, countList });
         }
@@ -215,8 +131,13 @@ namespace SocialWelfare.Controllers.Officer
             Models.Entities.User Officer = dbcontext.Users.Find(userId)!;
             dynamic? ApplicationList = null;
 
-            if (type!.ToString() == "Pending" || type.ToString() == "Approve" || type.ToString() == "Pool")
+
+            if (type!.ToString() == "Pending")
                 ApplicationList = PendingApplications(Officer!, start, length, type, serviceId);
+            else if (type.ToString() == "Pool")
+                ApplicationList = PoolApplications(Officer!, start, length, type, serviceId);
+            else if (type.ToString() == "Approve")
+                ApplicationList = ApproveApplications(Officer!, start, length, type, serviceId);
             else if (type!.ToString() == "Sent")
                 ApplicationList = SentApplications(Officer!, start, length, type, serviceId);
             else if (type.ToString() == "Sanction")
@@ -338,11 +259,11 @@ namespace SocialWelfare.Controllers.Officer
         }
         public IActionResult UserDetails(string? ApplicationId)
         {
+
             int? userId = HttpContext.Session.GetInt32("UserId");
             var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"];
-            string districtCode = UserSpecificDetails["DistrictCode"];
 
             var generalDetails = dbcontext.Applications.Where(u => u.ApplicationId == ApplicationId).ToList()[0];
             bool canOfficerTakeAction = true;
@@ -352,7 +273,6 @@ namespace SocialWelfare.Controllers.Officer
 
             currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == generalDetails.ApplicationId && cur.Officer == officerDesignation)!;
 
-            _logger.LogInformation($"=========NEXT:{currentPhase.Next}  PREVIOUS:{currentPhase.Previous}-=================================");
 
 
             if (currentPhase.Next != 0)
@@ -366,10 +286,7 @@ namespace SocialWelfare.Controllers.Officer
             if (currentPhase.Previous != 0)
             {
                 previousPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.PhaseId == currentPhase.Previous)!;
-                _logger.LogInformation($"===============CAN PULL:{previousPhase.CanPull}==============================");
                 previousPhase.CanPull = false;
-                _logger.LogInformation($"===============CAN PULL:{previousPhase.CanPull}==============================");
-
             }
 
             dbcontext.SaveChanges();
@@ -378,8 +295,8 @@ namespace SocialWelfare.Controllers.Officer
             if (IsMoreThanSpecifiedDays(generalDetails.SubmissionDate!.ToString(), 45)) canOfficerTakeAction = false;
 
 
-            var preAddressDetails = dbcontext.AddressJoins.FromSqlRaw("EXEC GetAddressDetails @AddressId", new SqlParameter("@AddressId", generalDetails!.PresentAddressId)).ToList()[0];
-            var perAddressDetails = dbcontext.AddressJoins.FromSqlRaw("EXEC GetAddressDetails @AddressId", new SqlParameter("@AddressId", generalDetails!.PermanentAddressId)).ToList()[0];
+            var preAddressDetails = dbcontext.Set<AddressJoin>().FromSqlRaw("EXEC GetAddressDetails @AddressId", new SqlParameter("@AddressId", generalDetails!.PresentAddressId)).ToList()[0];
+            var perAddressDetails = dbcontext.Set<AddressJoin>().FromSqlRaw("EXEC GetAddressDetails @AddressId", new SqlParameter("@AddressId", generalDetails!.PermanentAddressId)).ToList()[0];
             var serviceContent = dbcontext.Services.FirstOrDefault(u => u.ServiceId == generalDetails.ServiceId);
 
             var applicationHistory = JsonConvert.DeserializeObject<dynamic>(dbcontext.ApplicationsHistories.FirstOrDefault(his => his.ApplicationId == ApplicationId)!.History);
@@ -471,6 +388,7 @@ namespace SocialWelfare.Controllers.Officer
             var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == ApplicationId && cur.Officer == officerDesignation);
             CurrentPhase? otherPhase = null;
             string ActionTaken = currentPhase!.ActionTaken;
+            var recordsCount = dbcontext.RecordCounts.FirstOrDefault();
 
 
             currentPhase.ActionTaken = "Pending";
@@ -543,7 +461,6 @@ namespace SocialWelfare.Controllers.Officer
             var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"];
-            string districtCode = UserSpecificDetails["DistrictCode"];
             int serviceId = Convert.ToInt32(form["serviceId"].ToString());
             string action = form["action"].ToString();
             var IdList = JsonConvert.DeserializeObject<string[]>(form["IdList"].ToString());
@@ -551,22 +468,7 @@ namespace SocialWelfare.Controllers.Officer
             var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(dbcontext.Services.FirstOrDefault(u => u.ServiceId == serviceId)!.WorkForceOfficers!);
 
             string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
-            string accessCode = "0";
-
-            SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
-
-            switch (accessLevel)
-            {
-                case "Tehsil":
-                    accessCode = UserSpecificDetails!["TehsilCode"].ToString();
-                    break;
-                case "District":
-                    accessCode = UserSpecificDetails!["DistrictCode"].ToString();
-                    break;
-                case "Division":
-                    accessCode = UserSpecificDetails!["DivisionCode"].ToString();
-                    break;
-            }
+            string accessCode = UserSpecificDetails!["AccessCode"].ToString();
 
             foreach (var item in IdList!)
             {
@@ -587,10 +489,40 @@ namespace SocialWelfare.Controllers.Officer
             }
             dbcontext.SaveChanges();
 
-            var arrayLists = dbcontext.ApplicationLists.FirstOrDefault(list => list.ServiceId == serviceId && list.Officer == officerDesignation && list.AccessLevel == accessLevel && list.AccessCode == Convert.ToInt32(accessCode));
+            var arrayLists = dbcontext.ApplicationLists.FirstOrDefault(list =>
+            list.ServiceId == serviceId &&
+            list.Officer == officerDesignation &&
+            list.AccessLevel == accessLevel &&
+            list.AccessCode == Convert.ToInt32(accessCode));
 
-            var PoolList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.PoolList);
-            var ApprovalList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.ApprovalList);
+            List<string> PoolList, ApprovalList;
+
+            if (arrayLists == null)
+            {
+                // Create a new ApplicationList record if none exists
+                arrayLists = new ApplicationList
+                {
+                    ServiceId = serviceId,
+                    Officer = officerDesignation,
+                    AccessLevel = accessLevel,
+                    AccessCode = Convert.ToInt32(accessCode),
+                    ApprovalList = JsonConvert.SerializeObject(new List<string>()),
+                    PoolList = JsonConvert.SerializeObject(new List<string>()),
+                };
+
+                dbcontext.ApplicationLists.Add(arrayLists);
+                dbcontext.SaveChanges(); // Save the new record to the database
+
+                PoolList = new List<string>();
+                ApprovalList = new List<string>();
+            }
+            else
+            {
+                PoolList = JsonConvert.DeserializeObject<List<string>>(arrayLists.PoolList) ?? new List<string>();
+                ApprovalList = JsonConvert.DeserializeObject<List<string>>(arrayLists.ApprovalList) ?? new List<string>();
+            }
+
+
             string actionTaken = "";
 
             foreach (var item in IdList)
@@ -600,7 +532,7 @@ namespace SocialWelfare.Controllers.Officer
                     if (action == "add" && !ApprovalList!.Contains(item)) { ApprovalList.Add(item); actionTaken = "Transfered to Appove List From Inbox"; }
                     else if (action == "remove" && ApprovalList!.Contains(item)) { ApprovalList.Remove(item); actionTaken = "Transfered to Inbox From Approve List"; }
 
-                    arrayLists.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
+                    arrayLists!.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
 
                 }
                 else if (listType == "Pool")
@@ -608,14 +540,14 @@ namespace SocialWelfare.Controllers.Officer
                     if (action == "add" && !PoolList!.Contains(item)) { PoolList.Add(item); actionTaken = "Transfered to Pool List From Approve List"; }
                     else if (action == "remove" && PoolList!.Contains(item)) { PoolList.Remove(item); actionTaken = "Transfered to Inbox From Pool List"; }
 
-                    arrayLists.PoolList = JsonConvert.SerializeObject(PoolList);
+                    arrayLists!.PoolList = JsonConvert.SerializeObject(PoolList);
                 }
                 else if (listType == "ApproveToPool")
                 {
                     if (ApprovalList!.Contains(item)) ApprovalList.Remove(item);
                     if (!PoolList!.Contains(item)) PoolList.Add(item);
 
-                    arrayLists.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
+                    arrayLists!.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
                     arrayLists.PoolList = JsonConvert.SerializeObject(PoolList);
                     actionTaken = "Transfered to Pool List From Approve List";
                 }
@@ -624,7 +556,7 @@ namespace SocialWelfare.Controllers.Officer
                     if (!ApprovalList!.Contains(item)) ApprovalList.Add(item);
                     if (PoolList!.Contains(item)) PoolList.Remove(item);
 
-                    arrayLists.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
+                    arrayLists!.ApprovalList = JsonConvert.SerializeObject(ApprovalList);
                     arrayLists.PoolList = JsonConvert.SerializeObject(PoolList);
                     actionTaken = "Transfered to Approve List From Pool List";
 

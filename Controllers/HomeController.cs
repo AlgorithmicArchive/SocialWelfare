@@ -13,24 +13,14 @@ using SocialWelfare.Models.Entities;
 
 namespace SocialWelfare.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController(ILogger<HomeController> logger, SocialWelfareDepartmentContext dbContext, OtpStore otpStore, EmailSender emailSender, UserHelperFunctions helper, PdfService pdfService) : Controller
     {
-        private readonly ILogger<HomeController> _logger;
-        private readonly SocialWelfareDepartmentContext _dbContext;
-        private readonly OtpStore _otpStore;
-        private readonly EmailSender _emailSender;
-        private readonly UserHelperFunctions _helper;
-        private readonly PdfService _pdfService;
-
-        public HomeController(ILogger<HomeController> logger, SocialWelfareDepartmentContext dbContext, OtpStore otpStore, EmailSender emailSender, UserHelperFunctions helper, PdfService pdfService)
-        {
-            _logger = logger;
-            _dbContext = dbContext;
-            _otpStore = otpStore;
-            _emailSender = emailSender;
-            _helper = helper;
-            _pdfService = pdfService;
-        }
+        private readonly ILogger<HomeController> _logger = logger;
+        private readonly SocialWelfareDepartmentContext _dbContext = dbContext;
+        private readonly OtpStore _otpStore = otpStore;
+        private readonly EmailSender _emailSender = emailSender;
+        private readonly UserHelperFunctions _helper = helper;
+        private readonly PdfService _pdfService = pdfService;
 
         public override void OnActionExecuted(ActionExecutedContext context)
         {
@@ -74,99 +64,60 @@ namespace SocialWelfare.Controllers
 
             int? divisionCode = null;
             int? districtCode = null;
-            int? tehsilCode = null;
-            var UserSpecificDetails = new Dictionary<string, dynamic>();
 
-            string AccessLevel = "";
-            switch (designation)
+            var OfficersDesignations = _dbContext.OfficersDesignations.FirstOrDefault(des => des.Designation == designation);
+            string? AccessLevel = OfficersDesignations!.AccessLevel;
+
+            var UserSpecificDetails = new Dictionary<string, dynamic>
             {
-                case "Tehsil Social Welfare Officer":
-                    AccessLevel = "Tehsil";
+                { "Profile", "" },
+                { "Designation", designation },
+                { "AccessLevel", AccessLevel! }
+            };
+
+            switch (AccessLevel)
+            {
+                case "Tehsil":
+                case "District":
+                    UserSpecificDetails.Add("AccessCode", Convert.ToInt32(form[AccessLevel].ToString()));
                     break;
-                case "District Social Welfare Officer":
-                    AccessLevel = "District";
+
+                case "Division":
+                    districtCode = Convert.ToInt32(form["District"].ToString());
+                    divisionCode = _dbContext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.Division;
+                    UserSpecificDetails.Add("AccessCode", divisionCode!);
                     break;
-                case "Director Finance":
-                    AccessLevel = "State Level";
+
+                case "State":
+                    UserSpecificDetails.Add("AccessCode", 0);
                     break;
             }
 
+            UserSpecificDetails.Add("valid", false);
 
-
-            if (!string.IsNullOrEmpty(form["Division"]))
+            var UserType = new SqlParameter("@UserType", designation.Contains("Admin") ? "Admin" : "Officer");
+            var UserSpecificParam = new SqlParameter("@UserSpecificDetails", JsonConvert.SerializeObject(UserSpecificDetails));
+            var backupCodes = new
             {
-                divisionCode = Convert.ToInt32(form["Division"].ToString());
-                UserSpecificDetails.Add("Profile", "");
-                UserSpecificDetails.Add("Designation", designation);
-                UserSpecificDetails.Add("DivisionCode", divisionCode);
-                UserSpecificDetails.Add("AccessLevel", AccessLevel);
-                UserSpecificDetails.Add("valid", false);
+                unused = _helper.GenerateUniqueRandomCodes(10, 8),
+                used = Array.Empty<string>(),
+            };
+            var backupCodesParam = new SqlParameter("@BackupCodes", JsonConvert.SerializeObject(backupCodes));
 
-                var UserType = new SqlParameter("@UserType", designation.Contains("Admin") ? "Admin" : "Officer");
-                var UserSpecificParam = new SqlParameter("@UserSpecificDetails", JsonConvert.SerializeObject(UserSpecificDetails));
-                var backupCodes = new
-                {
-                    unused = _helper.GenerateUniqueRandomCodes(10, 8),
-                    used = Array.Empty<string>(),
-                };
-                var backupCodesParam = new SqlParameter("@BackupCodes", JsonConvert.SerializeObject(backupCodes));
+            var result = _dbContext.Users.FromSqlRaw("EXEC RegisterUser @Username,@Email,@Password,@MobileNumber,@UserSpecificDetails,@UserType,@BackupCodes", username, email, password, mobileNumber, UserSpecificParam, UserType, backupCodesParam).ToList();
 
-                var result = _dbContext.Users.FromSqlRaw("EXEC RegisterUser @Username,@Email,@Password,@MobileNumber,@UserSpecificDetails,@UserType,@BackupCodes", username, email, password, mobileNumber, UserSpecificParam, UserType, backupCodesParam).ToList();
-
-                if (result.Count > 0)
-                {
-                    string otp = GenerateOTP(6);
-                    _otpStore.StoreOtp("registration", otp);
-                    await _emailSender.SendEmail(form["Email"].ToString(), "OTP For Registration.", otp);
-                    return Json(new { status = true, result[0].UserId });
-                }
-                else
-                {
-                    return Json(new { status = false, response = "Registration failed." });
-                }
+            if (result.Count > 0)
+            {
+                string otp = GenerateOTP(6);
+                _otpStore.StoreOtp("registration", otp);
+                await _emailSender.SendEmail(form["Email"].ToString(), "OTP For Registration.", otp);
+                return Json(new { status = true, result[0].UserId });
             }
             else
             {
-                if (!string.IsNullOrEmpty(form["District"]) && !string.IsNullOrEmpty(form["Tehsil"]))
-                {
-                    districtCode = Convert.ToInt32(form["District"].ToString());
-                    tehsilCode = Convert.ToInt32(form["Tehsil"].ToString());
-                    divisionCode = _dbContext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.Division;
-                }
-
-                UserSpecificDetails.Add("Profile", "");
-                UserSpecificDetails.Add("Designation", designation);
-                UserSpecificDetails.Add("DivisionCode", divisionCode!);
-                UserSpecificDetails.Add("DistrictCode", districtCode!);
-                UserSpecificDetails.Add("TehsilCode", tehsilCode!);
-                UserSpecificDetails.Add("AccessLevel", AccessLevel);
-                UserSpecificDetails.Add("valid", false);
-
-                var UserType = new SqlParameter("@UserType", designation.Contains("Admin") ? "Admin" : "Officer");
-                var UserSpecificParam = new SqlParameter("@UserSpecificDetails", JsonConvert.SerializeObject(UserSpecificDetails));
-                var backupCodes = new
-                {
-                    unused = _helper.GenerateUniqueRandomCodes(10, 8),
-                    used = Array.Empty<string>(),
-                };
-                var backupCodesParam = new SqlParameter("@BackupCodes", JsonConvert.SerializeObject(backupCodes));
-
-                var result = _dbContext.Users.FromSqlRaw("EXEC RegisterUser @Username,@Email,@Password,@MobileNumber,@UserSpecificDetails,@UserType,@BackupCodes", username, email, password, mobileNumber, UserSpecificParam, UserType, backupCodesParam).ToList();
-
-                if (result.Count > 0)
-                {
-                    string otp = GenerateOTP(6);
-                    _otpStore.StoreOtp("registration", otp);
-                    await _emailSender.SendEmail(form["Email"].ToString(), "OTP For Registration.", otp);
-                    return Json(new { status = true, result[0].UserId });
-                }
-                else
-                {
-                    return Json(new { status = false, response = "Registration failed." });
-                }
+                return Json(new { status = false, response = "Registration failed." });
             }
         }
-
         public IActionResult Login(IFormCollection form)
         {
             var username = new SqlParameter("Username", form["Username"].ToString());

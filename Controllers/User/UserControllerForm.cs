@@ -1,4 +1,5 @@
 using System.Data;
+using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -136,66 +137,93 @@ namespace SocialWelfare.Controllers.User
         public async Task<IActionResult> InsertDocuments([FromForm] IFormCollection form)
         {
             var applicationId = form["ApplicationId"].ToString();
+            int serviceId = Convert.ToInt32(form["ServiceId"].ToString());
+            int accessCode = Convert.ToInt32(form["AccessCode"].ToString());
+            var labels = JsonConvert.DeserializeObject<string[]>(form["labels"].ToString()) ?? Array.Empty<string>();
+
             var docs = new List<Document>();
             var addedLabels = new HashSet<string>();
-            string[] labels = JsonConvert.DeserializeObject<string[]>(form["labels"].ToString()) ?? Array.Empty<string>();
 
             foreach (var label in labels)
             {
-                if (addedLabels.Contains(label))
+                if (addedLabels.Add(label))
                 {
-                    continue;
+                    var doc = new Document
+                    {
+                        Label = label,
+                        Enclosure = form[$"{label}Enclosure"].ToString(),
+                        File = await helper.GetFilePath(form.Files[$"{label}File"])
+                    };
+                    docs.Add(doc);
                 }
-
-                string enclosure = form[$"{label}Enclosure"].ToString();
-                string file = await helper.GetFilePath(form.Files[$"{label}File"]);
-                var doc = new Document
-                {
-                    Label = label,
-                    Enclosure = enclosure,
-                    File = file
-                };
-
-                docs.Add(doc);
-                addedLabels.Add(label);
             }
 
             var documents = JsonConvert.SerializeObject(docs);
             var workForceOfficers = JsonConvert.DeserializeObject<List<dynamic>>(form["workForceOfficers"].ToString()) ?? new List<dynamic>();
+            string officer = workForceOfficers[0].Designation;
+            var OfficerDetails = helper.GetOfficerDetails(officer, "District", accessCode);
+            var userSpecific = JsonConvert.DeserializeObject<dynamic>(OfficerDetails.UserSpecificDetails);
             var newPhase = new CurrentPhase
             {
                 ApplicationId = applicationId,
                 ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt"),
                 Officer = workForceOfficers[0].Designation,
+                OfficerId = OfficerDetails.UserId,
+                AccessCode = accessCode,
                 ActionTaken = "Pending",
                 Remarks = "",
-                File = "",
                 CanPull = false,
-                Previous = 0,
-                Next = 0
             };
             dbcontext.CurrentPhases.Add(newPhase);
-            dbcontext.SaveChanges();
-            int PhaseId = newPhase.PhaseId;
 
-            // Update Phase, Documents, and ApplicationStatus in Applications Table
-            helper.UpdateApplication("Phase", JsonConvert.SerializeObject(PhaseId), new SqlParameter("@ApplicationId", applicationId));
-            helper.UpdateApplication("Documents", documents, new SqlParameter("@ApplicationId", applicationId));
-            helper.UpdateApplication("ApplicationStatus", "Initiated", new SqlParameter("@ApplicationId", applicationId));
-            helper.UpdateApplication("SubmissionDate", DateTime.Now.ToString("dd MMM yyyy hh:mm tt"), new SqlParameter("@ApplicationId", applicationId));
+
+            var recordCount = await dbcontext.RecordCounts
+                .FirstOrDefaultAsync(rc => rc.ServiceId == serviceId && rc.Officer == officer && rc.AccessCode == accessCode);
+
+            if (recordCount != null)
+            {
+                recordCount.Pending++;
+            }
+            else
+            {
+                dbcontext.RecordCounts.Add(new RecordCount
+                {
+                    ServiceId = serviceId,
+                    Officer = officer,
+                    AccessCode = accessCode,
+                    Pending = 1
+                });
+            }
+
+            await dbcontext.SaveChangesAsync();
+
+            // Consolidate UpdateApplication calls
+            var updates = new Dictionary<string, string>
+            {
+                { "Phase", JsonConvert.SerializeObject(newPhase.PhaseId) },
+                { "Documents", documents },
+                { "ApplicationStatus", "Initiated" },
+                { "SubmissionDate", DateTime.Now.ToString("dd MMM yyyy hh:mm tt") }
+            };
+
+            foreach (var update in updates)
+            {
+                helper.UpdateApplication(update.Key, update.Value, new SqlParameter("@ApplicationId", applicationId));
+            }
 
             if (!form.ContainsKey("returnToEdit"))
             {
                 var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(applicationId);
                 int districtCode = Convert.ToInt32(serviceSpecific["District"]);
-                string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)!.DistrictName;
+                string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.DistrictName.ToUpper()!;
+
                 var details = new Dictionary<string, string>
                 {
                     ["REFERENCE NUMBER"] = userDetails.ApplicationId,
                     ["APPLICANT NAME"] = userDetails.ApplicantName,
-                    ["PARENTAGE"] = userDetails.RelationName + $" ({userDetails.Relation.ToUpper()})",
+                    ["PARENTAGE"] = $"{userDetails.RelationName} ({userDetails.Relation.ToUpper()})",
                     ["MOTHER NAME"] = serviceSpecific["MotherName"],
-                    ["APPLIED DISTRICT"] = AppliedDistrict.ToUpper(),
+                    ["APPLIED DISTRICT"] = appliedDistrict,
                     ["BANK NAME"] = bankDetails["BankName"],
                     ["ACCOUNT NUMBER"] = bankDetails["AccountNumber"],
                     ["IFSC CODE"] = bankDetails["IfscCode"],
@@ -204,29 +232,25 @@ namespace SocialWelfare.Controllers.User
                     ["PRESENT ADDRESS"] = $"{preAddressDetails.Address}, TEHSIL: {preAddressDetails.Tehsil}, DISTRICT: {preAddressDetails.District}, PIN CODE: {preAddressDetails.Pincode}",
                     ["PERMANENT ADDRESS"] = $"{perAddressDetails.Address}, TEHSIL: {perAddressDetails.Tehsil}, DISTRICT: {perAddressDetails.District}, PIN CODE: {perAddressDetails.Pincode}"
                 };
-
+                helper.UpdateApplicationHistory(applicationId, "Citizen", "Application Submitted.", "NULL");
                 _pdfService.CreateAcknowledgement(details, userDetails.ApplicationId);
-            }
-
-            if (form.ContainsKey("returnToEdit"))
-            {
-                helper.UpdateApplication("EditList", "[]", new SqlParameter("@ApplicationId", applicationId));
-                helper.UpdateApplicationHistory(applicationId, "Citizen", "Edited and returned to " + workForceOfficers[0].Designation, "NULL");
             }
             else
             {
-                helper.UpdateApplicationHistory(applicationId, "Citizen", "Application Submitted.", "NULL");
+                helper.UpdateApplication("EditList", "[]", new SqlParameter("@ApplicationId", applicationId));
+                helper.UpdateApplicationHistory(applicationId, "Citizen", $"Edited and returned to {officer}", "NULL");
             }
 
-            string email = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == applicationId)?.Email!;
+            var email = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == applicationId)?.Email;
 
-            if (email != null)
+            if (!string.IsNullOrWhiteSpace(email))
             {
-                await emailSender.SendEmail(email, "Acknowledgement", $"Your Application with Reference Number {applicationId} has been sent to {workForceOfficers[0].Designation} at {DateTime.Now:dd MMM yyyy hh:mm tt}");
+                await emailSender.SendEmail(email, "Acknowledgement", $"Your Application with Reference Number {applicationId} has been sent to {officer} at {DateTime.Now:dd MMM yyyy hh:mm tt}");
             }
 
             return Json(new { status = true, ApplicationId = applicationId, complete = true });
         }
+
 
 
         public async Task<IActionResult> UpdateGeneralDetails([FromForm] IFormCollection form)
@@ -379,11 +403,11 @@ namespace SocialWelfare.Controllers.User
             return Json(new { status = true });
         }
 
-        public IActionResult IncompleteApplication([FromForm] IFormCollection form)
+        public IActionResult IncompleteApplication(string ApplicationId)
         {
-            var ApplicationId = new SqlParameter("@ApplicationId", form["ApplicationId"].ToString());
-            helper.UpdateApplication("ApplicationStatus", "Initiated", ApplicationId);
-            helper.UpdateApplicationHistory(form["ApplicationId"].ToString(), "Citizen", "Application Submitted.", "NULL");
+            var ApplicationIdParam = new SqlParameter("@ApplicationId", ApplicationId);
+            helper.UpdateApplication("ApplicationStatus", "Initiated", ApplicationIdParam);
+            helper.UpdateApplicationHistory(ApplicationId, "Citizen", "Application Submitted.", "NULL");
             return Json(new { status = true });
         }
 

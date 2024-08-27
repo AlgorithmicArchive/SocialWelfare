@@ -173,6 +173,22 @@ public class UserHelperFunctions
     }
 
 
+    public User GetOfficerDetails(string Designation, string AccessLevel, int AccessCode)
+    {
+        var officer = dbcontext.Users
+        .AsEnumerable()
+        .FirstOrDefault(x =>
+        {
+            var details = JsonConvert.DeserializeObject<dynamic>(x.UserSpecificDetails);
+            return details?.Designation == Designation
+                && details?.AccessLevel == AccessLevel
+                && details?.AccessCode == AccessCode;
+        });
+
+
+
+        return officer!;
+    }
     public (Application UserDetails, AddressJoin PreAddressDetails, AddressJoin PerAddressDetails, dynamic ServiceSpecific, dynamic BankDetails) GetUserDetailsAndRelatedData(string applicationId)
     {
         var userDetails = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == applicationId);
@@ -182,12 +198,12 @@ public class UserHelperFunctions
             throw new Exception("User details not found");
         }
 
-        var preAddressDetails = dbcontext.AddressJoins
+        var preAddressDetails = dbcontext.Set<AddressJoin>()
             .FromSqlRaw("EXEC GetAddressDetails @AddressId", new SqlParameter("@AddressId", userDetails.PresentAddressId))
             .ToList()
             .FirstOrDefault();
 
-        var perAddressDetails = dbcontext.AddressJoins
+        var perAddressDetails = dbcontext.Set<AddressJoin>()
             .FromSqlRaw("EXEC GetAddressDetails @AddressId", new SqlParameter("@AddressId", userDetails.PermanentAddressId))
             .ToList()
             .FirstOrDefault();
