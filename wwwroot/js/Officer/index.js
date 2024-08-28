@@ -71,6 +71,7 @@ $(document).ready(function () {
 
       const type = propertyTypeMap[property];
       if (type) {
+        showSpinner();
         fetch(
           `/Officer/Applications?type=${type}&serviceId=${parseInt(
             $("#services").val()

@@ -583,61 +583,15 @@ namespace SocialWelfare.Controllers.Officer
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
             string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
-            SqlParameter AccessLevelCode = new SqlParameter("@AccessLevelCode", DBNull.Value);
-
-            switch (accessLevel)
-            {
-                case "Tehsil":
-                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["TehsilCode"]?.ToString() ?? string.Empty);
-                    break;
-                case "District":
-                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DistrictCode"]?.ToString() ?? string.Empty);
-                    break;
-                case "Division":
-                    AccessLevelCode = new SqlParameter("@AccessLevelCode", UserSpecificDetails!["DivisionCode"]?.ToString() ?? string.Empty);
-                    break;
-            }
-
-            var applicationList = dbcontext.Applications.FromSqlRaw(
-                "EXEC GetApplicationsForOfficer @OfficerDesignation, @ActionTaken, @AccessLevel, @AccessLevelCode, @ServiceId",
-                new SqlParameter("@OfficerDesignation", officerDesignation),
-                new SqlParameter("@ActionTaken", "Sanction"),
-                new SqlParameter("@AccessLevel", accessLevel),
-                AccessLevelCode,
-                new SqlParameter("@ServiceId", 1)).ToList();
 
             string ftpHost = form["ftpHost"].ToString();
             string ftpUser = form["ftpUser"].ToString();
             string ftpPassword = form["ftpPassword"].ToString();
+            int serviceId = Convert.ToInt32(form["serviceId"].ToString());
 
-            var builder = new StringBuilder();
-            foreach (var application in applicationList)
-            {
-                var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
-                int DistrictCode = Convert.ToInt32(serviceSpecific["District"]);
-                string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
-                var obj = new
-                {
-                    referenceNumber = application.ApplicationId,
-                    appliedDistrict,
-                    submissionDate = application.SubmissionDate!,
-                    applicantName = application.ApplicantName,
-                    parentage = application.RelationName + $" ({application.Relation.ToUpper()})",
-                    accountNumber = bankDetails["AccountNumber"],
-                    amount = "500000",
-                    dateOfMarriage = serviceSpecific!["DateOfMarriage"],
-                };
+            var service = dbcontext.Services.FirstOrDefault(s => s.ServiceId == serviceId)!;
 
-                builder.AppendLine($"{obj.referenceNumber},{obj.appliedDistrict},{obj.submissionDate},{obj.applicantName},{obj.accountNumber},{obj.amount},{obj.dateOfMarriage}");
-                application.ApplicationStatus = "Dispatched";
-                helper.UpdateApplicationHistory(application.ApplicationId, officerDesignation, "Dispatched To Bank", "NULL");
-            }
-
-            dbcontext.SaveChanges();
-
-            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "exports", DateTime.Now.ToString("dd_MMM_yyyy_hh:mm_tt") + "_MAS.csv");
-            System.IO.File.WriteAllText(filePath, builder.ToString());
-
+            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "exports", service.BankDispatchFile);
 
             var ftpClient = new SftpClient(ftpHost, 22, ftpUser, ftpPassword);
             ftpClient.Connect();
@@ -649,6 +603,9 @@ namespace SocialWelfare.Controllers.Officer
                 ftpClient.UploadFile(stream, Path.GetFileName(filePath));
             }
             ftpClient.Disconnect();
+
+            service.BankDispatchFile = "";
+            dbcontext.SaveChanges();
 
             return Json(new { status = true, message = "File Uploaded Successfully." });
         }

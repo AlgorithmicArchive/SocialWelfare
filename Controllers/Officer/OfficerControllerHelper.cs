@@ -21,6 +21,9 @@ using iText.Forms.Fields.Properties;
 using iText.Kernel.Font;
 using iText.IO.Font.Constants;
 using iText.Kernel.Colors;
+using CsvHelper;
+using CsvHelper.Configuration;
+using System.Globalization;
 
 namespace SocialWelfare.Controllers.Officer
 {
@@ -487,32 +490,15 @@ namespace SocialWelfare.Controllers.Officer
             var workForceOfficers = JsonConvert.DeserializeObject<IEnumerable<dynamic>>(service!.WorkForceOfficers!);
             var officer = workForceOfficers!.FirstOrDefault(o => o["Designation"] == officerDesignation);
 
-            string accessCode = UserSpecificDetails!["AccessCode"].ToString();
+            int accessCode = Convert.ToInt32(UserSpecificDetails!["AccessCode"].ToString());
             var recordsCount = dbcontext.RecordCounts.FirstOrDefault(rc => rc.ServiceId == serviceId && rc.Officer == officerDesignation && rc.AccessCode == Convert.ToInt32(accessCode));
+            var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.AccessCode == accessCode && cur.Officer == officerDesignation);
 
 
-            var applicationList = dbcontext.CurrentPhases
-          .Join(dbcontext.Applications,
-              cp => cp.ApplicationId,
-              a => a.ApplicationId,
-              (cp, a) => new { CurrentPhase = cp, Application = a })
-          .Where(x => x.Application.ServiceId == serviceId && x.CurrentPhase.ActionTaken == "Sanction" && x.CurrentPhase.Officer == officerDesignation)
-          .AsEnumerable().Skip(start).Take(length) // Switch to LINQ to Objects for JSON deserialization
-          .Where(x =>
-          {
-              if (accessLevel != "State")
-              {
-                  var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(x.Application.ServiceSpecific);
-                  string locationCode = serviceSpecific?[accessLevel]?.ToString() ?? string.Empty;
-                  return locationCode == accessCode;
-              }
-              return true; // If accessLevel is "State", do not filter out the item.
-          })
-          .Select(x => x.Application)
-          .ToList();
-
-            // Filter the applications in code
-            applicationList = applicationList.Where(app => app.ApplicationStatus == "Sanctioned").ToList();
+            var applicationList = dbcontext.Applications
+                 .Where(app => app.ServiceId == serviceId && app.ApplicationStatus == "Sanctioned")
+                 .AsEnumerable().Skip(start).Take(length)
+                 .ToList();
 
             var SanctionApplications = new List<dynamic>();
             var sanctionColumns = new List<dynamic>
@@ -533,7 +519,6 @@ namespace SocialWelfare.Controllers.Officer
                 var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
                 int DistrictCode = Convert.ToInt32(serviceSpecific!["District"]);
                 string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
-                var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == application.ApplicationId && cur.Officer == officerDesignation);
                 canPull = currentPhase!.CanPull;
 
                 List<dynamic> sanctionData = [
@@ -560,9 +545,9 @@ namespace SocialWelfare.Controllers.Officer
 
                 SanctionList = new
                 {
-                    data = SanctionApplications.AsEnumerable().Skip(start).Take(length),
+                    data = SanctionApplications,
                     columns = sanctionColumns,
-                    recordsTotal = recordsCount,
+                    recordsTotal = recordsCount!.Sanction,
                     recordsFiltered = applicationList.Count,
                 },
                 Type = type,
@@ -774,47 +759,91 @@ namespace SocialWelfare.Controllers.Officer
             return Json(new { status = true, TotalCount, PendingCount, RejectCount, ForwardCount, SanctionCount, PendingWithCitizenCount });
         }
 
-        public IActionResult BankCsvFile(string serviceId)
+        public async Task<IActionResult> BankCsvFile(string serviceId)
         {
+            int serviceIdInt = Convert.ToInt32(serviceId);
+            string staticAmount = "50000"; // or any other value you need
             int? userId = HttpContext.Session.GetInt32("UserId");
             Models.Entities.User Officer = dbcontext.Users.Find(userId)!;
-            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
-            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
-            string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
-            SqlParameter AccessLevelCode = new("@AccessLevelCode", DBNull.Value);
-            int ServiceId = Convert.ToInt32(serviceId);
+            var details = JsonConvert.DeserializeObject<dynamic>(Officer.UserSpecificDetails);
+            string officerDesignation = details!["Designation"];
+            int accessCode = Convert.ToInt32(details["AccessCode"]);
+            var service = dbcontext.Services.FirstOrDefault(s => s.ServiceId == serviceIdInt)!;
 
-            var applicationList = dbcontext.Applications
-                .Where(app => app.ServiceId == ServiceId && app.ApplicationStatus == "Sanctioned")
-                .AsEnumerable() // Switch to LINQ to Objects for custom logic
-                .Select(app =>
+            var recordsCount = dbcontext.RecordCounts
+                .FirstOrDefault(rc => rc.ServiceId == serviceIdInt && rc.Officer == officerDesignation && rc.AccessCode == accessCode);
+
+            // Define the path where the CSV file will be stored
+            string webRootPath = _webHostEnvironment.WebRootPath;
+            string exportsFolder = Path.Combine(webRootPath, "exports");
+
+            // Ensure the exports directory exists
+            if (!Directory.Exists(exportsFolder))
+            {
+                Directory.CreateDirectory(exportsFolder);
+            }
+
+            string fileName;
+            bool fileExists;
+
+            if (!string.IsNullOrEmpty(service.BankDispatchFile))
+            {
+                fileName = service.BankDispatchFile;
+                fileExists = true;
+            }
+            else
+            {
+                fileName = $"BankCsvFile_{serviceIdInt}_{DateTime.Now:yyyyMMddHHmmss}.csv";
+                fileExists = false;
+                service.BankDispatchFile = fileName;
+            }
+            string filePath = Path.Combine(exportsFolder, fileName);
+
+            // Notify the start of the process
+            await hubContext.Clients.All.SendAsync("ReceiveProgress", 0);
+
+            // Fetch data using the stored procedure
+            var bankFileData = await dbcontext.BankFiles
+                .FromSqlRaw("EXEC GetBankFileData @ServiceId, @StaticAmount",
+                            new SqlParameter("@ServiceId", serviceIdInt),
+                            new SqlParameter("@StaticAmount", staticAmount))
+                .AsNoTracking()
+                .ToListAsync();
+
+            int totalRecords = bankFileData.Count;
+            int batchSize = 1000; // Adjust the batch size as needed
+            int processedRecords = 0;
+
+            // Check if the file already exists
+
+            using (var streamWriter = new StreamWriter(filePath, append: fileExists))
+            using (var csvWriter = new CsvWriter(streamWriter, new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = !fileExists }))
+            {
+                while (processedRecords < totalRecords)
                 {
-                    // Get additional details for each application
-                    var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(app.ApplicationId);
+                    // Determine the next batch of records
+                    var batch = bankFileData.Skip(processedRecords).Take(batchSize);
 
-                    int districtCode = Convert.ToInt32(serviceSpecific["District"]);
-                    string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.DistrictName.ToUpper() ?? "UNKNOWN";
+                    // Write the current batch to the CSV file
+                    await csvWriter.WriteRecordsAsync(batch);
 
-                    // Return a new BankFile object
-                    return new BankFile
-                    {
-                        ApplicationId = app.ApplicationId,
-                        AppliedDistrict = appliedDistrict,
-                        SubmissionDate = app.SubmissionDate,
-                        ApplicantName = app.ApplicantName,
-                        Parentage = $"{app.RelationName} ({app.Relation.ToUpper()})",
-                        AccountNumber = bankDetails["AccountNumber"],
-                        IfscCode = bankDetails["IfscCode"],
-                        Amount = serviceSpecific["Amount"].ToString(),  // Assuming Amount is a field in serviceSpecific
-                        DateOfMarriage = serviceSpecific["DateOfMarriage"]?.ToString()
-                    };
-                })
-                .ToList();
+                    // Update progress
+                    processedRecords += batch.Count();
+                    int progress = (int)(processedRecords / (double)totalRecords * 100);
+                    await hubContext.Clients.All.SendAsync("ReceiveProgress", progress);
+                }
+            }
 
+            // Notify completion
+            await hubContext.Clients.All.SendAsync("ReceiveProgress", 100);
 
+            recordsCount!.Sanction -= totalRecords;
+            dbcontext.SaveChanges();
 
-            return Json(new { status = true });
+            // Return the file path as JSON
+            return Json(new { filePath = $"/exports/{fileName}" });
         }
+
 
 
 

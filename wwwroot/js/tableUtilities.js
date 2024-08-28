@@ -225,34 +225,58 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
         const numOfPages = Math.ceil(recordsTotal / length);
         const ul = $(
           `<ul
-            class="pagination d-flex justify-content-end mt-2"
-            id="tablePagination"
-            data-number-of-pages="${numOfPages}"
-            data-page-length="${table.page.len()}"
-            data-table-type="${type}"
-            data-service-id="${serviceId}"
-            data-table-id="${tableId}"
-            data-url-link="${url}"
-          ></ul>`
+                class="pagination d-flex justify-content-end mt-2"
+                id="tablePagination"
+                data-number-of-pages="${numOfPages}"
+                data-page-length="${table.page.len()}"
+                data-table-type="${type}"
+                data-service-id="${serviceId}"
+                data-table-id="${tableId}"
+                data-url-link="${url}"
+            ></ul>`
         );
+
         ul.append(
           `<li class="page-item"><a class="page-link" href="#">Previous</a></li>`
         );
 
-        for (let i = 0; i < numOfPages; i++) {
-          // Determine if the current page should be active
-          const isActive = start / length === i ? " active" : "";
+        const maxPagesToShow = 10; // Adjust the threshold as needed
+        let startPage = 0;
+        let endPage = numOfPages;
 
-          // Append the pagination item
+        if (numOfPages > maxPagesToShow) {
+          startPage = Math.max(
+            0,
+            Math.floor(start / length) - Math.floor(maxPagesToShow / 2)
+          );
+          endPage = Math.min(numOfPages, startPage + maxPagesToShow);
+
+          if (startPage > 0) {
+            ul.append(
+              `<li class="page-item disabled"><a class="page-link">...</a></li>`
+            );
+          }
+        }
+
+        for (let i = startPage; i < endPage; i++) {
+          const isActive = start / length === i ? " active" : "";
           ul.append(
             `<li class="page-item${isActive}" style="cursor:pointer">
-            <a class="page-link">${i + 1}</a>
-        </li>`
+                    <a class="page-link">${i + 1}</a>
+                </li>`
           );
         }
+
+        if (endPage < numOfPages) {
+          ul.append(
+            `<li class="page-item disabled"><a class="page-link">...</a></li>`
+          );
+        }
+
         ul.append(
           `<li class="page-item"><a class="page-link" href="#">Next</a></li>`
         );
+
         $(`#${tableId}`).after(ul);
       }
 
@@ -455,8 +479,8 @@ $(document).ready(function () {
     const pageLength = parseInt($pagination.attr("data-page-length"));
     $currentPageItem.removeClass("active");
     const tableType = $pagination.attr("data-table-type");
-    const serviceId = $pagination.attr("data-serviceId");
-    const tableId = $pagination.attr("data-table-Id");
+    const serviceId = $pagination.attr("data-service-id");
+    const tableId = $pagination.attr("data-table-id");
     const url = $pagination.attr("data-url-link");
 
     let callFunction = true;
@@ -477,6 +501,7 @@ $(document).ready(function () {
     }
 
     if (callFunction) {
+      console.log(serviceId);
       initializeRecordTables(
         tableId,
         url,

@@ -54,12 +54,15 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Village> Villages { get; set; }
 
     public virtual DbSet<Ward> Wards { get; set; }
+    public virtual DbSet<AddressJoin> AddressJoins { get; set; }
+    public virtual DbSet<BankFile> BankFiles { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("name=DefaultConnection");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-
+        modelBuilder.Entity<AddressJoin>().HasNoKey();
+        modelBuilder.Entity<BankFile>().HasNoKey();
         modelBuilder.Entity<Address>(entity =>
         {
             entity.ToTable("Address");

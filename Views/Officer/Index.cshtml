@@ -152,14 +152,10 @@
             <!-- Modal body -->
             <div class="modal-body">
                 <div class="container-fluid" id="bankFileContainer">
-                    <div id="progress-container" style="display:none;">
-                        <h3>Processing...</h3>
-                        <div class="progress">
-                            <div id="progress-bar" class="progress-bar" role="progressbar" aria-valuemin="0"
-                                aria-valuemax="100" aria-valuenow="0" style="width: 0%;">
-                                0%
-                            </div>
-                        </div>
+                    <div id="progress-container mb-2">
+                        <progress id="progressBar" value="0" max="100"
+                            style="height: 20px;appearance: none;border-radius: 15px;background-color: #a29e9e;"
+                            class="w-100"></progress>
                     </div>
                 </div>
                 <div class="container-fluid" id="ftpForm" style="display: none;">
