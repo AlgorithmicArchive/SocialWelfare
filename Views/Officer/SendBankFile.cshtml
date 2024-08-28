@@ -1,0 +1,35 @@
+<div class="full-screen-section flex-column py-5 mb-5">
+    <p class="text-center fw-bold fs-4 mt-5">Bank File Transfer</p>
+    <div class="container-fluid">
+        <div class="container d-flex justify-content-center gap-2">
+            <select class="form-select w-50" name="services" id="services">
+                <option value="">Select Service</option>
+            </select>
+
+            <button class="btn btn-primary" id="getRecords">Get Records</button>
+        </div>
+
+        <div class="container mt-2" id="ftpContainer">
+            <form id="ftpForm" style="display: none;">
+                <div class="container-fluid mt-5 border rounded-border p-3" id="ftpForm">
+                    <p class="w-100 mt-5 fs-3 text-center">Provide SFTP Details.</p>
+                    <div class="container d-flex flex-column gap-4 mb-2">
+                        <input class="form-control" type="text" name="ftpHost" id="ftpHost" placeholder="FTP Host"
+                            required>
+                        <input class="form-control" type="text" name="ftpUser" id="ftpUser" placeholder="FTP User"
+                            required>
+                        <input class="form-control" type="password" name="ftpPassword" id="ftpPassword"
+                            placeholder="FTP Password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark d-flex mx-auto" id="send">Send</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const serviceList = @Html.Raw(Json.Serialize(Model));
+</script>
+<script src="/js/Officer/sendBankFile.js"></script>

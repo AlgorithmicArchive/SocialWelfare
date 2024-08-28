@@ -58,6 +58,19 @@ $(document).ready(function () {
             },
           ],
         },
+        {
+          label: "Bank File Management",
+          dropdown: [
+            {
+              label: "Send File To Bank",
+              link: "/Officer/SendBankFile",
+            },
+            {
+              label: "Get Bank Response File",
+              link: "/Officer/GetResponseFile",
+            },
+          ],
+        },
         { label: "Reports", link: "/Officer/Reports" },
       ],
       profile: [
@@ -75,6 +88,10 @@ $(document).ready(function () {
 
   let Type =
     userType == "" ? "home" : userType == "Citizen" ? "user" : "officer";
+
+  if (Type == "officer" && userName != "directorFinance") {
+    menus.officer.right.splice(1, 1);
+  }
 
   const { left: LeftMenu, right: RightMenu, profile: Profile } = menus[Type];
 

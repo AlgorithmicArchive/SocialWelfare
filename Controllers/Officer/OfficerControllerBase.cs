@@ -328,6 +328,31 @@ namespace SocialWelfare.Controllers.Officer
             };
             return View(ApplicationDetails);
         }
+
+        public IActionResult SendBankFile()
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
+            string officerDesignation = UserSpecificDetails!["Designation"];
+            var Services = dbcontext.Services.Where(s => s.Active == true).ToList();
+            var ServiceList = new List<dynamic>();
+            foreach (var service in Services)
+            {
+                var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(service.WorkForceOfficers!);
+                foreach (var officer in WorkForceOfficers!)
+                {
+                    if (officer["Designation"] == officerDesignation)
+                    {
+                        ServiceList.Add(new { service.ServiceId, service.ServiceName });
+                    }
+                }
+            }
+
+
+            return View(ServiceList);
+        }
+
         public IActionResult Reports()
         {
             int? UserId = HttpContext.Session.GetInt32("UserId");
@@ -609,7 +634,6 @@ namespace SocialWelfare.Controllers.Officer
 
             return Json(new { status = true, message = "File Uploaded Successfully." });
         }
-
 
         [HttpGet]
         public IActionResult RegisterDSC()

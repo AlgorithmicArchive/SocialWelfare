@@ -759,6 +759,51 @@ namespace SocialWelfare.Controllers.Officer
             return Json(new { status = true, TotalCount, PendingCount, RejectCount, ForwardCount, SanctionCount, PendingWithCitizenCount });
         }
 
+        private async Task UpdateApplicationHistoryAsync(IEnumerable<BankFile> bankFileData, string officer, string fileName)
+        {
+            // Get all the ApplicationIds from the bankFileData
+            var applicationIds = bankFileData.Select(data => data.ApplicationId).ToList();
+
+            // Fetch all relevant application histories in a single query
+            var applicationHistories = await dbcontext.ApplicationsHistories
+                .Where(app => applicationIds.Contains(app.ApplicationId))
+                .ToListAsync();
+
+            foreach (var data in bankFileData)
+            {
+                // Find the corresponding history record
+                var applicationHistory = applicationHistories.FirstOrDefault(app => app.ApplicationId == data.ApplicationId);
+                if (applicationHistory != null)
+                {
+                    // Deserialize history
+                    var history = JsonConvert.DeserializeObject<List<dynamic>>(applicationHistory.History) ?? new List<dynamic>();
+
+                    // Create the new history object
+                    var newHistoryEntry = new
+                    {
+                        ActionTaker = officer,
+                        ActionTaken = "Appended To Bank File",
+                        Remarks = "NIL",
+                        DateTime = DateTime.Now.ToString("dd MMM yyyy hh:mm tt"),
+                        UpdateObject = (dynamic)null!,
+                        File = fileName
+                    };
+
+                    // Add the new history entry
+                    history.Add(newHistoryEntry);
+
+                    // Serialize the history back to the string and update the database entity
+                    applicationHistory.History = JsonConvert.SerializeObject(history);
+                }
+            }
+
+            // Save all changes in a single call
+            await dbcontext.SaveChangesAsync();
+        }
+
+
+
+
         public async Task<IActionResult> BankCsvFile(string serviceId)
         {
             int serviceIdInt = Convert.ToInt32(serviceId);
@@ -810,6 +855,8 @@ namespace SocialWelfare.Controllers.Officer
                 .AsNoTracking()
                 .ToListAsync();
 
+            await UpdateApplicationHistoryAsync(bankFileData, officerDesignation, fileName);
+
             int totalRecords = bankFileData.Count;
             int batchSize = 1000; // Adjust the batch size as needed
             int processedRecords = 0;
@@ -844,7 +891,13 @@ namespace SocialWelfare.Controllers.Officer
             return Json(new { filePath = $"/exports/{fileName}" });
         }
 
+        public IActionResult IsBankFile(string serviceId)
+        {
+            int ServiceId = Convert.ToInt32(serviceId);
+            string BankDispatchFile = dbcontext.Services.FirstOrDefault(s => s.ServiceId == ServiceId)!.BankDispatchFile;
 
+            return Json(new { isFilePresent = BankDispatchFile != "" });
+        }
 
 
         [HttpPost]
