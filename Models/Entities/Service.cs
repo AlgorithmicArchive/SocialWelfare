@@ -19,8 +19,6 @@ public partial class Service
 
     public string LetterUpdateDetails { get; set; } = null!;
 
-    public string BankDispatchFile { get; set; } = null!;
-
     public DateTime CreatedAt { get; set; }
 
     public bool Active { get; set; }

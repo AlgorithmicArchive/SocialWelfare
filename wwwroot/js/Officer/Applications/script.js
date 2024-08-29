@@ -7,22 +7,6 @@ let finalList = [];
 let serviceId = 0;
 let bankDispatchFile = "";
 
-function downloadFile(filePath) {
-  fetch(filePath)
-    .then((response) => response.blob())
-    .then((blob) => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.style.display = "none";
-      a.href = url;
-      a.download = filePath.split("/").pop(); // Extract filename from path
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-    })
-    .catch((error) => console.error("Error downloading file:", error));
-}
-
 function selectedCount(id, arr) {
   let count = Array.isArray(arr) ? arr.length : arr;
   $(`#${id}`).text($(`#${id}`).text().split("(")[0] + `(${count})`);
@@ -243,44 +227,8 @@ function onSelect(list) {
   processApplications(Applications.poolCount, poolIdList, true);
   processApplications(Applications.approveCount, poolIdList, true);
 }
-function startFileCreation(serviceId) {
-  fetch("/Officer/BankCsvFile?serviceId=" + serviceId)
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      return response.json(); // Assuming the server returns JSON
-    })
-    .then((data) => {
-      downloadFile(data.filePath);
-      alert("File created successfully!");
-      $("#bankFileContainer").hide();
-      $("#ftpForm").show();
-      // Handle the success case here, possibly using the returned `data`
-    })
-    .catch((error) => {
-      alert("Error creating file.");
-      console.error("There was a problem with the fetch operation:", error);
-    });
-}
 
 $(document).ready(function () {
-  console.log(serviceId, bankDispatchFile);
-
-  const connection = new signalR.HubConnectionBuilder()
-    .withUrl("/progressHub")
-    .build();
-
-  connection.on("ReceiveProgress", function (progress) {
-    console.log(`Progress: ${progress}%`);
-    // Update progress bar or any UI element
-    document.getElementById("progressBar").value = progress;
-  });
-
-  connection.start().catch(function (err) {
-    return console.error(err.toString());
-  });
-
   $(document).on("change", ".pending-element", function () {
     const currentVal = $(this).val();
     if ($(this).is(":checked")) {
@@ -397,64 +345,5 @@ $(document).ready(function () {
       10
     );
     switchContainer("ApproveContainer", "approveButton");
-  });
-
-  $("#generateBankFile").on("click", function () {
-    $("#ftpCredentials").modal("show");
-    if (bankDispatchFile == "") {
-      $("#bankFileContainer").append(
-        `<button class="btn btn-dark d-flex mx-auto" id="createFile">Create File</button>`
-      );
-    } else {
-      $("#bankFileContainer").append(
-        `<p>A file already exists.</p><button class="btn btn-dark d-flex mx-auto" id="createFile">Append To File</button>`
-      );
-    }
-
-    $("#createFile").click(function () {
-      $("#progress-container").show();
-      startFileCreation(serviceId);
-    });
-    $("#send")
-      .off("click")
-      .on("click", async function () {
-        $("#ftpCredentials input").each(function () {
-          if ($(this).val() == "" && $(this).next("span").length == 0) {
-            $(this).after(
-              '<span class="errorMsg">This field is required</span>'
-            );
-          } else if ($(this).val() != "") {
-            $(this).next("span").remove();
-          }
-        });
-
-        const canProceed = $(".errorMsg").length == 0;
-
-        if (canProceed) {
-          const formdata = new FormData();
-          formdata.append("ftpHost", $("#ftpHost").val());
-          formdata.append("ftpUser", $("#ftpUser").val());
-          formdata.append("ftpPassword", $("#ftpPassword").val());
-          formdata.append("serviceId", serviceId);
-          showSpinner();
-          fetch("/Officer/UploadCsv", { method: "POST", body: formdata })
-            .then((res) => res.json())
-            .then((data) => {
-              hideSpinner();
-              if (data.status) {
-                $("#send").after(
-                  `<p class="text-success text-center">${data.message}</p>`
-                );
-                setTimeout(() => {
-                  window.location.href = "/Officer";
-                }, 2000);
-              } else {
-                $("#send").after(
-                  `<p class="errorMsg text-center">${data.message}</p>`
-                );
-              }
-            });
-        }
-      });
   });
 });

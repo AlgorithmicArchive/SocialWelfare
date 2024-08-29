@@ -25,6 +25,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<ApplicationsHistory> ApplicationsHistories { get; set; }
 
+    public virtual DbSet<BankFile> BankFiles { get; set; }
+
     public virtual DbSet<Block> Blocks { get; set; }
 
     public virtual DbSet<Certificate> Certificates { get; set; }
@@ -36,6 +38,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Feedback> Feedbacks { get; set; }
 
     public virtual DbSet<HalqaPanchayat> HalqaPanchayats { get; set; }
+
+    public virtual DbSet<Log> Logs { get; set; }
 
     public virtual DbSet<OfficersDesignation> OfficersDesignations { get; set; }
 
@@ -54,15 +58,18 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Village> Villages { get; set; }
 
     public virtual DbSet<Ward> Wards { get; set; }
+
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
-    public virtual DbSet<BankFile> BankFiles { get; set; }
+    public virtual DbSet<BankFileModel> BankFileModels { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("name=DefaultConnection");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AddressJoin>().HasNoKey();
-        modelBuilder.Entity<BankFile>().HasNoKey();
+        modelBuilder.Entity<BankFileModel>().HasNoKey();
+
         modelBuilder.Entity<Address>(entity =>
         {
             entity.ToTable("Address");
@@ -165,6 +172,15 @@ public partial class SocialWelfareDepartmentContext : DbContext
                 .HasConstraintName("FK_ApplicationsHistory_Applications");
         });
 
+        modelBuilder.Entity<BankFile>(entity =>
+        {
+            entity.HasKey(e => e.FileId);
+
+            entity.Property(e => e.FileName).HasMaxLength(255);
+            entity.Property(e => e.GeneratedDate).HasMaxLength(50);
+            entity.Property(e => e.ResponseFile).HasMaxLength(255);
+        });
+
         modelBuilder.Entity<Block>(entity =>
         {
             entity.HasKey(e => e.Uuid);
@@ -254,6 +270,14 @@ public partial class SocialWelfareDepartmentContext : DbContext
                 .IsUnicode(false);
         });
 
+        modelBuilder.Entity<Log>(entity =>
+        {
+            entity.Property(e => e.Action).HasColumnType("text");
+            entity.Property(e => e.DateOfAction).HasMaxLength(50);
+            entity.Property(e => e.IpAddress).HasMaxLength(50);
+            entity.Property(e => e.UserType).HasMaxLength(15);
+        });
+
         modelBuilder.Entity<OfficersDesignation>(entity =>
         {
             entity.HasKey(e => e.Uuid);
@@ -276,20 +300,20 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
         modelBuilder.Entity<RecordCount>(entity =>
         {
-            entity.HasKey(e => e.RecordId).HasName("PK_NewTable");
-
-            entity.ToTable("RecordCount");
+            entity
+                .HasNoKey()
+                .ToTable("RecordCount");
 
             entity.Property(e => e.Officer)
                 .HasMaxLength(100)
                 .IsUnicode(false);
+            entity.Property(e => e.RecordId).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<Service>(entity =>
         {
             entity.HasKey(e => e.ServiceId).HasName("PK__tmp_ms_x__C51BB00A0C58849B");
 
-            entity.Property(e => e.BankDispatchFile).HasDefaultValue("");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
