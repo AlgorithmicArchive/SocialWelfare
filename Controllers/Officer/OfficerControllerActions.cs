@@ -79,10 +79,11 @@ namespace SocialWelfare.Controllers.Officer
             _pdfService.CreateSanctionPdf(sanctionObject, Officer, ApplicationId);
         }
 
-        private static void UpdateRecordCounts(RecordCount recordsCount, int pendingCount = 0, int forwardCount = 0, int returnCount = 0, int sanctionCount = 0, int rejectCount = 0)
+        private static void UpdateRecordCounts(RecordCount recordsCount, int pendingCount = 0, int pendingWithCitizenCount = 0, int forwardCount = 0, int returnCount = 0, int sanctionCount = 0, int rejectCount = 0)
         {
             if (recordsCount == null) return;
             recordsCount.Pending += pendingCount;
+            recordsCount.PendingWithCitizen += pendingWithCitizenCount;
             recordsCount.Forward += forwardCount;
             recordsCount.Return += returnCount;
             recordsCount.Sanction += sanctionCount;
@@ -190,8 +191,8 @@ namespace SocialWelfare.Controllers.Officer
                     break;
 
                 case "ReturnToEdit":
+                    UpdateRecordCounts(recordsCount!, pendingCount: -1, pendingWithCitizenCount: 1);
                     HandleReturnToEdit(currentPhase, form, applicationIdParam, officerDesignation, remarks);
-                    UpdateRecordCounts(recordsCount!, pendingCount: -1, returnCount: 1);
                     break;
 
                 case "Sanction":

@@ -344,31 +344,21 @@ namespace SocialWelfare.Controllers.User
         {
 
             var workForceOfficers = JsonConvert.DeserializeObject<List<dynamic>>(form["workForceOfficers"].ToString());
+            int serviceId = Convert.ToInt32(form["serviceId"].ToString());
+            int accessCode = Convert.ToInt32(form["District"]);
+            string officerDesignation = workForceOfficers![0].Designation;
 
-            List<object> Phases = [];
+            var recordsCount = dbcontext.RecordCounts
+              .FirstOrDefault(rc => rc.ServiceId == serviceId && rc.Officer == officerDesignation && rc.AccessCode == accessCode);
 
-            for (var i = 0; i < workForceOfficers!.Count; i++)
-            {
-                var phase = new
-                {
-                    ReceivedOn = i == 0 ? DateTime.Now.ToString("dd MMM yyyy hh:mm tt") : "",
-                    Officer = workForceOfficers[i]["Designation"],
-                    HasApplication = i == 0,
-                    ActionTaken = i == 0 ? "Pending" : "",
-                    Remarks = "",
-                    CanPull = false,
-                };
-                Phases.Add(phase);
-            }
-
-
+            UpdateRecordCounts(recordsCount!, pendingCount: 1, pendingWithCitizenCount: -1);
             var receivedOnParam = new SqlParameter("@ReceivedOn", SqlDbType.VarChar)
             {
                 Value = DateTime.Now.ToString("dd MMM yyyy hh:mm tt")
             };
             var officerParam = new SqlParameter("@Officer", SqlDbType.VarChar)
             {
-                Value = workForceOfficers[0].Designation
+                Value = workForceOfficers![0].Designation
             };
             var actionTakenParam = new SqlParameter("@ActionTaken", SqlDbType.NChar)
             {
@@ -395,7 +385,6 @@ namespace SocialWelfare.Controllers.User
 
 
 
-            helper.UpdateApplication("Phase", JsonConvert.SerializeObject(Phases.ToArray()), new SqlParameter("@ApplicationId", form["ApplicationId"].ToString()));
             helper.UpdateApplication("EditList", "[]", new SqlParameter("@ApplicationId", form["ApplicationId"].ToString()));
             helper.UpdateApplicationHistory(form["ApplicationId"].ToString(), "Citizen", "Edited and returned to " + workForceOfficers[0].Designation, "NULL");
 
@@ -403,9 +392,28 @@ namespace SocialWelfare.Controllers.User
             return Json(new { status = true });
         }
 
-        public IActionResult IncompleteApplication(string ApplicationId)
+
+        private static void UpdateRecordCounts(RecordCount recordsCount, int pendingCount = 0, int pendingWithCitizenCount = 0, int forwardCount = 0, int returnCount = 0, int sanctionCount = 0, int rejectCount = 0)
+        {
+            if (recordsCount == null) return;
+            recordsCount.Pending += pendingCount;
+            recordsCount.PendingWithCitizen += pendingWithCitizenCount;
+            recordsCount.Forward += forwardCount;
+            recordsCount.Return += returnCount;
+            recordsCount.Sanction += sanctionCount;
+            recordsCount.Reject += rejectCount;
+        }
+
+        public IActionResult IncompleteApplication(string ApplicationId, string DistrictId)
         {
             var ApplicationIdParam = new SqlParameter("@ApplicationId", ApplicationId);
+            int serviceId = dbcontext.Applications.FirstOrDefault(app => app.ApplicationId == ApplicationId)!.ServiceId;
+            int accessCode = Convert.ToInt32(DistrictId);
+            var workForceOfficer = JsonConvert.DeserializeObject<List<dynamic>>(dbcontext.Services.FirstOrDefault(s => s.ServiceId == serviceId)!.WorkForceOfficers!);
+            string officerDesignation = workForceOfficer![0]["Designation"];
+            var recordsCount = dbcontext.RecordCounts
+              .FirstOrDefault(rc => rc.ServiceId == serviceId && rc.Officer == officerDesignation && rc.AccessCode == accessCode);
+            UpdateRecordCounts(recordsCount!, pendingCount: 1);
             helper.UpdateApplication("ApplicationStatus", "Initiated", ApplicationIdParam);
             helper.UpdateApplicationHistory(ApplicationId, "Citizen", "Application Submitted.", "NULL");
             return Json(new { status = true });

@@ -147,6 +147,8 @@ function handleFormData(
     const formdata = new FormData();
     formdata.append("ApplicationId", ApplicationId);
     formdata.append("workForceOfficers", JSON.stringify(workForceOfficers));
+    formdata.append("serviceId", serviceContent.serviceId);
+    formdata.append("District", $("#District").val());
     showSpinner();
     fetch("/User/UpdateEditList", { method: "post", body: formdata })
       .then((res) => res.json())

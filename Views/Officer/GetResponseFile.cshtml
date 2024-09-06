@@ -1,0 +1,40 @@
+<div class="full-screen-section flex-column py-5 mb-5">
+    <div class="container-fluid" id="mainContainer">
+
+        <div class="modal-body mt-5">
+            <div class="container mt-3 p-3 border rounded-border" id="ftpForm">
+                <p class="text-center fw-bold fs-4">Bank File Transfer</p>
+                <div class="container d-flex flex-column gap-4 mb-2">
+                    <select class="form-select" name="services" id="services">
+                        <option value="">Select Service</option>
+                    </select>
+                    <div class="text-danger" id="error-services"></div>
+
+                    <select class="form-select" name="districts" id="districts">
+                        <option value="">Select District</option>
+                    </select>
+                    <div class="text-danger" id="error-districts"></div>
+
+                    <input class="form-control" type="text" name="ftpHost" id="ftpHost" placeholder="FTP Host">
+                    <div class="text-danger" id="error-ftpHost"></div>
+
+                    <input class="form-control" type="text" name="ftpUser" id="ftpUser" placeholder="FTP User">
+                    <div class="text-danger" id="error-ftpUser"></div>
+
+                    <input class="form-control" type="password" name="ftpPassword" id="ftpPassword"
+                        placeholder="FTP Password">
+                    <div class="text-danger" id="error-ftpPassword"></div>
+                </div>
+
+                <button id="submitBtn" class="btn btn-dark d-flex mx-auto mt-3">Get Response File</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const data = @Html.Raw(Json.Serialize(Model));
+    console.log(data);
+</script>
+
+<script src="/js/Officer/getResponseFile.js"></script>

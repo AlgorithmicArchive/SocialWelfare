@@ -87,66 +87,20 @@
         </div>
     </div>
 
-    <div class="container-fluid d-none flex-column gap-5 py-5 mb-5" id="dataGrid">
-        <div class="container-fluid d-flex justify-content-between">
-            <div class="d-flex justify-content-center align-items-center gap-2">
-                <div class="dropdown">
-                    <button type="button" class="btn btn-light border dropdown-toggle w-100" data-bs-toggle="dropdown">
-                        Select Report Columns
-                    </button>
-                    <ul class="dropdown-menu w-100 px-2">
-                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
-                                value="applicationNo">Application Number</li>
-                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
-                                value="applicantName">Applicant Name</li>
-                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
-                                value="applicationStatus">Application Status</li>
-                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
-                                value="appliedDistrict">Applied District</li>
-                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
-                                value="appliedService">Applied Service</li>
-                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
-                                value="applicationCurrentlyWith">Application Currently With</li>
-                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
-                                value="receivedOn">Received
-                            On</li>
-                        <li class="d-flex gap-2"><input type="checkbox" name="chosenColumns" class="form-check"
-                                value="submissionDate">Application Submission Date</li>
-                    </ul>
-                </div>
-                <button class="btn btn-primary" id="getRecords">Get Records</button>
-            </div>
-            <div class="">
-                <button class="btn btn-info" onclick="printTable('printableArea')">Print</button>
-                <button class="btn btn-success" onclick="exportTableToExcel('applicationListTable')">EXCEL</button>
-                <button class="btn btn-danger" onclick="SaveAsPdf('printableArea','applicationListTable')">PDF</button>
-            </div>
-        </div>
-        <div id="printableArea">
-            <table class="table table-responsive table-bordered table-striped" id="applicationListTable">
+    <div class="container-fluid mb-5 mt-3 p-5">
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table class="table table-striped table-hover table-bordered w-100" id="applicationsTable">
                 <thead class="bg-dark text-white">
-                    <tr>
-                        <th>S.No.</th>
-                        <th>Application Number</th>
-                        <th>Applicant Name</th>
-                        <th>Application Status</th>
-                        <th>Applied District</th>
-                        <th>Applied Service</th>
-                        <th>Application Currently With</th>
-                        <th>Application Received On</th>
-                        <th>Application Submission Date</th>
-                    </tr>
                 </thead>
-                <tbody id="applicationListContainer">
-
-                </tbody>
+                <tbody id="tbody"></tbody>
             </table>
         </div>
     </div>
+
 </div>
 
 <script>
-    const countList = @Html.Raw(Json.Serialize(Model));
+    const obj = @Html.Raw(Json.Serialize(Model));
     let myChart;
 </script>
 <script src="/js/Officer/reports.js"></script>

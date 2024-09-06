@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.EMMA;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -227,7 +228,7 @@ namespace SocialWelfare.Controllers.Officer
                     recordsFiltered = PoolList.Count
                 },
                 Type = type,
-                ServiceId = 1
+                ServiceId = serviceId
             };
 
             if (!AllData)
@@ -616,6 +617,82 @@ namespace SocialWelfare.Controllers.Officer
                 return obj;
             else return new { columns = RejectColumns, data = RejectApplications };
         }
+
+        public IActionResult GetTableRecords(int start, int length, string type, int totalCount, int serviceId)
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            Models.Entities.User Officer = dbcontext.Users.Find(userId)!;
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer?.UserSpecificDetails!);
+            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
+            string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
+            int accessCode = Convert.ToInt32(UserSpecificDetails!["AccessCode"].ToString());
+            List<dynamic> ApplicationList = [];
+            var applications = dbcontext.Applications.Join(dbcontext.CurrentPhases,
+                  app => app.ApplicationId,
+                  cp => cp.ApplicationId,
+                  (app, cp) => new { CurrentPhase = cp, Application = app })
+                  .Where(x => (type == "Total" || x.CurrentPhase.ActionTaken == type)
+                    && x.CurrentPhase.Officer == officerDesignation
+                    && x.CurrentPhase.AccessCode == accessCode)
+                  .Select(x => x.Application)
+                  .Skip(start)
+                  .Take(length)
+                  .ToList();
+
+
+            var applicationColumns = new List<dynamic>
+                {
+                    new { title = "S.No" },
+                    new { title = "Reference Number" },
+                    new { title = "Applicant Name" },
+                    new { title = "Application Status" },
+                    new { title = "Applied District" },
+                    new { title = "Application Currently With" },
+                    new { title = "Application Received On" },
+                    new { title = "Application Submission Date"}
+                };
+
+
+            int appIndex = 1;
+
+            foreach (var application in applications)
+            {
+                var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
+                int DistrictCode = Convert.ToInt32(serviceSpecific["District"]);
+                string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
+                string applicationStatus = userDetails.ApplicationStatus == "Initiated" ? "Pending" : userDetails.ApplicationStatus;
+                var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == application.ApplicationId && cur.Next == 0);
+
+                List<dynamic> applicationData = [
+                    appIndex,
+                    application.ApplicationId,
+                    application.ApplicantName,
+                    applicationStatus,
+                    appliedDistrict,
+                    currentPhase!.Officer,
+                    currentPhase.ReceivedOn,
+                    application.SubmissionDate!,
+                ];
+
+                ApplicationList.Add(applicationData);
+            }
+
+
+
+            return Json(new
+            {
+                ApplicationList = new
+                {
+                    data = ApplicationList,
+                    columns = applicationColumns,
+                    recordsTotal = totalCount,
+                    recordsFiltered = ApplicationList.Count
+                },
+                Type = type,
+                ServiceId = serviceId
+            });
+        }
+
 
     }
 }

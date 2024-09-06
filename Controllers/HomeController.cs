@@ -37,6 +37,13 @@ namespace SocialWelfare.Controllers
             return new string(Enumerable.Range(0, length).Select(_ => random.Next(0, 10).ToString()[0]).ToArray());
         }
 
+        [HttpGet]
+        public IActionResult TestCors()
+        {
+            return Json(new { msg = "CORS is working!" });
+        }
+
+
         public IActionResult Index()
         {
             return View();

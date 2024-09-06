@@ -1,91 +1,244 @@
 function initializeDataTable(
   tableId,
-  containerId,
-  data,
-  tableType = "",
-  pageLength = 10
+  url,
+  serviceId,
+  type,
+  totalCount,
+  start,
+  length
 ) {
-  // Destroy existing DataTable if it exists
   if ($.fn.DataTable.isDataTable(`#${tableId}`)) {
     $(`#${tableId}`).DataTable().destroy();
+    $(`#${tableId} thead`).empty();
+    $(`#${tableId} tbody`).empty();
   }
-  const container = $(`#${containerId}`);
-  container.empty();
-  data.map((item, index) => {
-    let row = `<tr><td>${index + 1}</td>`; // First column for index
+  let Url =
+    url +
+    `?type=${type}&start=${start}&length=${length}&totalCount=${totalCount}&serviceId=${serviceId}`;
+  if (serviceId != null && serviceId != 0)
+    Url += `&serviceId=${parseInt(serviceId)}`;
+  showSpinner();
+  fetch(Url)
+    .then((res) => res.json())
+    .then((json) => {
+      console.log(json);
+      hideSpinner();
+      $("#SanctionContainer").removeClass("d-flex").addClass("d-none");
+      let applications;
 
-    for (const key in item) {
-      if (item.hasOwnProperty(key)) {
-        row += `<td>${item[key] === "" ? "N/A" : item[key]}</td>`;
-      }
-    }
+      applications = json.applicationList;
 
-    row += `</tr>`;
-    container.append(row); // Append each row to the container
-  });
+      const data = applications.data;
+      const columns = applications.columns;
+      const recordsTotal = applications.recordsTotal;
+      const recordsFiltered = applications.recordsFiltered;
+      let activeButtons = [];
+      const table = $(`#${tableId}`).DataTable({
+        data: data,
+        columns: columns,
+        destroy: true,
+        lengthMenu: [1, 2, 10, 25, 50, 100, 500, 1000],
+        pageLength: length,
+        dom: "Blfrtip",
+        buttons: [
+          {
+            extend: "colvis",
+            text: "Select Columns",
+            className: "custom-colvis-button",
+            action: function (e, dt, node, config) {
+              // Remove any existing customButtonCollection
+              $(".custom-button-collection").remove();
 
-  // Reinitialize the DataTable
-  const dataTable = $(`#${tableId}`).DataTable({
-    responsive: true,
-    paging: true,
-    searching: true,
-    info: true,
-    lengthChange: true,
-    pageLength: pageLength, // Default number of entries to display
-    lengthMenu: [1, 3, 10, 25, 50, 100, 500, 1000], // Options for the user to select from
-    pagingType: "full_numbers", // Use full pagination control
-    // Customizing pagination text
-    language: {
-      paginate: {
-        first: "First",
-        previous: "Previous",
-        next: "Next",
-        last: "Last",
-      },
-    },
-  });
+              // Create custom checkbox UI
+              var columnList = $("<div></div>").css("text-align", "left"); // Ensure left alignment
+              dt.columns().every(function (index) {
+                var column = this;
+                var colvisCheckbox = $("<input>", {
+                  type: "checkbox",
+                  checked: column.visible(),
+                }).css("margin-right", "10px");
+                var label = $("<label></label>").text(
+                  column.header().innerText
+                );
 
-  dataTable.on("length.dt", function () {
-    var length = dataTable.page.len();
-    var start = dataTable.page.info().start;
-    let type = "";
-    if (
-      tableType === "Pending" ||
-      tableType === "Pool" ||
-      tableType === "Approve"
-    )
-      type = "Pending";
+                activeButtons.push(label.text());
 
-    // Send a request to the backend with the new page length
-    fetch(`/Officer/Applications?type=${type}&start=${start}&length=${length}`)
-      .then((response) => response.json())
-      .then((data) => {
-        let list, filteredList;
-        switch (type) {
-          case "Pending":
-            list = data.applicationList.PendingList;
-            filteredList = PendingObject(
-              list,
-              data.applicationList.canSanction
-            );
-            break;
-          case "Pool":
-            list = data.applicationList.PoolList;
-            filteredList = PoolObject(list);
-            break;
-          case "Approve":
-            list = data.applicationList.ApproveList;
-            filteredList = ApproveObject(list);
-            break;
-        }
-        console.log(filteredList, dataTable.clear().rows);
-        dataTable.clear().rows.add(filteredList).draw();
-        // initializeDataTable(tableId, containerId, filteredList, "", length);
-      })
-      .catch((error) => {
-        console.error("Failed to fetch data from backend:", error);
+                colvisCheckbox.on("change", function () {
+                  // Toggle column visibility
+                  column.visible(!column.visible());
+
+                  // Get the header text of the column and normalize it
+                  const headerText = column.header().innerText.trim();
+
+                  // If the column is now hidden, remove the header text from activeButtons
+                  if (!column.visible()) {
+                    activeButtons = activeButtons.filter(
+                      (item) => item.trim() !== headerText
+                    );
+                  }
+                  // If the column is visible and not already in activeButtons, add it
+                  else if (!activeButtons.includes(headerText)) {
+                    activeButtons.push(headerText);
+                  }
+                });
+
+                // Append checkbox and label directly
+                columnList.append(colvisCheckbox).append(label).append("<br>"); // Add <br> for line break
+              });
+
+              // Display the custom checkbox UI
+              var customButtonCollection = $(
+                '<div class="dt-button-collection custom-button-collection"></div>'
+              ).append(columnList);
+
+              // Insert the customButtonCollection after the custom-colvis-button
+              $(node)
+                .attr("aria-haspopup", "true")
+                .after(customButtonCollection);
+
+              // Close the collection when clicking outside
+              $(document).on("click", function (event) {
+                if (
+                  !$(event.target).closest(node).length &&
+                  !$(event.target).closest(".custom-button-collection").length
+                ) {
+                  $(".custom-button-collection").hide();
+                }
+              });
+
+              // Prevent the collection from closing when clicking inside
+              $(customButtonCollection).on("click", function (event) {
+                event.stopPropagation();
+              });
+
+              // Toggle the customButtonCollection visibility on button click
+              $(node).on("click", function (event) {
+                event.stopPropagation();
+                var customButtonCollectionVisible = $(node)
+                  .next(".custom-button-collection")
+                  .is(":visible");
+                $(".custom-button-collection").hide(); // Hide any other open collections
+                if (!customButtonCollectionVisible) {
+                  $(node).next(".custom-button-collection").show();
+                }
+              });
+            },
+          },
+        ],
       });
-  });
+
+      $(`#${tableId}_paginate`).remove();
+
+      if (recordsTotal > recordsFiltered) {
+        const numOfPages = Math.ceil(recordsTotal / length);
+        const ul = $(
+          `<ul
+                class="pagination d-flex justify-content-end mt-2"
+                id="tablePagination"
+                data-number-of-pages="${numOfPages}"
+                data-page-length="${table.page.len()}"
+                data-table-type="${type}"
+                data-service-id="${serviceId}"
+                data-table-id="${tableId}"
+                data-url-link="${url}"
+            ></ul>`
+        );
+
+        ul.append(
+          `<li class="page-item"><a class="page-link" href="#">Previous</a></li>`
+        );
+
+        const maxPagesToShow = 10; // Adjust the threshold as needed
+        let startPage = 0;
+        let endPage = numOfPages;
+
+        if (numOfPages > maxPagesToShow) {
+          startPage = Math.max(
+            0,
+            Math.floor(start / length) - Math.floor(maxPagesToShow / 2)
+          );
+          endPage = Math.min(numOfPages, startPage + maxPagesToShow);
+
+          if (startPage > 0) {
+            ul.append(
+              `<li class="page-item disabled"><a class="page-link">...</a></li>`
+            );
+          }
+        }
+
+        for (let i = startPage; i < endPage; i++) {
+          const isActive = start / length === i ? " active" : "";
+          ul.append(
+            `<li class="page-item${isActive}" style="cursor:pointer">
+                    <a class="page-link">${i + 1}</a>
+                </li>`
+          );
+        }
+
+        if (endPage < numOfPages) {
+          ul.append(
+            `<li class="page-item disabled"><a class="page-link">...</a></li>`
+          );
+        }
+
+        ul.append(
+          `<li class="page-item"><a class="page-link" href="#">Next</a></li>`
+        );
+
+        $(`#${tableId}`).after(ul);
+      }
+
+      // Remove any previous 'length.dt' event handler
+      $(`#${tableId}`).off("length.dt");
+
+      $(`#${tableId}`).on("length.dt", function (e, settings, len) {
+        initializeRecordTables(tableId, url, serviceId, type, 0, len);
+      });
+
+      // Remove any previous click event handler on #exportAll
+      $("#exportAll").off("click");
+
+      $("#exportAll").on("click", function () {
+        // Encode the activeButtons array
+
+        fetch(
+          `/Officer/DownloadAllData?type=${type}&activeButtons=${JSON.stringify(
+            activeButtons
+          )}`
+        )
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(
+                "Network response was not ok " + response.statusText
+              );
+            }
+            return response.json();
+          })
+          .then((data) => {
+            if (data.filePath) {
+              const a = document.createElement("a");
+              a.href = data.filePath;
+              a.download = data.filePath;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            } else {
+              console.error("File path not returned");
+            }
+          })
+          .catch((error) =>
+            console.error(
+              "There was a problem with the fetch operation:",
+              error
+            )
+          );
+      });
+
+      // $(`#${tableId}_filter`).addClass("w-100");
+      $(`#${tableId}_filter`).after(
+        `<div class="d-flex justify-content-center gap-3 w-100 mt-3"><p><b>Total Records</b>:${recordsTotal}</p> <p><b>Filtered Records</b>:${recordsFiltered}</p></div>`
+      );
+    });
 }
 
 function initializeRecordTables(tableId, url, serviceId, type, start, length) {

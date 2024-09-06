@@ -121,42 +121,23 @@ function createPieChart(labels, values) {
     config
   );
 }
-function updateConditions(conditions, count) {
-  const districtValue = $("#district").attr("data-id");
-  const officerValue = $("#officer").text();
+function updateConditions(count) {
   const serviceValue = $("#service").val();
 
-  if (districtValue != "") {
-    conditions["JSON_VALUE(a.ServiceSpecific, '$.District')"] = districtValue;
-  } else {
-    delete conditions["JSON_VALUE(a.ServiceSpecific, '$.District')"];
-  }
-
-  if (officerValue != "") {
-    conditions["JSON_VALUE(app.value, '$.Officer')"] = officerValue;
-  } else {
-    delete conditions["JSON_VALUE(app.value, '$.Officer')"];
-  }
-
   if (serviceValue != "") {
-    conditions["a.ServiceId"] = serviceValue;
-  } else {
-    delete conditions["a.ServiceId"];
-  }
-
-  if (!isEmpty(conditions)) {
-    fetch("/Officer/GetFilteredCount?conditions=" + JSON.stringify(conditions))
+    fetch("/Officer/GetFilteredCount?serviceId=" + parseInt(serviceValue))
       .then((res) => res.json())
       .then((data) => {
         if (data.status) {
-          $("#total").text(data.totalCount.length);
-          $("#pending").text(data.pendingCount.length);
-          $("#rejected").text(data.rejectCount.length);
-          $("#sanction").text(data.sanctionCount.length);
-          count.totalCount = data.totalCount;
-          count.pendingCount = data.pendingCount;
-          count.rejectCount = data.rejectCount;
-          count.sanctionCount = data.sanctionCount;
+          console.log(data, count);
+          $("#total").text(data.countList.totalCount);
+          $("#pending").text(data.countList.pendingCount);
+          $("#rejected").text(data.countList.rejectCount);
+          $("#sanction").text(data.countList.sanctionCount);
+          count.totalCount = data.countList.totalCount;
+          count.pendingCount = data.countList.pendingCount;
+          count.rejectCount = data.countList.rejectCount;
+          count.sanctionCount = data.countList.sanctionCount;
           createChart(
             [
               "Total",
@@ -166,21 +147,22 @@ function updateConditions(conditions, count) {
               "Rejected",
             ],
             [
-              count.totalCount.length,
-              count.sanctionCount.length,
-              count.pendingCount.length,
-              count.pendingWithCitizenCount.length,
-              count.rejectCount.length,
+              count.totalCount,
+              count.sanctionCount,
+              count.pendingCount,
+              count.pendingWithCitizenCount,
+              count.rejectCount,
             ]
           );
           $("#chartService").text($("#service option:selected").text());
-          $("#chartOfficer").text(officerValue);
-          $("#chartDistrict").text($("#district option:selected").text());
+          $("#chartOfficer").text($("#officer").text());
+          $("#chartDistrict").text($("#distric").text());
         }
       });
   }
 }
 function SetDistricts(districtCode) {
+  console.log(districtCode);
   fetch("/Base/GetDistricts")
     .then((res) => res.json())
     .then((data) => {
@@ -192,6 +174,7 @@ function SetDistricts(districtCode) {
         });
         $("#district").text(districtName);
         $("#district").attr("data-id", districtCode);
+        if (districtCode == 0) $("#district").text("All");
       }
     });
 }
@@ -234,82 +217,26 @@ function convertCamelCaseToReadable(str) {
       })
   );
 }
-function setApplicationList(applicationList) {
-  let propertiesToRemove = [];
+function setApplicationList(totalCount, type) {
+  type = type == "PendingWithCitizen" ? "ReturnToEdit" : type;
+  console.log(totalCount, type);
+  let serviceId = $("#service").val();
+  if (serviceId == "") serviceId = 0;
 
-  let checkedValues = $('input[name="chosenColumns"]:checked')
-    .map(function () {
-      return this.value;
-    })
-    .get();
-
-  console.log(checkedValues);
-  if (checkedValues.length > 0) {
-    let properties = Object.keys(applicationList[0]);
-    properties.forEach((item) => {
-      if (!checkedValues.includes(item)) propertiesToRemove.push(item);
-    });
-    $("#applicationListTable thead tr").empty();
-
-    console.log($("#applicationListTable thead tr"));
-    // $("#applicationListTable thead tr").append(`<th>S.No.</th>`);
-
-    // checkedValues.map((item) =>
-    //   $("#applicationListTable thead tr").append(
-    //     `<th>${convertCamelCaseToReadable(item)}</th>`
-    //   )
-    // );
-    $('input[name="chosenColumns"]').prop("checked", false);
-  } else {
-    $("#applicationListTable thead tr").empty();
-    $("#applicationListTable thead tr").append(`
-        <th>S.No.</th>
-        <th>Application Number</th>
-        <th>Applicant Name</th>
-        <th>Application Status</th>
-        <th>Applied District</th>
-        <th>Applied Service</th>
-        <th>Application Currently With</th>
-        <th>Application Received On</th>
-        <th>Application Submission Date</th>
-      `);
+  if (totalCount != 0) {
+    initializeDataTable(
+      "applicationsTable",
+      "/Officer/GetTableRecords",
+      serviceId,
+      type,
+      totalCount,
+      0,
+      10
+    );
   }
-
-  applicationList = applicationList.map((obj) => {
-    return propertiesToRemove.reduce((acc, property) => {
-      const { [property]: _, ...rest } = acc;
-      return rest;
-    }, obj);
-  });
-
-  // Update the table body with the new data
-  const container = $("#applicationListContainer");
-  container.empty();
-  $("#dataGrid").removeClass("d-none").addClass("d-flex");
-
-  // applicationList.forEach((item, index) => {
-  //   let row = `<tr><td>${index + 1}</td>`; // First column for index
-
-  //   for (const key in item) {
-  //     if (item.hasOwnProperty(key)) {
-  //       row += `<td>${item[key] == "" ? "N/A" : item[key]}</td>`;
-  //     }
-  //   }
-
-  //   row += `</tr>`;
-  //   container.append(row); // Append each row to the container
-  // });
-
-  // Initialize DataTable after the table structure is complete
-  initializeDataTable(
-    "applicationListTable",
-    "applicationListContainer",
-    applicationList
-  );
-
   $("html, body").animate(
     {
-      scrollTop: $("#dataGrid").offset().top,
+      scrollTop: $("#applicationsTable").offset().top,
     },
     "slow"
   );
@@ -317,40 +244,36 @@ function setApplicationList(applicationList) {
 let applicationList;
 
 $(document).ready(function () {
-  const count = countList;
-  const districtCode = count.districtCode;
-  const officer = count.officer;
-  const conditions = {};
+  const count = obj.countList;
+  console.log(count);
+  const districtCode = obj.districtCode;
+  const officer = obj.designation;
   const mappings = [
-    { id: "#services", value: count.serviceCount.length },
-    { id: "#officers", value: count.officerCount.length },
-    { id: "#citizens", value: count.citizenCount.length },
-    { id: "#applications", value: count.applicationCount.length },
-    { id: "#total", value: count.totalCount.length },
-    { id: "#pending", value: count.pendingCount.length },
-    { id: "#pendingWithCitizen", value: count.pendingWithCitizenCount.length },
-    { id: "#rejected", value: count.rejectCount.length },
-    { id: "#sanction", value: count.sanctionCount.length },
+    { id: "#total", value: count.totalCount },
+    { id: "#pending", value: count.pendingCount },
+    { id: "#pendingWithCitizen", value: count.pendingWithCitizenCount },
+    { id: "#rejected", value: count.rejectCount },
+    { id: "#sanction", value: count.sanctionCount },
   ];
-  const AllDistrictCount = count.allDistrictCount;
+  const AllDistrictCount = obj.allDistrictCount;
 
   createChart(
     ["Total", "Sanctioned", "Pending", "Pending With Citizen", "Rejected"],
     [
-      count.totalCount.length,
-      count.sanctionCount.length,
-      count.pendingCount.length,
-      count.pendingWithCitizenCount.length,
-      count.rejectCount.length,
+      count.totalCount,
+      count.sanctionCount,
+      count.pendingCount,
+      count.pendingWithCitizenCount,
+      count.rejectCount,
     ]
   );
   createPieChart(
     ["Sanctioned", "Pending", "Pending With Citizen", "Rejected"],
     [
-      AllDistrictCount.sanctioned.length,
-      AllDistrictCount.pending.length,
-      AllDistrictCount.pendingWithCitizen.length,
-      AllDistrictCount.rejected.length,
+      AllDistrictCount.sanctionCount,
+      AllDistrictCount.pendingCount,
+      AllDistrictCount.pendingWithCitizenCount,
+      AllDistrictCount.rejectedCount,
     ]
   );
 
@@ -365,22 +288,16 @@ $(document).ready(function () {
   createChart(
     ["Total", "Sanctioned", "Pending", "Pending With Citizen", "Rejected"],
     [
-      count.totalCount.length,
-      count.sanctionCount.length,
-      count.pendingCount.length,
-      count.pendingWithCitizenCount.length,
-      count.rejectCount.length,
+      count.totalCount,
+      count.sanctionCount,
+      count.pendingCount,
+      count.pendingWithCitizenCount,
+      count.rejectCount,
     ]
   );
 
   $("#service").on("change", function () {
-    updateConditions(conditions, count);
-  });
-  $("#district").on("change", function () {
-    updateConditions(conditions);
-  });
-  $("#officer").on("change", function () {
-    updateConditions(conditions);
+    updateConditions(count);
   });
 
   $(".dashboard-card").on("click", function () {
@@ -392,7 +309,7 @@ $(document).ready(function () {
       applicationList = count.pendingWithCitizenCount;
     else if (card == "Rejected") applicationList = count.rejectCount;
 
-    setApplicationList(applicationList);
+    setApplicationList(applicationList, card);
   });
 
   $("#getRecords").on("click", function () {

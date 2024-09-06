@@ -15,6 +15,8 @@ public partial class RecordCount
 
     public int Pending { get; set; }
 
+    public int PendingWithCitizen { get; set; }
+
     public int Forward { get; set; }
 
     public int Sanction { get; set; }

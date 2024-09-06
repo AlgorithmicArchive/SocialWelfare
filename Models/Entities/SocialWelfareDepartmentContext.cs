@@ -51,6 +51,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<Tehsil> Tehsils { get; set; }
 
+    public virtual DbSet<UniqueIdtable> UniqueIdtables { get; set; }
+
     public virtual DbSet<UpdatedLetterDetail> UpdatedLetterDetails { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -61,7 +63,6 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
     public virtual DbSet<BankFileModel> BankFileModels { get; set; }
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("name=DefaultConnection");
 
@@ -69,7 +70,6 @@ public partial class SocialWelfareDepartmentContext : DbContext
     {
         modelBuilder.Entity<AddressJoin>().HasNoKey();
         modelBuilder.Entity<BankFileModel>().HasNoKey();
-
         modelBuilder.Entity<Address>(entity =>
         {
             entity.ToTable("Address");
@@ -300,14 +300,13 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
         modelBuilder.Entity<RecordCount>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("RecordCount");
+            entity.HasKey(e => e.RecordId);
+
+            entity.ToTable("RecordCount");
 
             entity.Property(e => e.Officer)
                 .HasMaxLength(100)
                 .IsUnicode(false);
-            entity.Property(e => e.RecordId).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<Service>(entity =>
@@ -336,6 +335,20 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.DistrictId).HasColumnName("DistrictID");
             entity.Property(e => e.TehsilName)
                 .HasMaxLength(255)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<UniqueIdtable>(entity =>
+        {
+            entity.HasKey(e => new { e.DistrictNameShort, e.MonthShort }).HasName("PK__UniqueID__EB7142A582B5632B");
+
+            entity.ToTable("UniqueIDTable");
+
+            entity.Property(e => e.DistrictNameShort)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.MonthShort)
+                .HasMaxLength(3)
                 .IsUnicode(false);
         });
 

@@ -244,55 +244,43 @@ namespace SocialWelfare.Controllers.Officer
             return View(new { ServiceList, Districts });
         }
 
+        public IActionResult GetResponseFile()
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
+            string officerDesignation = UserSpecificDetails!["Designation"];
+            var Services = dbcontext.Services.Where(s => s.Active == true).ToList();
+            var ServiceList = new List<dynamic>();
+            var Districts = dbcontext.Districts.ToList();
+            foreach (var service in Services)
+            {
+                var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(service.WorkForceOfficers!);
+                foreach (var officer in WorkForceOfficers!)
+                {
+                    if (officer["Designation"] == officerDesignation)
+                    {
+                        ServiceList.Add(new { service.ServiceId, service.ServiceName });
+                    }
+                }
+            }
+
+
+            return View(new { ServiceList, Districts });
+        }
         public IActionResult Reports()
         {
             int? UserId = HttpContext.Session.GetInt32("UserId");
             string Officer = JsonConvert.DeserializeObject<dynamic>(dbcontext.Users.FirstOrDefault(u => u.UserId == UserId)!.UserSpecificDetails)!["Designation"];
-            int ServiceCount = dbcontext.Services.ToList().Count;
-            int OfficerCount = dbcontext.Users.Where(u => u.UserType == "Officer").ToList().Count;
-            int CitizenCount = dbcontext.Users.Where(u => u.UserType == "Citizen").ToList().Count;
-            int ApplicationCount = dbcontext.Applications.ToList().Count;
-            var conditions = new Dictionary<string, string>();
-
             var officerDetails = JsonConvert.DeserializeObject<dynamic>(dbcontext.Users.FirstOrDefault(u => u.UserId == UserId)!.UserSpecificDetails);
-            string districtCode = officerDetails!["DistrictCode"];
-            string designation = officerDetails["Designation"];
-            conditions.Add("JSON_VALUE(a.ServiceSpecific, '$.District')", districtCode);
-            conditions.Add("JSON_VALUE(app.value, '$.Officer')", designation);
+            string designation = officerDetails!["Designation"];
+            int districtCode = Convert.ToInt32(officerDetails["AccessCode"]);
 
-            var TotalCount = GetCount("Total", conditions.Count != 0 ? conditions : null!);
-            var PendingCount = GetCount("Pending", conditions.Count != 0 ? conditions : null!);
-            var RejectCount = GetCount("Reject", conditions.Count != 0 ? conditions : null!);
-            var SanctionCount = GetCount("Sanction", conditions.Count != 0 ? conditions : null!);
-            var PendingWithCitizenCount = GetCount("PendingWithCitizen", conditions.Count != 0 ? conditions : null!);
-
-            var AllDistrictCount = new
-            {
-                Sanctioned = GetCount("Sanction", null!),
-                Pending = GetCount("Pending", null!),
-                PendingWithCitizen = GetCount("PendingWithCitizen", null!),
-                Rejected = GetCount("Reject", null!),
-            };
-
-
-            var countList = new
-            {
-                ServiceCount,
-                OfficerCount,
-                CitizenCount,
-                ApplicationCount,
-                TotalCount,
-                PendingCount,
-                RejectCount,
-                SanctionCount,
-                PendingWithCitizenCount,
-                AllDistrictCount,
-                districtCode,
-                Officer,
-            };
-            return View(countList);
+            var AllDistrictCount = GetCount();
+            var countList = GetCount(designation, districtCode);
+            return View(new { countList, AllDistrictCount, districtCode, designation });
         }
- 
+
         public IActionResult UpdateRequests()
         {
             int? userId = HttpContext.Session.GetInt32("UserId");

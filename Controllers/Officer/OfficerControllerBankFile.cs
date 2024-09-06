@@ -46,6 +46,59 @@ namespace SocialWelfare.Controllers.Officer
 
             return Json(new { status = true, message = "File Uploaded Successfully." });
         }
+
+        public IActionResult GetResponseBankFile([FromForm] IFormCollection form)
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            Models.Entities.User Officer = dbcontext.Users.Find(userId)!;
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
+            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
+            string accessLevel = UserSpecificDetails!["AccessLevel"]?.ToString() ?? string.Empty;
+
+            string ftpHost = form["ftpHost"].ToString();
+            string ftpUser = form["ftpUser"].ToString();
+            string ftpPassword = form["ftpPassword"].ToString();
+            int serviceId = Convert.ToInt32(form["serviceId"].ToString());
+            int districtId = Convert.ToInt32(form["districtId"].ToString());
+
+            var bankFile = dbcontext.BankFiles.FirstOrDefault(bf => bf.ServiceId == serviceId && bf.DistrictId == districtId && bf.FileSent == false);
+            string originalFileName = Path.GetFileNameWithoutExtension(bankFile!.FileName);
+            string responseFile = $"{originalFileName}_response.csv";
+
+            var ftpClient = new SftpClient(ftpHost, 22, ftpUser, ftpPassword);
+            ftpClient.Connect();
+
+
+            if (!ftpClient.IsConnected)
+            {
+                return Json(new { status = false, message = "Unable to connect to the SFTP server." });
+            }
+
+            if (!string.IsNullOrEmpty(bankFile.ResponseFile))
+            {
+                return Json(new { status = true, file = bankFile.ResponseFile });
+            }
+
+            if (!ftpClient.Exists(responseFile))
+            {
+                return Json(new { status = false, message = "No response file received yet." });
+            }
+
+            string filePath = Path.Combine(_webHostEnvironment.WebRootPath, "exports", responseFile);
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                ftpClient.DownloadFile(responseFile, stream);
+            }
+
+            bankFile.ResponseFile = responseFile;
+            dbcontext.SaveChanges();
+
+            return Json(new { status = true, file = bankFile.ResponseFile });
+
+        }
+
         private async Task UpdateApplicationHistoryAsync(IEnumerable<BankFileModel> bankFileData, string officer, string fileName)
         {
             // Get all the ApplicationIds from the bankFileData

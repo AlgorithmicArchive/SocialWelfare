@@ -48,6 +48,7 @@ builder.Services.AddScoped<EmailSender>();
 builder.Services.AddScoped<UserHelperFunctions>();
 builder.Services.AddTransient<PdfService>();
 builder.Services.AddSingleton<IEncryptionService, EncryptionHelper>();
+builder.Services.AddCors();
 
 var app = builder.Build();
 
@@ -57,11 +58,11 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:8081"));
 
 app.UseAuthentication();  // Ensure authentication is used
 app.UseAuthorization();
