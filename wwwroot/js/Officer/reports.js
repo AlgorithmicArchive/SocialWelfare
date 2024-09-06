@@ -221,13 +221,18 @@ function setApplicationList(totalCount, type) {
   type = type == "PendingWithCitizen" ? "ReturnToEdit" : type;
   console.log(totalCount, type);
   let serviceId = $("#service").val();
+  let officer = $("#officer").val();
+  let district = $("#district").val();
   if (serviceId == "") serviceId = 0;
+  if (district == "") district = 0;
 
   if (totalCount != 0) {
     initializeDataTable(
       "applicationsTable",
       "/Officer/GetTableRecords",
       serviceId,
+      officer,
+      district,
       type,
       totalCount,
       0,

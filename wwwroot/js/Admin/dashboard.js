@@ -1,28 +1,24 @@
 $(document).ready(function () {
-  const count = countList;
+  const count = data.countList;
+  const AllDistrictCount = data.allDistrictCount;
   const divisionCode = count.divisionCode;
   let applicationList;
   const conditions = {};
 
   const mappings = [
-    { id: "#services", value: count.serviceCount.length },
-    { id: "#officers", value: count.officerCount.length },
-    { id: "#citizens", value: count.citizenCount.length },
-    { id: "#applications", value: count.applicationCount.length },
-    { id: "#total", value: count.totalCount.length },
-    { id: "#pending", value: count.pendingCount.length },
-    { id: "#pendingWithCitizen", value: count.pendingWithCitizenCount.length },
-    { id: "#rejected", value: count.rejectCount.length },
-    { id: "#approved", value: count.sanctionCount.length },
+    { id: "#total", value: count.totalCount },
+    { id: "#pending", value: count.pendingCount },
+    { id: "#pendingWithCitizen", value: count.pendingWithCitizenCount },
+    { id: "#rejected", value: count.rejectCount },
+    { id: "#approved", value: count.sanctionCount },
   ];
-  const AllDistrictCount = count.allDistrictCount;
   createPieChart(
     ["Sanctioned", "Pending", "Pending With Citizen", "Rejected"],
     [
-      AllDistrictCount.sanctioned.length,
-      AllDistrictCount.pending.length,
-      AllDistrictCount.pendingWithCitizen.length,
-      AllDistrictCount.rejected.length,
+      AllDistrictCount.sanctionCount,
+      AllDistrictCount.pendingCount,
+      AllDistrictCount.pendingWithCitizenCount,
+      AllDistrictCount.rejectCount,
     ]
   );
 
@@ -37,11 +33,11 @@ $(document).ready(function () {
   createChart(
     ["Total", "Sanctioned", "Pending", "Pending With Citizen", "Rejected"],
     [
-      count.totalCount.length,
-      count.sanctionCount.length,
-      count.pendingCount.length,
-      count.pendingWithCitizenCount.length,
-      count.rejectCount.length,
+      count.totalCount,
+      count.sanctionCount,
+      count.pendingCount,
+      count.pendingWithCitizenCount,
+      count.rejectCount,
     ]
   );
 
@@ -62,10 +58,10 @@ $(document).ready(function () {
       applicationList = count.pendingWithCitizenCount;
     else if (card == "Rejected") applicationList = count.rejectCount;
 
-    setApplicationList(applicationList);
+    setApplicationList(applicationList, card);
 
     var $anchor = $("<a/>", {
-      href: "#dataGrid",
+      href: "#applicationsTable",
       id: "tempAnchor",
     }).appendTo("body");
 

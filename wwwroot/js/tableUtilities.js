@@ -2,6 +2,8 @@ function initializeDataTable(
   tableId,
   url,
   serviceId,
+  officer,
+  district,
   type,
   totalCount,
   start,
@@ -14,9 +16,8 @@ function initializeDataTable(
   }
   let Url =
     url +
-    `?type=${type}&start=${start}&length=${length}&totalCount=${totalCount}&serviceId=${serviceId}`;
-  if (serviceId != null && serviceId != 0)
-    Url += `&serviceId=${parseInt(serviceId)}`;
+    `?type=${type}&start=${start}&length=${length}&totalCount=${totalCount}&serviceId=${serviceId}&officer=${officer}&district=${district}`;
+
   showSpinner();
   fetch(Url)
     .then((res) => res.json())

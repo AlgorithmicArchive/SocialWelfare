@@ -661,7 +661,7 @@ namespace SocialWelfare.Controllers.Officer
                 int DistrictCode = Convert.ToInt32(serviceSpecific["District"]);
                 string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
                 string applicationStatus = userDetails.ApplicationStatus == "Initiated" ? "Pending" : userDetails.ApplicationStatus;
-                var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == application.ApplicationId && cur.Next == 0);
+                var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == application.ApplicationId && (cur.ActionTaken == "Pending" || cur.ActionTaken == "Sanction" || cur.ActionTaken == "Reject"));
 
                 List<dynamic> applicationData = [
                     appIndex,
