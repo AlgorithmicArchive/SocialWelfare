@@ -11,8 +11,6 @@ public partial class CurrentPhase
 
     public string ReceivedOn { get; set; } = null!;
 
-    public int OfficerId { get; set; }
-
     public string Officer { get; set; } = null!;
 
     public int AccessCode { get; set; }
@@ -21,11 +19,13 @@ public partial class CurrentPhase
 
     public string Remarks { get; set; } = null!;
 
-    public string File { get; set; } = null!;
+    public string? File { get; set; }
 
     public bool CanPull { get; set; }
 
     public int Previous { get; set; }
 
     public int Next { get; set; }
+
+    public virtual Application Application { get; set; } = null!;
 }

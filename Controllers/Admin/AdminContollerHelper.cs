@@ -218,7 +218,7 @@ namespace SocialWelfare.Controllers.Admin
             int division = Convert.ToInt32(Division);
             int district = Convert.ToInt32(District);
 
-            int ApplicationDivision = dbcontext.Districts.FirstOrDefault(d => d.Uuid == district)!.Division;
+            int ApplicationDivision = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == district)!.Division;
 
             if (division == ApplicationDivision)
                 return true;
@@ -233,7 +233,7 @@ namespace SocialWelfare.Controllers.Admin
             {
                 var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific);
                 int districtCode = Convert.ToInt32(serviceSpecific!["District"]);
-                string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.Uuid == districtCode)?.DistrictName!;
+                string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.DistrictName!;
                 string AppliedService = dbcontext.Services.FirstOrDefault(s => s.ServiceId == application.ServiceId)?.ServiceName!;
                 var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == application.ApplicationId && (cur.ActionTaken == "Pending" || cur.ActionTaken == "Sanction" || cur.ActionTaken == "Reject"));
                 string ApplicationCurrentlyWith = currentPhase!.Officer;
@@ -260,7 +260,7 @@ namespace SocialWelfare.Controllers.Admin
             dynamic obj = new ExpandoObject();
             var serviceSpecific = JsonConvert.DeserializeObject<dynamic>(application.ServiceSpecific);
             int districtCode = Convert.ToInt32(serviceSpecific!["District"]);
-            string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.Uuid == districtCode)?.DistrictName!;
+            string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)?.DistrictName!;
             string AppliedService = dbcontext.Services.FirstOrDefault(s => s.ServiceId == application.ServiceId)?.ServiceName!;
             var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == application.ApplicationId && (cur.ActionTaken == "Pending" || cur.ActionTaken == "Sanction" || cur.ActionTaken == "Reject"));
             string ApplicationCurrentlyWith = currentPhase!.Officer;
@@ -346,7 +346,7 @@ namespace SocialWelfare.Controllers.Admin
             {
                 var application = dbcontext.Applications.FirstOrDefault(a => a.ApplicationId == applicationId);
                 int applicationDistrict = JsonConvert.DeserializeObject<dynamic>(application!.ServiceSpecific)!.District;
-                int applicationDivision = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == applicationDistrict)!.Division;
+                int? applicationDivision = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == applicationDistrict)!.Division;
 
                 if (Division == applicationDivision)
                 {

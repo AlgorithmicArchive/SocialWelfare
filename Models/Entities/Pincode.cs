@@ -7,5 +7,5 @@ public partial class Pincode
 {
     public int PincodeId { get; set; }
 
-    public int? Pincode1 { get; set; }
+    public int Pincode1 { get; set; }
 }

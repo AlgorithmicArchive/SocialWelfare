@@ -69,7 +69,6 @@ namespace SocialWelfare.Controllers.Officer
             return Json(new { status = true, countList });
         }
 
-
         [HttpPost]
         public IActionResult UpdatePool([FromForm] IFormCollection form)
         {

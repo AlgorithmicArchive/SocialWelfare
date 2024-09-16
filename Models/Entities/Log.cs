@@ -16,4 +16,6 @@ public partial class Log
     public string Action { get; set; } = null!;
 
     public string DateOfAction { get; set; } = null!;
+
+    public virtual User User { get; set; } = null!;
 }

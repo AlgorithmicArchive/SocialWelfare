@@ -11,5 +11,5 @@ public partial class OfficersDesignation
 
     public string DesignationShort { get; set; } = null!;
 
-    public string? AccessLevel { get; set; }
+    public string AccessLevel { get; set; } = null!;
 }

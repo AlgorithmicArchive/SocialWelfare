@@ -2,6 +2,7 @@ const formUI = {
   appendForm: function (containerId, formType) {
     const formTitle = formType === "login" ? "Login" : "Register";
     const buttonLabel = formType === "login" ? "Login" : "Register";
+    const buttonId = formType ==="login"?"loginButton":"registerButton";
     const additionalFields =
       formType === "register"
         ? `
@@ -38,7 +39,7 @@ const formUI = {
           <label for="Captcha">Captcha</label>
           <input type="text" class="form-control border-0 border-bottom rounded-0 mb-2" id="captchaInput" placeholder="Captcha">
           <p id="captchaError" class="fs-6 text-danger text-center"></p>
-          <button class="btn btn-dark w-25 mx-auto">${buttonLabel}</button>
+          <button id="${buttonId}" class="btn btn-dark w-25 mx-auto">${buttonLabel}</button>
       </div>
       <p class="fs-5 text-center mt-4">OR</p>
       <p id="switchTo${
@@ -152,6 +153,7 @@ $(document).ready(function () {
               $("#otpButton").click();
               userId = data.userId;
             } else {
+              console.log(data);
               $("#registerButton").after(
                 `<p class="fs-6 text-danger text-center p-2">${data.response}</p>`
               );
@@ -161,6 +163,7 @@ $(document).ready(function () {
               console.log(data.url);
               window.location.href = data.url;
             } else {
+              console.log(data);
               $("#loginButton").after(
                 `<p class="fs-6 text-danger text-center p-2">${data.response}</p>`
               );
@@ -198,6 +201,7 @@ $(document).ready(function () {
   });
 
   $(document).on("blur input", "input", async function () {
+    console.log($("#Email").length)
     if ($("#Email").length) {
       const id = $(this).attr("id");
       const value = $(this).val();
@@ -216,3 +220,9 @@ $(document).ready(function () {
     }
   });
 });
+
+[
+  {
+    name:"Identity Proof"
+  }
+]

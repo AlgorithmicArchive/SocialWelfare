@@ -1,10 +1,8 @@
 using System.Data;
-using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using SocialWelfare.Models.Entities;
 
 namespace SocialWelfare.Controllers.User
@@ -136,54 +134,89 @@ namespace SocialWelfare.Controllers.User
         }
         public async Task<IActionResult> InsertDocuments([FromForm] IFormCollection form)
         {
+            _logger.LogInformation("------------- INSERT DOCUMENT-------------------");
+            _logger.LogInformation("------------- INSERT DOCUMENT DOWN-------------------");
+            
             var applicationId = form["ApplicationId"].ToString();
-            int serviceId = Convert.ToInt32(form["ServiceId"].ToString());
-            int accessCode = Convert.ToInt32(form["AccessCode"].ToString());
-            var labels = JsonConvert.DeserializeObject<string[]>(form["labels"].ToString()) ?? Array.Empty<string>();
+            if (string.IsNullOrEmpty(applicationId))
+            {
+                return Json(new{message="ApplicationId is missing"});
+            }
+            _logger.LogInformation("------------- INSERT DOCUMENT DOWN 1-------------------");
 
+            if (!int.TryParse(form["ServiceId"].ToString(), out int serviceId))
+            {
+                return Json(new { message = "ServiceId is missing or invalid" });
+            }
+            _logger.LogInformation("------------- INSERT DOCUMENT DOWN 2-------------------");
+
+            if (!int.TryParse(form["AccessCode"].ToString(), out int accessCode))
+            {
+                return Json(new { message = "AccessCode is missing or invalid" });
+            }
+            _logger.LogInformation("------------- INSERT DOCUMENT DOWN 3-------------------");
+
+            var labels = JsonConvert.DeserializeObject<string[]>(form["labels"].ToString()) ?? [];
             var docs = new List<Document>();
             var addedLabels = new HashSet<string>();
+            _logger.LogInformation("------------- INSERT DOCUMENT DOWN 4-------------------");
 
             foreach (var label in labels)
             {
                 if (addedLabels.Add(label))
                 {
+                    var file = form.Files[$"{label}File"];
+                    if (file == null)
+                    {
+                        return Json(new{message=$"{label}File is missing"});
+                    }
+
                     var doc = new Document
                     {
                         Label = label,
                         Enclosure = form[$"{label}Enclosure"].ToString(),
-                        File = await helper.GetFilePath(form.Files[$"{label}File"])
+                        File = await helper.GetFilePath(file)
                     };
                     docs.Add(doc);
                 }
             }
+            _logger.LogInformation("------------- INSERT DOCUMENT DOWN 5-------------------");
 
             var documents = JsonConvert.SerializeObject(docs);
-            var workForceOfficers = JsonConvert.DeserializeObject<List<dynamic>>(form["workForceOfficers"].ToString()) ?? new List<dynamic>();
-            string officer = workForceOfficers[0].Designation;
-            var OfficerDetails = helper.GetOfficerDetails(officer, "District", accessCode);
-            var userSpecific = JsonConvert.DeserializeObject<dynamic>(OfficerDetails.UserSpecificDetails);
+            var workForceOfficers = JsonConvert.DeserializeObject<List<dynamic>>(form["workForceOfficers"].ToString()) ?? [];
+            
+            if (workForceOfficers.Count == 0)
+            {
+                return Json(new{message="No workforce officers available"});
+            }
+            _logger.LogInformation("------------- INSERT DOCUMENT DOWN 6-------------------");
+
+            string officer = workForceOfficers[0]!.Designation;
+            _logger.LogInformation($"-----------OFFICER: {officer} ACCESSCODE: {accessCode}-------------------------");
             var newPhase = new CurrentPhase
             {
                 ApplicationId = applicationId,
                 ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt"),
                 Officer = workForceOfficers[0].Designation,
-                OfficerId = OfficerDetails.UserId,
                 AccessCode = accessCode,
                 ActionTaken = "Pending",
                 Remarks = "",
                 CanPull = false,
             };
             dbcontext.CurrentPhases.Add(newPhase);
+            _logger.LogInformation("------------- INSERT DOCUMENT DOWN 8-------------------");
 
 
             var recordCount = await dbcontext.RecordCounts
                 .FirstOrDefaultAsync(rc => rc.ServiceId == serviceId && rc.Officer == officer && rc.AccessCode == accessCode);
+          
+            _logger.LogInformation("------------- INSERT DOCUMENT DOWN 9-------------------");
 
             if (recordCount != null)
             {
                 recordCount.Pending++;
             }
+
             else
             {
                 dbcontext.RecordCounts.Add(new RecordCount
@@ -196,6 +229,7 @@ namespace SocialWelfare.Controllers.User
             }
 
             await dbcontext.SaveChangesAsync();
+            _logger.LogInformation("------------- INSERT DOCUMENT DOWN 10-------------------");
 
             // Consolidate UpdateApplication calls
             var updates = new Dictionary<string, string>
@@ -228,7 +262,7 @@ namespace SocialWelfare.Controllers.User
                     ["ACCOUNT NUMBER"] = bankDetails["AccountNumber"],
                     ["IFSC CODE"] = bankDetails["IfscCode"],
                     ["DATE OF MARRIAGE"] = serviceSpecific["DateOfMarriage"],
-                    ["DATE OF SUBMISSION"] = userDetails.SubmissionDate!,
+                    ["DATE OF SUBMISSION"] = userDetails.SubmissionDate,
                     ["PRESENT ADDRESS"] = $"{preAddressDetails.Address}, TEHSIL: {preAddressDetails.Tehsil}, DISTRICT: {preAddressDetails.District}, PIN CODE: {preAddressDetails.Pincode}",
                     ["PERMANENT ADDRESS"] = $"{perAddressDetails.Address}, TEHSIL: {perAddressDetails.Tehsil}, DISTRICT: {perAddressDetails.District}, PIN CODE: {perAddressDetails.Pincode}"
                 };
@@ -250,9 +284,6 @@ namespace SocialWelfare.Controllers.User
 
             return Json(new { status = true, ApplicationId = applicationId, complete = true });
         }
-
-
-
         public async Task<IActionResult> UpdateGeneralDetails([FromForm] IFormCollection form)
         {
 
@@ -352,38 +383,16 @@ namespace SocialWelfare.Controllers.User
               .FirstOrDefault(rc => rc.ServiceId == serviceId && rc.Officer == officerDesignation && rc.AccessCode == accessCode);
 
             UpdateRecordCounts(recordsCount!, pendingCount: 1, pendingWithCitizenCount: -1);
-            var receivedOnParam = new SqlParameter("@ReceivedOn", SqlDbType.VarChar)
-            {
-                Value = DateTime.Now.ToString("dd MMM yyyy hh:mm tt")
-            };
-            var officerParam = new SqlParameter("@Officer", SqlDbType.VarChar)
-            {
-                Value = workForceOfficers![0].Designation
-            };
-            var actionTakenParam = new SqlParameter("@ActionTaken", SqlDbType.NChar)
-            {
-                Value = "Pending"
-            };
-            var remarksParam = new SqlParameter("@Remarks", SqlDbType.NVarChar)
-            {
-                Value = string.Empty
-            };
-            var canPullParam = new SqlParameter("@CanPull", SqlDbType.Bit)
-            {
-                Value = false
-            };
 
-            dbcontext.Database.ExecuteSqlRaw(
-               "EXEC UpsertCurrentPhase @ApplicationId, @ReceivedOn, @Officer, @ActionTaken, @Remarks, @CanPull",
-               new SqlParameter("@ApplicationId", SqlDbType.VarChar) { Value = form["ApplicationId"].ToString() },
-               receivedOnParam,
-               officerParam,
-               actionTakenParam,
-               remarksParam,
-               canPullParam
-           );
+           string Officer = workForceOfficers[0].Designation;
 
+            var CurrentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == form["ApplicationId"] && cur.Officer == Officer);
+            CurrentPhase!.ReceivedOn =DateTime.Now.ToString("dd MMM yyyy hh:mm tt");
+            CurrentPhase.ActionTaken = "Pending";
+            CurrentPhase.Remarks = string.Empty;
+            CurrentPhase.CanPull = false;
 
+            dbcontext.SaveChanges();
 
             helper.UpdateApplication("EditList", "[]", new SqlParameter("@ApplicationId", form["ApplicationId"].ToString()));
             helper.UpdateApplicationHistory(form["ApplicationId"].ToString(), "Citizen", "Edited and returned to " + workForceOfficers[0].Designation, "NULL");
@@ -407,7 +416,7 @@ namespace SocialWelfare.Controllers.User
         public IActionResult IncompleteApplication(string ApplicationId, string DistrictId)
         {
             var ApplicationIdParam = new SqlParameter("@ApplicationId", ApplicationId);
-            int serviceId = dbcontext.Applications.FirstOrDefault(app => app.ApplicationId == ApplicationId)!.ServiceId;
+            int? serviceId = dbcontext.Applications.FirstOrDefault(app => app.ApplicationId == ApplicationId)!.ServiceId;
             int accessCode = Convert.ToInt32(DistrictId);
             var workForceOfficer = JsonConvert.DeserializeObject<List<dynamic>>(dbcontext.Services.FirstOrDefault(s => s.ServiceId == serviceId)!.WorkForceOfficers!);
             string officerDesignation = workForceOfficer![0]["Designation"];

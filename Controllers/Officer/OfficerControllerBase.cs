@@ -181,7 +181,7 @@ namespace SocialWelfare.Controllers.Officer
 
             dbcontext.SaveChanges();
 
-            if (IsMoreThanSpecifiedDays(currentPhase.ReceivedOn.ToString(), 15)) canOfficerTakeAction = false;
+            if (IsMoreThanSpecifiedDays(currentPhase.ReceivedOn!.ToString(), 15)) canOfficerTakeAction = false;
             if (IsMoreThanSpecifiedDays(generalDetails.SubmissionDate!.ToString(), 45)) canOfficerTakeAction = false;
 
 

@@ -122,3 +122,30 @@ $(document).ready(function () {
       });
   });
 });
+
+
+[{
+  Designation: "District Social Welfare Officer",
+  canForward: true,
+  canReturn: false,
+  canReturnToEdit: true,
+  canSanction: false,
+  canUpdate: true,
+},
+{
+  Designation: "Deputy Development Commissioner",
+  canForward: true,
+  canReturn: true,
+  canReturnToEdit: false,
+  canSanction: false,
+  canUpdate: false,
+},
+{
+  Designation: "Director Finance",
+  canForward: false,
+  canReturn: false,
+  canReturnToEdit: false,
+  canSanction: true,
+  canUpdate: false,
+}
+]

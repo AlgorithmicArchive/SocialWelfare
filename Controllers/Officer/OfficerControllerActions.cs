@@ -166,13 +166,13 @@ namespace SocialWelfare.Controllers.Officer
                     {
                         await UpdateRelatedRecordsCount(nextOfficer, serviceId);
                     }
-                    else if (nextPhase!.ActionTaken.Trim().Equals("Return", StringComparison.OrdinalIgnoreCase))
+                    else if (nextPhase!.ActionTaken!.Trim().Equals("Return", StringComparison.OrdinalIgnoreCase))
                     {
-                        await UpdateRelatedRecordsCount(nextPhase!.Officer, serviceId, returnCount: -1);
+                        await UpdateRelatedRecordsCount(nextPhase.Officer!, serviceId, returnCount: -1);
                     }
                     else
                     {
-                        await UpdateRelatedRecordsCount(nextPhase!.Officer, serviceId);
+                        await UpdateRelatedRecordsCount(nextPhase.Officer!, serviceId);
                     }
                     await HandleForward(form, currentPhase, officerDesignation, serviceId, remarks, applicationId, accessCode);
                     break;
@@ -182,10 +182,10 @@ namespace SocialWelfare.Controllers.Officer
 
                     _logger.LogInformation($"-----------------ACTION TAKEN IN RETURN: {previousPhase!.ActionTaken}---------------");
 
-                    if (previousPhase!.ActionTaken.Trim().Equals("Forward", StringComparison.OrdinalIgnoreCase))
+                    if (previousPhase.ActionTaken!.Trim().Equals("Forward", StringComparison.OrdinalIgnoreCase))
                     {
                         _logger.LogInformation($"-----------------ACTION TAKEN: {previousPhase!.ActionTaken}");
-                        await UpdateRelatedRecordsCount(previousPhase.Officer, serviceId, forwardCount: -1);
+                        await UpdateRelatedRecordsCount(previousPhase.Officer!, serviceId, forwardCount: -1);
                     }
                     HandleReturn(currentPhase, remarks);
                     break;
@@ -243,7 +243,6 @@ namespace SocialWelfare.Controllers.Officer
                     {
                         ApplicationId = applicationId,
                         ReceivedOn = DateTime.Now.ToString("dd MMM yyyy hh:mm tt"),
-                        OfficerId = nextOfficerDetails!.UserId,
                         Officer = nextOfficer,
                         AccessCode = AccessCode,
                         ActionTaken = "Pending",

@@ -17,11 +17,15 @@ public partial class Service
 
     public string? UpdateColumn { get; set; }
 
-    public string LetterUpdateDetails { get; set; } = null!;
+    public string? LetterUpdateDetails { get; set; }
 
-    public DateTime CreatedAt { get; set; }
+    public decimal CreatedAt { get; set; }
 
     public bool Active { get; set; }
 
     public virtual ICollection<Application> Applications { get; set; } = new List<Application>();
+
+    public virtual ICollection<BankFile> BankFiles { get; set; } = new List<BankFile>();
+
+    public virtual ICollection<RecordCount> RecordCounts { get; set; } = new List<RecordCount>();
 }

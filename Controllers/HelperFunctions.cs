@@ -70,13 +70,9 @@ public class UserHelperFunctions
 
         string financialYear = GetCurrentFinancialYear();
 
-        var result = dbcontext.ApplicationPerDistricts
-                      .FromSqlRaw("EXEC CountPerDistrict @DistrictId, @FinancialYear",
-                                  new SqlParameter("@DistrictId", districtId),
-                                  new SqlParameter("@FinancialYear", financialYear))
-                      .ToList();
+        var result = dbcontext.ApplicationPerDistricts.FirstOrDefault(a=>a.DistrictId==districtId && a.FinancialYear==financialYear);
 
-        int countPerDistrict = result.FirstOrDefault()?.CountValue ?? 0;
+        int countPerDistrict = result?.CountValue ?? 0;
 
         string sql = "";
 

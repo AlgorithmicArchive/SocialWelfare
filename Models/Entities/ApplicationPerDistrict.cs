@@ -12,4 +12,6 @@ public partial class ApplicationPerDistrict
     public string FinancialYear { get; set; } = null!;
 
     public int CountValue { get; set; }
+
+    public virtual District District { get; set; } = null!;
 }

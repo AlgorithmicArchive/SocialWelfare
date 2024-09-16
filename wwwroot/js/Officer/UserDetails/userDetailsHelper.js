@@ -278,18 +278,20 @@ function getWorkForceOfficer(
 ) {
   const workForceOfficers = JSON.parse(serviceContent.workForceOfficers);
   let officer;
-  workForceOfficers.map((item) => {
+  let currentIndex;
+  workForceOfficers.map((item,index) => {
     if (item.Designation == currentOfficer) {
       officer = item;
+      currentIndex = index;
     }
   });
 
   const options = [
     officer.canForward
-      ? `<option value="Forward">Forward To ${officer.nextOfficer}</option>`
+      ? `<option value="Forward">Forward To ${workForceOfficers[currentIndex+1].Designation}</option>`
       : "",
     officer.canReturn
-      ? `<option value="Return">Return To ${officer.prevOfficer}</option>`
+      ? `<option value="Return">Return To ${workForceOfficers[currentIndex-1].Designation}</option>`
       : "",
     officer.canReturnToEdit
       ? `<option value="ReturnToEdit">Return To Edit</option>`

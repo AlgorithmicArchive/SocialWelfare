@@ -17,5 +17,7 @@ public partial class Certificate
 
     public byte[] EncryptionIv { get; set; } = null!;
 
-    public DateTime RegisteredDate { get; set; }
+    public string RegisteredDate { get; set; } = null!;
+
+    public virtual User Officer { get; set; } = null!;
 }

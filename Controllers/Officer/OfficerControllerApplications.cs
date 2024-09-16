@@ -19,7 +19,8 @@ namespace SocialWelfare.Controllers.Officer
 
 
             var recordsCount = dbcontext.RecordCounts.FirstOrDefault(rc => rc.ServiceId == serviceId && rc.Officer == officerDesignation && rc.AccessCode == Convert.ToInt32(accessCode));
-            int totalPending = recordsCount!.Pending;
+            int? totalPending = recordsCount!.Pending;
+            _logger.LogInformation($"------- Total Pending : {totalPending}--------------");
             var arrayLists = dbcontext.ApplicationLists.FirstOrDefault(list => list.ServiceId == serviceId && list.Officer == officerDesignation && list.AccessLevel == accessLevel && list.AccessCode == Convert.ToInt32(accessCode));
             List<string> poolList = [];
             List<string> approveList = [];
@@ -28,7 +29,7 @@ namespace SocialWelfare.Controllers.Officer
             {
                 poolList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.PoolList)!;
                 approveList = JsonConvert.DeserializeObject<List<string>>(arrayLists!.ApprovalList)!;
-                totalPending -= poolList.Count - approveList.Count;
+                totalPending -= poolList.Count + approveList.Count;
             }
 
             var applicationList = dbcontext.CurrentPhases
@@ -324,7 +325,6 @@ namespace SocialWelfare.Controllers.Officer
                     application.RelationName + $" ({application.Relation.ToUpper()})",
                     serviceSpecific["MotherName"],
                     application.DateOfBirth,
-                    serviceSpecific["DateOfMarriage"],
                     $"{bankDetails["BankName"]}/{bankDetails["IfscCode"]}/{bankDetails["AccountNumber"]}",
                     $"{preAddressDetails.Address!.ToUpper()}, TEHSIL:{preAddressDetails.Tehsil!.ToUpper()}, DISTRICT:{preAddressDetails.District!.ToUpper()}, PINCODE:{preAddressDetails.Pincode}",
                     application.SubmissionDate!
@@ -530,7 +530,7 @@ namespace SocialWelfare.Controllers.Officer
                 return obj;
             else return new { columns = sanctionColumns, data = SanctionApplications };
         }
-        public dynamic RejectApplications(Models.Entities.User Officer, int start, int length, string type, int serviceId, bool AllData = false)
+        public dynamic RejectApplications(Models.Entities.User Officer, int start, int length, string type, int? serviceId, bool AllData = false)
         {
             var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
             string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;

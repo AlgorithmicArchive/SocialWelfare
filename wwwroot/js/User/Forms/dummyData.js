@@ -187,7 +187,7 @@ const dummyDocuments = [
   "DomicileCertificateFile",
   "BankPassbookFile",
   "MarriageCardFile",
-  "AffidavitdulyattestedbytheJudicialMagistrateFirstClassFile",
+  "AffidavitdulyattestedbytheJudicialMagistrateFirstClassFile" ,
   "ConsentFormforAadharSeedingoftheBankAccountFile",
   "OtherFile",
 ];

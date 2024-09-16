@@ -33,7 +33,6 @@ $(document).ready(function () {
         accoutNumber,
         ApplicationId
       );
-      console.log(accoutNumber);
     }
 
     if ($(`#form${stepCount} .errorMsg`).length === 0 && !IsDuplicateAccNo) {

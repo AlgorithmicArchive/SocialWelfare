@@ -111,7 +111,12 @@ namespace SocialWelfare.Controllers
             };
             var backupCodesParam = new SqlParameter("@BackupCodes", JsonConvert.SerializeObject(backupCodes));
 
-            var result = _dbContext.Users.FromSqlRaw("EXEC RegisterUser @Username,@Email,@Password,@MobileNumber,@UserSpecificDetails,@UserType,@BackupCodes", username, email, password, mobileNumber, UserSpecificParam, UserType, backupCodesParam).ToList();
+            var registeredDate = new SqlParameter("@RegisteredDate",DateTime.Now.ToString("dd MMM yyyy hh:mm:ss tt"));
+
+            var result = _dbContext.Users.FromSqlRaw(
+                "EXEC RegisterUser @Username, @Password, @Email, @MobileNumber, @UserSpecificDetails, @UserType, @BackupCodes, @RegisteredDate",
+                username, password, email, mobileNumber, UserSpecificParam, UserType, backupCodesParam, registeredDate
+            ).ToList();
 
             if (result.Count > 0)
             {
@@ -131,7 +136,7 @@ namespace SocialWelfare.Controllers
             SqlParameter password = !string.IsNullOrEmpty(form["Password"]) ? new SqlParameter("Password", form["Password"].ToString()) : null!;
 
             var user = _dbContext.Users.FromSqlRaw("EXEC UserLogin @Username,@Password", username, password).ToList();
-
+            _logger.LogInformation($"=====USER COUNT:{user.Count}============");
             if (user.Count != 0)
             {
                 if (!user[0].EmailValid) return Json(new { status = false, response = "Email Not Verified." });
@@ -264,7 +269,7 @@ namespace SocialWelfare.Controllers
         public async Task<IActionResult> Register(IFormCollection form)
         {
             var username = new SqlParameter("@Username", form["Username"].ToString());
-            var password = new SqlParameter("@Password", form["Password"].ToString());
+            var password = new SqlParameter("@Password", form["Password"].ToString());  
             var email = new SqlParameter("@Email", form["Email"].ToString());
             var mobileNumber = new SqlParameter("@MobileNumber", form["MobileNumber"].ToString());
 
@@ -285,8 +290,14 @@ namespace SocialWelfare.Controllers
             var UserType = new SqlParameter("@UserType", "Citizen");
 
             var backupCodesParam = new SqlParameter("@BackupCodes", JsonConvert.SerializeObject(backupCodes));
+            
+            var registeredDate = new SqlParameter("@RegisteredDate",DateTime.Now.ToString("dd MMM yyyy hh:mm:ss tt"));
 
-            var result = _dbContext.Users.FromSqlRaw("EXEC RegisterUser @Username,@Email,@Password,@MobileNumber,@UserSpecificDetails,@UserType,@BackupCodes", username, email, password, mobileNumber, UserSpecificParam, UserType, backupCodesParam).ToList();
+            var result = _dbContext.Users.FromSqlRaw(
+                "EXEC RegisterUser @Username, @Password, @Email, @MobileNumber, @UserSpecificDetails, @UserType, @BackupCodes, @RegisteredDate",
+                username, password, email, mobileNumber, UserSpecificParam, UserType, backupCodesParam, registeredDate
+            ).ToList();
+
 
             if (result.Count != 0)
             {
@@ -324,8 +335,9 @@ namespace SocialWelfare.Controllers
             {
                 if (int.TryParse(form["CitizenId"].ToString(), out int parsedCitizenId))
                 {
-                    var citizenIdParam = new SqlParameter("@CitizenId", parsedCitizenId);
-                    _dbContext.Database.ExecuteSqlRaw("EXEC ValidateUserEmail @CitizenId", citizenIdParam);
+                    var Citizen = _dbContext.Users.FirstOrDefault(u=>u.UserId == parsedCitizenId);
+                    Citizen!.EmailValid = true;
+                    _dbContext.SaveChanges();
                     return Json(new { status = true, response = "Registration Successful." });
                 }
                 else

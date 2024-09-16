@@ -51,6 +51,7 @@ $(document).ready(function () {
     "editList",
     "applicationsHistories",
     "service",
+    "currentPhases",
   ];
 
   // Set user image

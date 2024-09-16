@@ -19,5 +19,9 @@ public partial class BankFile
 
     public bool FileSent { get; set; }
 
-    public string? ResponseFile { get; set; }
+    public string ResponseFile { get; set; } = null!;
+
+    public virtual District District { get; set; } = null!;
+
+    public virtual Service Service { get; set; } = null!;
 }

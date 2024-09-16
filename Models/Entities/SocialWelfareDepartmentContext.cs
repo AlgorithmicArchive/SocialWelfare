@@ -61,10 +61,10 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
     public virtual DbSet<Ward> Wards { get; set; }
 
-    public virtual DbSet<AddressJoin> AddressJoins { get; set; }
-    public virtual DbSet<BankFileModel> BankFileModels { get; set; }
+     public virtual DbSet<AddressJoin> AddressJoins { get; set; }   
+     public virtual DbSet<BankFileModel> BankFileModels { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("name=DefaultConnection");
+        => optionsBuilder.UseSqlServer("Name=DefaultConnection");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -79,26 +79,27 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
         modelBuilder.Entity<Application>(entity =>
         {
-            entity.HasKey(e => e.ApplicationId).HasName("PK__tmp_ms_x__C93A4C99B10E9956");
-
-            entity.HasIndex(e => e.ServiceId, "IX_Applications_ServiceId");
-
             entity.Property(e => e.ApplicationId)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.ApplicantImage).IsUnicode(false);
             entity.Property(e => e.ApplicantName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
             entity.Property(e => e.ApplicationStatus)
                 .HasMaxLength(15)
                 .IsUnicode(false);
-            entity.Property(e => e.BankDetails).HasDefaultValue("{}");
-            entity.Property(e => e.Category).HasMaxLength(50);
+            entity.Property(e => e.BankDetails).IsUnicode(false);
+            entity.Property(e => e.Category)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.DateOfBirth)
                 .HasMaxLength(50)
                 .IsUnicode(false);
-            entity.Property(e => e.Documents).HasDefaultValue("[]");
-            entity.Property(e => e.EditList).HasDefaultValue("[]");
+            entity.Property(e => e.Documents).IsUnicode(false);
+            entity.Property(e => e.EditList)
+                .IsUnicode(false)
+                .HasDefaultValue("[]");
             entity.Property(e => e.Email)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -106,23 +107,33 @@ public partial class SocialWelfareDepartmentContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.PermanentAddressId)
-                .HasMaxLength(10)
-                .IsFixedLength();
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValueSql("((0))");
             entity.Property(e => e.PresentAddressId)
-                .HasMaxLength(10)
-                .IsFixedLength();
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValueSql("((0))");
             entity.Property(e => e.Relation)
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.RelationName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
-            entity.Property(e => e.SubmissionDate).HasMaxLength(50);
+            entity.Property(e => e.ServiceSpecific).IsUnicode(false);
+            entity.Property(e => e.SubmissionDate)
+                .HasMaxLength(50)
+                .HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Citizen).WithMany(p => p.Applications)
+                .HasForeignKey(d => d.CitizenId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Applications_Users");
 
             entity.HasOne(d => d.Service).WithMany(p => p.Applications)
                 .HasForeignKey(d => d.ServiceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Applicati__Servi__25DB9BFC");
+                .HasConstraintName("FK_Applications_Services");
         });
 
         modelBuilder.Entity<ApplicationList>(entity =>
@@ -135,9 +146,11 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.AccessLevel)
                 .HasMaxLength(50)
                 .IsUnicode(false);
-            entity.Property(e => e.ApprovalList).HasDefaultValue("[]");
-            entity.Property(e => e.Officer).HasMaxLength(50);
-            entity.Property(e => e.PoolList).HasDefaultValue("[]");
+            entity.Property(e => e.ApprovalList).IsUnicode(false);
+            entity.Property(e => e.Officer)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.PoolList).IsUnicode(false);
         });
 
         modelBuilder.Entity<ApplicationPerDistrict>(entity =>
@@ -150,6 +163,11 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.FinancialYear)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+
+            entity.HasOne(d => d.District).WithMany(p => p.ApplicationPerDistricts)
+                .HasForeignKey(d => d.DistrictId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ApplicationPerDistrict_District");
         });
 
         modelBuilder.Entity<ApplicationsHistory>(entity =>
@@ -158,13 +176,11 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
             entity.ToTable("ApplicationsHistory");
 
-            entity.HasIndex(e => e.ApplicationId, "IX_ApplicationsHistory_ApplicationId");
-
             entity.Property(e => e.Uuid).HasColumnName("UUID");
             entity.Property(e => e.ApplicationId)
                 .HasMaxLength(50)
                 .IsUnicode(false);
-            entity.Property(e => e.History).HasDefaultValue("[]");
+            entity.Property(e => e.History).IsUnicode(false);
 
             entity.HasOne(d => d.Application).WithMany(p => p.ApplicationsHistories)
                 .HasForeignKey(d => d.ApplicationId)
@@ -176,22 +192,41 @@ public partial class SocialWelfareDepartmentContext : DbContext
         {
             entity.HasKey(e => e.FileId);
 
-            entity.Property(e => e.FileName).HasMaxLength(255);
-            entity.Property(e => e.GeneratedDate).HasMaxLength(50);
-            entity.Property(e => e.ResponseFile).HasMaxLength(255);
+            entity.Property(e => e.FileName)
+                .HasMaxLength(510)
+                .IsUnicode(false);
+            entity.Property(e => e.GeneratedDate)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.ResponseFile)
+                .HasMaxLength(510)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.District).WithMany(p => p.BankFiles)
+                .HasForeignKey(d => d.DistrictId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_BankFiles_District");
+
+            entity.HasOne(d => d.Service).WithMany(p => p.BankFiles)
+                .HasForeignKey(d => d.ServiceId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_BankFiles_Services");
         });
 
         modelBuilder.Entity<Block>(entity =>
         {
-            entity.HasKey(e => e.Uuid);
-
             entity.ToTable("Block");
 
-            entity.Property(e => e.Uuid).HasColumnName("UUID");
+            entity.Property(e => e.BlockId).ValueGeneratedNever();
             entity.Property(e => e.BlockName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
             entity.Property(e => e.DistrictId).HasColumnName("DistrictID");
+
+            entity.HasOne(d => d.District).WithMany(p => p.Blocks)
+                .HasForeignKey(d => d.DistrictId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Block_District");
         });
 
         modelBuilder.Entity<Certificate>(entity =>
@@ -202,8 +237,13 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.EncryptionIv).HasColumnName("encryptionIV");
             entity.Property(e => e.EncryptionKey).HasColumnName("encryptionKey");
             entity.Property(e => e.RegisteredDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasMaxLength(50)
+                .HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Officer).WithMany(p => p.Certificates)
+                .HasForeignKey(d => d.OfficerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Certificates_Users");
         });
 
         modelBuilder.Entity<CurrentPhase>(entity =>
@@ -213,29 +253,36 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.ToTable("CurrentPhase");
 
             entity.Property(e => e.ActionTaken)
-                .HasMaxLength(10)
-                .IsFixedLength();
-            entity.Property(e => e.ApplicationId).HasMaxLength(50);
-            entity.Property(e => e.File)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.ApplicationId)
                 .HasMaxLength(50)
-                .HasDefaultValue("");
+                .IsUnicode(false);
+            entity.Property(e => e.File)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasDefaultValue("NIL");
             entity.Property(e => e.Officer)
                 .HasMaxLength(150)
                 .IsUnicode(false);
             entity.Property(e => e.ReceivedOn)
                 .HasMaxLength(50)
                 .IsUnicode(false);
-            entity.Property(e => e.Remarks).HasColumnType("text");
+            entity.Property(e => e.Remarks).IsUnicode(false);
+
+            entity.HasOne(d => d.Application).WithMany(p => p.CurrentPhases)
+                .HasForeignKey(d => d.ApplicationId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CurrentPhase_Applications");
         });
 
         modelBuilder.Entity<District>(entity =>
         {
-            entity.HasKey(e => e.Uuid);
-
             entity.ToTable("District");
 
-            entity.Property(e => e.Uuid).HasColumnName("UUID");
-            entity.Property(e => e.DistrictId).HasColumnName("DistrictID");
+            entity.Property(e => e.DistrictId)
+                .ValueGeneratedNever()
+                .HasColumnName("DistrictID");
             entity.Property(e => e.DistrictName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
@@ -251,11 +298,16 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.ToTable("Feedback");
 
             entity.Property(e => e.Uuid).HasColumnName("UUID");
-            entity.Property(e => e.Message).HasColumnType("text");
-            entity.Property(e => e.ServiceRelated).HasMaxLength(50);
-            entity.Property(e => e.SubmittedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.Message).IsUnicode(false);
+            entity.Property(e => e.ServiceRelated)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.SubmittedAt).HasColumnType("decimal(23, 3)");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Feedbacks)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Feedback_Users");
         });
 
         modelBuilder.Entity<HalqaPanchayat>(entity =>
@@ -268,14 +320,30 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.PanchayatName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+
+            entity.HasOne(d => d.Block).WithMany(p => p.HalqaPanchayats)
+                .HasForeignKey(d => d.BlockId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_HalqaPanchayat_Block");
         });
 
         modelBuilder.Entity<Log>(entity =>
         {
-            entity.Property(e => e.Action).HasColumnType("text");
-            entity.Property(e => e.DateOfAction).HasMaxLength(50);
-            entity.Property(e => e.IpAddress).HasMaxLength(50);
-            entity.Property(e => e.UserType).HasMaxLength(15);
+            entity.Property(e => e.Action).IsUnicode(false);
+            entity.Property(e => e.DateOfAction)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.IpAddress)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.UserType)
+                .HasMaxLength(30)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.User).WithMany(p => p.Logs)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Logs_Users");
         });
 
         modelBuilder.Entity<OfficersDesignation>(entity =>
@@ -284,10 +352,12 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
             entity.Property(e => e.Uuid).HasColumnName("UUID");
             entity.Property(e => e.AccessLevel)
-                .HasMaxLength(20)
-                .IsFixedLength();
+                .HasMaxLength(40)
+                .IsUnicode(false);
             entity.Property(e => e.Designation).IsUnicode(false);
-            entity.Property(e => e.DesignationShort).HasMaxLength(50);
+            entity.Property(e => e.DesignationShort)
+                .HasMaxLength(100)
+                .IsUnicode(false);
         });
 
         modelBuilder.Entity<Pincode>(entity =>
@@ -307,42 +377,49 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.Officer)
                 .HasMaxLength(100)
                 .IsUnicode(false);
+
+            entity.HasOne(d => d.Service).WithMany(p => p.RecordCounts)
+                .HasForeignKey(d => d.ServiceId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RecordCount_Services");
         });
 
         modelBuilder.Entity<Service>(entity =>
         {
-            entity.HasKey(e => e.ServiceId).HasName("PK__tmp_ms_x__C51BB00A0C58849B");
-
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.CreatedAt).HasColumnType("decimal(23, 3)");
             entity.Property(e => e.Department)
                 .HasMaxLength(255)
                 .IsUnicode(false);
-            entity.Property(e => e.LetterUpdateDetails).HasDefaultValue("[]");
+            entity.Property(e => e.FormElement).IsUnicode(false);
+            entity.Property(e => e.LetterUpdateDetails).IsUnicode(false);
             entity.Property(e => e.ServiceName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+            entity.Property(e => e.UpdateColumn).IsUnicode(false);
+            entity.Property(e => e.WorkForceOfficers).IsUnicode(false);
         });
 
         modelBuilder.Entity<Tehsil>(entity =>
         {
-            entity.HasKey(e => e.Uuid);
-
             entity.ToTable("Tehsil");
 
-            entity.Property(e => e.Uuid).HasColumnName("UUID");
+            entity.Property(e => e.TehsilId).ValueGeneratedNever();
             entity.Property(e => e.DistrictId).HasColumnName("DistrictID");
             entity.Property(e => e.TehsilName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+
+            entity.HasOne(d => d.District).WithMany(p => p.Tehsils)
+                .HasForeignKey(d => d.DistrictId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Tehsil_District");
         });
 
         modelBuilder.Entity<UniqueIdtable>(entity =>
         {
-            entity.HasKey(e => new { e.DistrictNameShort, e.MonthShort }).HasName("PK__UniqueID__EB7142A582B5632B");
-
-            entity.ToTable("UniqueIDTable");
+            entity
+                .HasNoKey()
+                .ToTable("UniqueIDTable");
 
             entity.Property(e => e.DistrictNameShort)
                 .HasMaxLength(10)
@@ -354,20 +431,36 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
         modelBuilder.Entity<UpdatedLetterDetail>(entity =>
         {
-            entity.HasKey(e => e.ApplicationId);
+            entity.HasNoKey();
 
-            entity.Property(e => e.ApplicationId).HasMaxLength(50);
+            entity.Property(e => e.ApplicationId)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedDetails).IsUnicode(false);
+
+            entity.HasOne(d => d.Application).WithMany()
+                .HasForeignKey(d => d.ApplicationId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UpdatedLetterDetails_Applications");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.Property(e => e.Email).HasMaxLength(50);
-            entity.Property(e => e.MobileNumber).HasMaxLength(10);
-            entity.Property(e => e.RegisteredDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.UserType).HasMaxLength(15);
-            entity.Property(e => e.Username).HasMaxLength(50);
+            entity.Property(e => e.BackupCodes).IsUnicode(false);
+            entity.Property(e => e.Email)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.MobileNumber)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.RegisteredDate).HasMaxLength(120);
+            entity.Property(e => e.UserSpecificDetails).IsUnicode(false);
+            entity.Property(e => e.UserType)
+                .HasMaxLength(30)
+                .IsUnicode(false);
+            entity.Property(e => e.Username)
+                .HasMaxLength(100)
+                .IsUnicode(false);
         });
 
         modelBuilder.Entity<Village>(entity =>
@@ -380,6 +473,16 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.VillageName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+
+            entity.HasOne(d => d.HalqaPanchayat).WithMany(p => p.Villages)
+                .HasForeignKey(d => d.HalqaPanchayatId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Village_HalqaPanchayat");
+
+            entity.HasOne(d => d.Tehsil).WithMany(p => p.Villages)
+                .HasForeignKey(d => d.TehsilId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Village_Tehsil");
         });
 
         modelBuilder.Entity<Ward>(entity =>
@@ -392,6 +495,11 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.WardName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+
+            entity.HasOne(d => d.Village).WithMany(p => p.Wards)
+                .HasForeignKey(d => d.VillageId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Ward_Village");
         });
 
         OnModelCreatingPartial(modelBuilder);

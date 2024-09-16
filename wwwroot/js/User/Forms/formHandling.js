@@ -171,10 +171,12 @@ function handleFormData(
   }
 }
 function processApplication(originalForm, url) {
+  console.log(originalForm);
   showSpinner();
   fetch(url, { method: "post", body: originalForm })
     .then((res) => res.json())
     .then((data) => {
+      console.log(data);
       if (data.status) {
         hideSpinner();
         ApplicationId =

@@ -24,4 +24,6 @@ public partial class RecordCount
     public int Return { get; set; }
 
     public int Reject { get; set; }
+
+    public virtual Service Service { get; set; } = null!;
 }

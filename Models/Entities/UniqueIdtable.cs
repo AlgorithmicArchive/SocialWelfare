@@ -9,5 +9,5 @@ public partial class UniqueIdtable
 
     public string MonthShort { get; set; } = null!;
 
-    public long? LastSequentialNumber { get; set; }
+    public long LastSequentialNumber { get; set; }
 }

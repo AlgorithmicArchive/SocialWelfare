@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using SocialWelfare.Models.Entities;
 
 namespace SocialWelfare.Controllers.User
 {
@@ -40,9 +39,10 @@ namespace SocialWelfare.Controllers.User
         [HttpGet]
         public IActionResult GetPhases(string applicationId)
         {
-            int phaseId = dbcontext.Applications.FirstOrDefault(app => app.ApplicationId == applicationId)!.Phase;
+            int? phaseId = Convert.ToInt32(dbcontext.Applications.FirstOrDefault(app => app.ApplicationId == applicationId)!.Phase);
             var phases = new List<dynamic>();
 
+            _logger.LogInformation($"---------- PHASE ID: {phaseId}");
             // Traverse the linked list of phases
             while (phaseId != 0)
             {

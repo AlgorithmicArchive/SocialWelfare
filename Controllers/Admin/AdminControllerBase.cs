@@ -28,9 +28,9 @@ namespace SocialWelfare.Controllers.Admin
         public IActionResult Dashboard()
         {
             int? UserId = HttpContext.Session.GetInt32("UserId");
-            int accessCode = JsonConvert.DeserializeObject<dynamic>(dbcontext.Users.FirstOrDefault(u => u.UserId == UserId)!.UserSpecificDetails)!["AccessCode"];
             var user = dbcontext.Users.FirstOrDefault(u => u.UserId == UserId);
             var userSpecificDetails = JsonConvert.DeserializeObject<dynamic>(user!.UserSpecificDetails);
+            int accessCode = Convert.ToInt32(userSpecificDetails!["AccessCode"]);
 
 
             var countList = GetCount();

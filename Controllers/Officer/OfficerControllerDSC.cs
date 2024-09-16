@@ -69,7 +69,7 @@ namespace SocialWelfare.Controllers.Officer
             }
             catch (Exception ex)
             {
-                return BadRequest($"Error processing .pfx file: {ex.Message}");
+                return NotFound($"Error processing .pfx file: {ex.Message}");
             }
         }
         private static async Task<byte[]> ReadStreamToByteArray(Stream stream)

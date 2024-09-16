@@ -11,7 +11,8 @@ function AddErrorSpan(id, errorList) {
     errorList.map((item) => {
       $("#" + id + "Msg").append(`<p>${item}</p>`);
     });
-  } else {attachValidation
+  } else {
+    // attachValidation
     $("#" + id + "Msg").remove();
   }
 }

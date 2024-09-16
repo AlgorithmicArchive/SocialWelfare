@@ -11,7 +11,7 @@ public partial class User
 
     public string Email { get; set; } = null!;
 
-    public string Password { get; set; } = null!;
+    public byte[] Password { get; set; } = null!;
 
     public string MobileNumber { get; set; } = null!;
 
@@ -23,5 +23,13 @@ public partial class User
 
     public bool EmailValid { get; set; }
 
-    public DateTime RegisteredDate { get; set; }
+    public string RegisteredDate { get; set; } = null!;
+
+    public virtual ICollection<Application> Applications { get; set; } = new List<Application>();
+
+    public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
+
+    public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
+
+    public virtual ICollection<Log> Logs { get; set; } = new List<Log>();
 }
