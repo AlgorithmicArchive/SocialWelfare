@@ -1,0 +1,199 @@
+DistrictID,TehsilId,TehsilName
+8,1,Kupwara
+8,2,Handwara
+8,3,Karnah
+2,4,Khag
+2,5,Beerwah
+2,6,Khansahib
+2,7,Budgam
+2,8,Chadoora
+2,9,Charar- E- Shrief
+10,16,Haveli
+10,17,Mandi
+10,18,Mendhar
+12,21,Darhal
+12,22,Rajouri
+12,23,Thanamandi
+12,24,Kalakote
+12,25,Nowshera
+7,26,Sunderbani
+7,27,Billawar
+7,28,Basohli
+7,29,Bani
+7,30,Kathua
+7,31,Hiranagar
+7,32,Sukrala
+3,33,Rafiabad
+3,34,Pattan
+3,35,Baramulla
+3,36,Kreeri
+3,37,Wagoora
+3,38,Boniyar
+3,39,Sopore
+623,40,Gurez
+623,41,Bandipora
+626,45,Lar
+626,46,Kangan
+626,47,Ganderbal
+11,48,Pampore
+11,49,Awantipora
+11,50,Wachi
+11,51,Pulwama
+11,52,Zakura
+1,53,Pahalgam
+1,54,Bijbehara
+1,55,Anantnag
+1,56,Shangus
+1,57,Kokernag
+1,58,Dooru
+622,59,Kulgam
+622,60,Devsar
+622,61,D H Pora
+4,62,Doda
+4,63,Thuroo  (Tehsil)
+4,64,Thathri
+4,65,Bhaderwah
+621,66,Banihal
+621,67,Ramban
+620,68,Kishtwar
+620,69,Marwah
+620,70,Chhatroo
+620,71,Atholi (Paddar)
+14,73,Chenani
+14,74,Ramnagar
+14,75,Majalta
+627,77,Reasi
+5,78,Akhnoor
+5,79,Jammu
+5,80,Ranbir Singh Pura
+5,81,Bishnah
+624,82,Samba
+625,6091,Keller
+625,6092,Keegam
+622,6193,Qaimoh
+622,6194,Pahloo
+5,6700,Thuroo
+5,6701,Jourian
+5,6702,Maira Mandrian
+5,6703,Chowki Choura
+5,6704,Kharah Balli
+5,6705,Pargwal
+5,6706,Jammu South
+5,6707,Bahu
+5,6708,Jammu North
+5,6709,Bhalwal
+5,6710,Tirind
+5,6711,Nagrota
+5,6712,Dansal
+5,6713,Mandal
+5,6714,Khour
+5,6715,Marh
+5,6717,Arnia
+5,6718,Jammu West
+624,6719,Rajpura
+624,6720,Bari Brahamana
+624,6721,Ghagwal
+14,6723,Udhampur
+624,6724,Ramgarh
+7,6725,Mahanpur
+7,6726,Dinga Amb
+7,6727,Nagri
+7,6728,Ramkote
+7,6729,Lohai Malhar
+7,6731,Marheen
+14,6733,Tikri
+14,6734,Moungri
+14,6735,Panchari
+14,6736,Basantgarh
+14,6737,Latti
+627,6738,Chassana
+627,6739,Shri Mata Vaishno Devi Shrine Board (SMVDSB)
+627,6740,Arnas
+627,6741,Katra
+627,6742,Pouni
+627,6743,Sool
+627,6744,Bhomag
+4,6746,Bharath Bagla
+4,6747,Bhagwah
+4,6748,Kashtigarh
+4,6749,Gundna
+4,6750,Mohalla
+4,6751,Marmat
+4,6752,Assar
+4,6753,Bhalessa
+4,6754,Chilly Pingal
+4,6755,Bhalla
+4,6756,Kahara
+4,6757,Phigsoo
+4,6758,Chiralla
+621,6759,Khari
+621,6760,Pogal Paristan
+621,6761,Batote
+621,6762,Rajgarh
+621,6763,Gool
+620,6764,Mughalmaidan
+620,6765,Dachhan
+620,6766,Warwan
+620,6767,Machail
+620,6768,Nagseni
+620,6769,Drabshalla
+620,6770,Bounjwah
+12,6771,Khawas
+12,6772,Manjakote
+12,6773,Qila Darhal
+12,6774,Laroka
+12,6776,Beri Pattan
+620,6777,Washer
+10,6778,Balakote
+10,6779,Mankote
+622,6780,Frisal
+8,6782,Keran
+8,6783,Kralpora
+8,6784,Sogam
+8,6785,Machil
+8,6786,Drugmulla
+8,6787,Ramhal
+8,6788,Qaziabad
+8,6789,Langate
+13,6790,Shopian
+8,6791,Lolab
+8,6792,Lalpora
+11,6793,Kakapora
+11,6794,Shahoora
+11,6795,Aripal
+11,6796,Rajpora
+11,6797,Zainapora
+625,6798,Barbugh
+625,6799,Chitragam
+625,6800,Hermain
+13,6801,Khanyar
+13,6802,Channapora
+13,6803,Eidgah
+13,6804,Panthachowk
+13,6805,Sholipora
+626,6806,Gund
+623,6809,Aloosa
+623,6810,Ajas
+623,6811,Hajin
+2,6813,Narbal
+2,6814,Magam
+2,6815,Bk Pora
+1,6816,Shahbad Bala
+1,6817,Qazigund
+1,6818,Sallar
+1,6820,Larnoo
+1,6821,Shangus East
+1,6822,Anantnag East
+1,6823,Shirat
+3,6824,Danghiwacha
+3,6827,Dangarpora
+3,6828,Khoie
+3,6829,Kawarhama
+3,6830,Kunzar
+627,6850,Mahore
+12,6851,Koteranka
+621,7201,Ramsoo
+3,7202,Narvaw
+4,7203,Bhella
+4,7204,Sundar Doda
+8,7205,Qalamabad
