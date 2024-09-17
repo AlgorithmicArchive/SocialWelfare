@@ -253,16 +253,14 @@ namespace SocialWelfare.Controllers
                 };
 
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
-                if (userType == "Citizen" || userType == "Officer")
-                    return RedirectToAction("Index", userType == "Citizen" ? "User" : "Officer");
-                else if (userType == "Admin") return RedirectToAction("Dashboard", "Admin");
+                if (userType == "Citizen" || userType == "Officer" || userType == "Admin")
+                    return Json(new{status = true,userType});
                 else
-                    return RedirectToAction("Authentication", "Home");
+                    return Json(new{status = false, url = "/Home/Authentication"});
             }
             else
             {
-                TempData["ErrorMessage"] = "Invalid OTP or Backup Code. Try again";
-                return View("Verification");
+                return Json(new{status = false, message = "Invalid Code"});
             }
         }
 

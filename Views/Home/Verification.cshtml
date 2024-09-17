@@ -1,4 +1,4 @@
-<div class="full-screen-section center-align">
+<div class="full-screen-section center-align flex-column gap-4">
     <div id="mainContainer" class="width-25 shadow-lg rounded-border center-align flex-column p-3">
         <p class="fs-4 fw-bod text-center">Two Step Verification</p>
         <button class="btn btn-danger width-50 rounded-pill fw-bold" id="otpButton">OTP in Mail</button>
@@ -6,7 +6,7 @@
         <button class="btn btn-warning width-50 rounded-pill fw-bold" id="backupButton">Backup Code</button>
         <p class="text-center text-danger">@TempData["ErrorMessage"]</p>
     </div>
-    <form action="/Home/Verification" method="post">
+    <form id="verificationForm">
         <div id="otpContainer" class="shadow-lg rounded-border center-align flex-column p-3 gap-3"
             style="display: none;">
             <p class="fs-4 fw-bod text-center">OTP has been sent to email.</p>
