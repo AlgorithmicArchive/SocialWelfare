@@ -65,5 +65,17 @@ namespace SocialWelfare.Controllers.User
             return Json(new { phase = JsonConvert.SerializeObject(phases) });
         }
 
+        [HttpGet]
+        public IActionResult GetServiceContent(){
+             int? serviceId = HttpContext.Session.GetInt32("serviceId");
+            var service = dbcontext.Services.FirstOrDefault(ser=>ser.ServiceId == serviceId);
+            if(service!=null){
+             
+
+                return Json(new{status = true,service.ServiceName, service.FormElement});
+            }
+            else  return Json(new{status=false,message="No Service Found"});
+        }
+
     }
 }
