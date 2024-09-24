@@ -31,7 +31,7 @@ namespace SocialWelfare.Controllers.User
         [HttpGet]
         public IActionResult GetBlocks(string districtId)
         {
-            int.TryParse(districtId, out int DistrictId);
+            int DistrictId = Convert.ToInt32(districtId);
             var blocks = dbcontext.Blocks.Where(u => u.DistrictId == DistrictId).ToList();
             return Json(new { status = true, blocks });
         }
@@ -70,8 +70,6 @@ namespace SocialWelfare.Controllers.User
              int? serviceId = HttpContext.Session.GetInt32("serviceId");
             var service = dbcontext.Services.FirstOrDefault(ser=>ser.ServiceId == serviceId);
             if(service!=null){
-             
-
                 return Json(new{status = true,service.ServiceName, service.FormElement});
             }
             else  return Json(new{status=false,message="No Service Found"});
