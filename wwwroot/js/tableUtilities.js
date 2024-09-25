@@ -371,6 +371,31 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
             },
           },
         ],
+        columnDefs: [
+          {
+              // Assuming the button is in the last column (adjust the index as necessary)
+              targets: -1,
+              render: function(data, type, row, meta) {
+                  try {
+                      // Try to parse the data as JSON
+                      let buttonData = JSON.parse(data);
+  
+                      // Check if the parsed data has the necessary button properties
+                      if (buttonData && buttonData.function && buttonData.parameters) {
+                          return `<button class="btn btn-dark d-flex mx-auto" onclick="${buttonData.function}(${buttonData.parameters.join(',')})">
+                                      View
+                                  </button>`;
+                      } else {
+                          // If it's not JSON or doesn't contain button details, render it as text
+                          return data;
+                      }
+                  } catch (e) {
+                      // If parsing fails, assume it's plain text and render as is
+                      return data;
+                  }
+              }
+          }
+      ]
       });
 
       $(`#${tableId}_paginate`).remove();

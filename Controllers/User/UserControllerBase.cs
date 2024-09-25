@@ -69,7 +69,11 @@ namespace SocialWelfare.Controllers.User
             int index = 1;
             foreach (var item in services)
             {
-                List<dynamic> data = [index, item.ServiceName, item.Department, $"<button class='btn btn-dark w-100' onclick=OpenForm({item.ServiceId})>View</button>"];
+                var button = new{
+                    function = "OpenForm",
+                    parameters = new[] { item.ServiceId }
+                };
+                List<dynamic> data = [index, item.ServiceName, item.Department, JsonConvert.SerializeObject(button)];
                 Services.Add(data);
                 index++;
             }
