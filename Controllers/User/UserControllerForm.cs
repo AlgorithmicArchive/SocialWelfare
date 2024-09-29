@@ -183,7 +183,8 @@ namespace SocialWelfare.Controllers.User
             _logger.LogInformation("------------- INSERT DOCUMENT DOWN 5-------------------");
 
             var documents = JsonConvert.SerializeObject(docs);
-            var workForceOfficers = JsonConvert.DeserializeObject<List<dynamic>>(form["workForceOfficers"].ToString()) ?? [];
+            var service = dbcontext.Services.FirstOrDefault(service=>service.ServiceId == serviceId);
+            var workForceOfficers = JsonConvert.DeserializeObject<List<dynamic>>(service!.WorkForceOfficers!) ?? [];
             
             if (workForceOfficers.Count == 0)
             {
@@ -281,7 +282,7 @@ namespace SocialWelfare.Controllers.User
             {
                 await emailSender.SendEmail(email, "Acknowledgement", $"Your Application with Reference Number {applicationId} has been sent to {officer} at {DateTime.Now:dd MMM yyyy hh:mm tt}");
             }
-
+            HttpContext.Session.SetString("ApplicationId",applicationId);
             return Json(new { status = true, ApplicationId = applicationId, complete = true });
         }
         public async Task<IActionResult> UpdateGeneralDetails([FromForm] IFormCollection form)

@@ -222,26 +222,9 @@ namespace SocialWelfare.Controllers.User
         }
 
         [HttpGet]
-        public IActionResult Acknowledgement(string? RefNo)
+        public IActionResult Acknowledgement()
         {
-            var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(RefNo!);
-            int districtCode = Convert.ToInt32(serviceSpecific["District"]);
-            string AppliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtCode)!.DistrictName;
-            var details = new Dictionary<string, string>
-            {
-                ["REFERENCE NUMBER"] = userDetails.ApplicationId,
-                ["APPLICANT NAME"] = userDetails.ApplicantName,
-                ["PARENTAGE"] = userDetails.RelationName + $" ({userDetails.Relation.ToUpper()})",
-                ["MOTHER NAME"] = serviceSpecific["MotherName"],
-                ["APPLIED DISTRICT"] = AppliedDistrict.ToUpper(),
-                ["BANK NAME"] = bankDetails["BankName"],
-                ["ACCOUNT NUMBER"] = bankDetails["AccountNumber"],
-                ["IFSC CODE"] = bankDetails["IfscCode"],
-                ["DATE OF MARRIAGE"] = serviceSpecific["DateOfMarriage"],
-                ["DATE OF SUBMISSION"] = userDetails.SubmissionDate!,
-                ["PRESENT ADDRESS"] = $"{preAddressDetails.Address}, TEHSIL: {preAddressDetails.Tehsil}, DISTRICT: {preAddressDetails.District}, PIN CODE: {preAddressDetails.Pincode}",
-                ["PERMANENT ADDRESS"] = $"{perAddressDetails.Address}, TEHSIL: {perAddressDetails.Tehsil}, DISTRICT: {perAddressDetails.District}, PIN CODE: {perAddressDetails.Pincode}"
-            };
+            var details = FetchAcknowledgementDetails(); // Use the new helper method here
             return View(details);
         }
 
