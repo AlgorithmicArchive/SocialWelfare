@@ -89,7 +89,12 @@ namespace SocialWelfare.Controllers.Officer
                 var (userDetails, preAddressDetails, perAddressDetails, serviceSpecific, bankDetails) = helper.GetUserDetailsAndRelatedData(application.ApplicationId);
                 int DistrictCode = Convert.ToInt32(serviceSpecific["District"]);
                 string appliedDistrict = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == DistrictCode)!.DistrictName.ToUpper();
-
+                
+                var button = new{
+                    function = "UserDetails",
+                    parameters = new[] { application.ApplicationId },
+                    buttonText="View"
+                };
                 List<dynamic> pendingData =
                     [
                         pendingIndex,
@@ -98,7 +103,7 @@ namespace SocialWelfare.Controllers.Officer
                         application.ApplicantName,
                         serviceSpecific["DateOfMarriage"],
                         application.SubmissionDate!,
-                        $"<button class='btn btn-dark w-100' onclick=UserDetails('{application.ApplicationId}');>View</button>"
+                        JsonConvert.SerializeObject(button)
                     ];
                 if (!canSanction) pendingData.RemoveAt(1);
                 if (serviceSpecific["DateOfMarriage"] == null)

@@ -278,6 +278,7 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
       const columns = applications.columns;
       const recordsTotal = applications.recordsTotal;
       const recordsFiltered = applications.recordsFiltered;
+      console.log(data);
       let activeButtons = [];
       const table = $(`#${tableId}`).DataTable({
         data: data,
@@ -382,8 +383,9 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
   
                       // Check if the parsed data has the necessary button properties
                       if (buttonData && buttonData.function && buttonData.parameters) {
-                          return `<button class="btn btn-dark d-flex mx-auto" onclick="${buttonData.function}(${buttonData.parameters.join(',')})">
-                                      View
+                        let formattedString = buttonData.parameters.map(param => `'${param}'`).join(',');
+                          return `<button class="btn btn-dark d-flex mx-auto" onclick="${buttonData.function}(${formattedString})">
+                                      ${buttonData.buttonText}
                                   </button>`;
                       } else {
                           // If it's not JSON or doesn't contain button details, render it as text

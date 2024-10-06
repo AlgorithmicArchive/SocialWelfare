@@ -71,7 +71,8 @@ namespace SocialWelfare.Controllers.User
             {
                 var button = new{
                     function = "OpenForm",
-                    parameters = new[] { item.ServiceId }
+                    parameters = new[] { item.ServiceId },
+                    buttonText = "View"
                 };
                 List<dynamic> data = [index, item.ServiceName, item.Department, JsonConvert.SerializeObject(button)];
                 Services.Add(data);
@@ -140,7 +141,7 @@ namespace SocialWelfare.Controllers.User
             return View();
         }
 
-        public IActionResult GetApplicationStatus(int start, int length, string type = "")
+        public IActionResult GetApplicationStatus(int start=0, int length=10, string type = "")
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
             List<Application> applications = [];
@@ -163,12 +164,24 @@ namespace SocialWelfare.Controllers.User
             int index = 1;
             foreach (var item in applications)
             {
+                var firstButton = new{
+                    function = "CreateTimeLine",
+                    parameters = new[] { item.ApplicationId },
+                    buttonText="View"
+                };
+                
+                 var secondButton = new{
+                    function = "EditForm",
+                    parameters = new[] { item.ApplicationId },
+                    buttonText="Edit Form"
+                };
+
                 List<dynamic> data =
                 [
                     index,
                     item.ApplicationId,
                     item.ApplicantName,
-                   !Incomplete?$"<button class='btn btn-dark w-100' data-bs-toggle='modal' data-bs-target='#exampleModal' onclick=CreateTimeline('{item.ApplicationId}')>View</button>":$"<button class='btn btn-dark w-100' onclick=EditForm('{item.ApplicationId}')>Edit Form</button>"
+                   !Incomplete?JsonConvert.SerializeObject(firstButton):JsonConvert.SerializeObject(secondButton)
                 ];
 
                 Applications.Add(data);
@@ -184,8 +197,6 @@ namespace SocialWelfare.Controllers.User
 
             return Json(new { status = true, obj });
         }
-
-
 
         public IActionResult IncompleteApplications()
         {

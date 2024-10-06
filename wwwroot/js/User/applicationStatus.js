@@ -1,33 +1,11 @@
-function EditForm(ApplicationId, returnedToEdit = false) {
-  let url = "/User/ServiceForm?ApplicationId=" + ApplicationId;
-  if (returnedToEdit) url += "&returnToEdit=" + returnedToEdit;
-  window.location.href = url;
-}
 
-function downloadFile(ApplicationId) {
-  const filePath =
-    "/files/" + ApplicationId.replace(/\//g, "_") + "SanctionLetter.pdf";
-  fetch(filePath)
-    .then((response) => response.blob())
-    .then((blob) => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.style.display = "none";
-      a.href = url;
-      a.download = filePath.split("/").pop(); // Extract filename from path
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-    })
-    .catch((error) => console.error("Error downloading file:", error));
-}
-
-async function CreateTimeline(ApplicationId) {
+async function CreateTimeLine(ApplicationId) {
   let res = await fetch("/User/GetPhases?ApplicationId=" + ApplicationId);
   let data = await res.json();
   let phases = JSON.parse(data.phase);
   console.log(phases);
 
+  $("#statusTimeline").modal('show');
   let sanctioned = false;
   let returnedToEdit = false;
   $("#timeline").empty();
@@ -70,6 +48,32 @@ async function CreateTimeline(ApplicationId) {
                 onclick='downloadFile("${ApplicationId}")'>Downlaod Sanction Letter</button>`
     );
   }
+}
+
+
+
+function EditForm(ApplicationId, returnedToEdit = false) {
+  let url = "/User/ServiceForm?ApplicationId=" + ApplicationId;
+  if (returnedToEdit) url += "&returnToEdit=" + returnedToEdit;
+  window.location.href = url;
+}
+
+function downloadFile(ApplicationId) {
+  const filePath =
+    "/files/" + ApplicationId.replace(/\//g, "_") + "SanctionLetter.pdf";
+  fetch(filePath)
+    .then((response) => response.blob())
+    .then((blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = filePath.split("/").pop(); // Extract filename from path
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    })
+    .catch((error) => console.error("Error downloading file:", error));
 }
 
 function SendUpdateRequest(updateRequest, ApplicationId) {

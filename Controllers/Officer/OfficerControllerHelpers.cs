@@ -333,5 +333,28 @@ namespace SocialWelfare.Controllers.Officer
             helper.UpdateApplicationHistory(ApplicationId, officerDesignation, "Pulled Back From " + otherPhase == null ? "Sanction Phase" : otherPhase!.Officer, "");
             return Json(new { status = true, PullApplication = "YES" });
         }
+ 
+        public IActionResult GeServiceList(){
+            
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
+            string officerDesignation = UserSpecificDetails!["Designation"]?.ToString() ?? string.Empty;
+            var Services = dbcontext.Services.Where(s => s.Active == true).ToList();
+            var ServiceList = new List<dynamic>();
+            foreach (var service in Services)
+            {
+                var WorkForceOfficers = JsonConvert.DeserializeObject<dynamic>(service.WorkForceOfficers!);
+                foreach (var officer in WorkForceOfficers!)
+                {
+                    if (officer["Designation"] == officerDesignation)
+                    {
+                        ServiceList.Add(new { service.ServiceId, service.ServiceName });
+                    }
+                }
+            }
+
+            return Json(new{ServiceList});
+        }
     }
 }
