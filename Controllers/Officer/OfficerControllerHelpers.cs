@@ -69,6 +69,105 @@ namespace SocialWelfare.Controllers.Officer
             return Json(new { status = true, countList });
         }
 
+
+        [HttpGet]
+        public dynamic? GetApplicationDetails(string? ApplicationId)
+        {
+
+            _logger.LogInformation($"Application ID: {ApplicationId}");
+            // Fetch the logged-in user ID
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null)
+                return null;
+
+            // Retrieve the officer's details
+            var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+            if (Officer == null)
+                return null;
+
+            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer.UserSpecificDetails);
+            string officerDesignation = UserSpecificDetails!["Designation"];
+
+            // Fetch the general details of the application
+            var generalDetails = dbcontext.Applications.FirstOrDefault(u => u.ApplicationId == ApplicationId);
+            if (generalDetails == null)
+                return null;
+
+            bool canOfficerTakeAction = true;
+
+            // Fetch the current phase, next phase, and previous phase details
+            var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == generalDetails.ApplicationId && cur.Officer == officerDesignation);
+
+            CurrentPhase? nextPhase = null, previousPhase = null;
+            if (currentPhase != null)
+            {
+                if (currentPhase.Next != 0)
+                {
+                    nextPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.PhaseId == currentPhase.Next);
+                    if (nextPhase != null)
+                        nextPhase.CanPull = false;
+                }
+
+                if (currentPhase.Previous != 0)
+                {
+                    previousPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.PhaseId == currentPhase.Previous);
+                    if (previousPhase != null)
+                        previousPhase.CanPull = false;
+                }
+
+                dbcontext.SaveChanges();
+
+                // Check if officer can take action based on days elapsed
+                if (IsMoreThanSpecifiedDays(currentPhase.ReceivedOn!.ToString(), 15))
+                    canOfficerTakeAction = false;
+                if (IsMoreThanSpecifiedDays(generalDetails.SubmissionDate!.ToString(), 45))
+                    canOfficerTakeAction = false;
+            }
+
+            // Fetch address details using stored procedures
+            var preAddressDetails = dbcontext.Set<AddressJoin>().FromSqlRaw("EXEC GetAddressDetails @AddressId", new SqlParameter("@AddressId", generalDetails!.PresentAddressId)).ToList().FirstOrDefault();
+            var perAddressDetails = dbcontext.Set<AddressJoin>().FromSqlRaw("EXEC GetAddressDetails @AddressId", new SqlParameter("@AddressId", generalDetails!.PermanentAddressId)).ToList().FirstOrDefault();
+
+            var serviceContent = dbcontext.Services.FirstOrDefault(u => u.ServiceId == generalDetails.ServiceId);
+
+            // Fetch application history
+            var applicationHistory = JsonConvert.DeserializeObject<dynamic>(dbcontext.ApplicationsHistories.FirstOrDefault(his => his.ApplicationId == ApplicationId)!.History);
+
+            // Filter history to include only relevant actions
+            List<dynamic> histories = new List<dynamic>();
+            foreach (var history in applicationHistory!)
+            {
+                bool isTransfered = history["ActionTaken"].ToString().Contains("Transfered");
+                if (!isTransfered) histories.Add(history);
+            }
+
+            // Find update object from history
+            string updateObject = "";
+            foreach (var item in applicationHistory!)
+            {
+                if (item["ActionTaken"] == "Update")
+                {
+                    updateObject = JsonConvert.SerializeObject(item["UpdateObject"]);
+                }
+            }
+
+            // Prepare the consolidated details to return
+            var applicationDetails = new
+            {
+                currentOfficer = officerDesignation,
+                serviceContent,
+                generalDetails,
+                preAddressDetails,
+                perAddressDetails,
+                canOfficerTakeAction,
+                previousActions = histories,
+                updateObject,
+            };
+
+            return applicationDetails;
+        }
+
+
         [HttpPost]
         public IActionResult UpdatePool([FromForm] IFormCollection form)
         {

@@ -149,76 +149,9 @@ namespace SocialWelfare.Controllers.Officer
 
         public IActionResult UserDetails(string? ApplicationId)
         {
-
-            int? userId = HttpContext.Session.GetInt32("UserId");
-            var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
-            var UserSpecificDetails = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails);
-            string officerDesignation = UserSpecificDetails!["Designation"];
-
-            var generalDetails = dbcontext.Applications.Where(u => u.ApplicationId == ApplicationId).ToList()[0];
-            bool canOfficerTakeAction = true;
-
-            CurrentPhase currentPhase, nextPhase, previousPhase;
-
-
-            currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == generalDetails.ApplicationId && cur.Officer == officerDesignation)!;
-
-
-
-            if (currentPhase.Next != 0)
-            {
-                nextPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.PhaseId == currentPhase.Next)!;
-                nextPhase.CanPull = false;
-
-            }
-
-
-            if (currentPhase.Previous != 0)
-            {
-                previousPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.PhaseId == currentPhase.Previous)!;
-                previousPhase.CanPull = false;
-            }
-
-            dbcontext.SaveChanges();
-
-            if (IsMoreThanSpecifiedDays(currentPhase.ReceivedOn!.ToString(), 15)) canOfficerTakeAction = false;
-            if (IsMoreThanSpecifiedDays(generalDetails.SubmissionDate!.ToString(), 45)) canOfficerTakeAction = false;
-
-
-            var preAddressDetails = dbcontext.Set<AddressJoin>().FromSqlRaw("EXEC GetAddressDetails @AddressId", new SqlParameter("@AddressId", generalDetails!.PresentAddressId)).ToList()[0];
-            var perAddressDetails = dbcontext.Set<AddressJoin>().FromSqlRaw("EXEC GetAddressDetails @AddressId", new SqlParameter("@AddressId", generalDetails!.PermanentAddressId)).ToList()[0];
-            var serviceContent = dbcontext.Services.FirstOrDefault(u => u.ServiceId == generalDetails.ServiceId);
-
-            var applicationHistory = JsonConvert.DeserializeObject<dynamic>(dbcontext.ApplicationsHistories.FirstOrDefault(his => his.ApplicationId == ApplicationId)!.History);
-            List<dynamic> histories = [];
-            foreach (var history in applicationHistory!)
-            {
-                bool isTransfered = history["ActionTaken"].ToString().Contains("Transfered");
-                if (!isTransfered) histories.Add(history);
-            }
-            string updateObject = "";
-            foreach (var item in applicationHistory!)
-            {
-                if (item["ActionTaken"] == "Update")
-                {
-                    updateObject = JsonConvert.SerializeObject(item["UpdateObject"]);
-                }
-            }
-
-            var ApplicationDetails = new
-            {
-                currentOfficer = officerDesignation,
-                serviceContent,
-                generalDetails,
-                preAddressDetails,
-                perAddressDetails,
-                canOfficerTakeAction,
-                previousActions = histories,
-                updateObject,
-            };
-            return View(ApplicationDetails);
+            var applicationDetails = GetApplicationDetails(ApplicationId);
+            return View(applicationDetails);
         }
-
         public IActionResult SendBankFile()
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
