@@ -134,9 +134,6 @@ namespace SocialWelfare.Controllers.User
         }
         public async Task<IActionResult> InsertDocuments([FromForm] IFormCollection form)
         {
-            _logger.LogInformation("------------- INSERT DOCUMENT-------------------");
-            _logger.LogInformation("------------- INSERT DOCUMENT DOWN-------------------");
-            
             var applicationId = form["ApplicationId"].ToString();
             if (string.IsNullOrEmpty(applicationId))
             {

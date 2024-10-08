@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace SocialWelfare.Controllers.User
 {
-    public partial class UserController
+    public partial class UserController:Controller
     {
         [HttpPost]
         public IActionResult SetServiceForm([FromForm] IFormCollection form)
@@ -12,6 +12,28 @@ namespace SocialWelfare.Controllers.User
             HttpContext.Session.SetInt32("serviceId", serviceId);
             return Json(new { status = true, url = "/User/ServiceForm" });
         }
+
+        [HttpGet]
+        public dynamic? GetUserDetails(){
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            int initiated = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus == "Initiated").ToList().Count;
+            int incomplete = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus == "Incomplete").ToList().Count;
+            int sanctioned = dbcontext.Applications.Where(u => u.CitizenId == userId && u.ApplicationStatus == "Sanctioned" || u.ApplicationStatus == "Dispatched").ToList().Count;
+            var userDetails = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+
+
+
+            var details = new
+            {
+                userDetails,
+                initiated,
+                incomplete,
+                sanctioned
+            };
+
+            return details;
+        }
+
 
         [HttpGet]
         public IActionResult GetDistricts()
@@ -58,6 +80,7 @@ namespace SocialWelfare.Controllers.User
                     currentPhase.Remarks
                 });
 
+                if(currentPhase!.ActionTaken == "Pending") break;
                 // Move to the next phase
                 phaseId = currentPhase.Next;
             }
