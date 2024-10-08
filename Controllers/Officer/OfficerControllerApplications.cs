@@ -418,13 +418,18 @@ namespace SocialWelfare.Controllers.Officer
                 var currentPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.ApplicationId == application.ApplicationId && cur.Officer == officerDesignation);
                 canPull = currentPhase!.CanPull;
 
+                 var button = new{
+                    function = "PullApplication",
+                    parameters = new[] { application.ApplicationId },
+                    buttonText="Pull"
+                };
 
                 List<dynamic> sentData = [
                     index+1,
                     application.ApplicationId,
                     application.ApplicantName,
                     application.SubmissionDate!,
-                    canPull? $"<button class='btn btn-dark w-100' onclick=PullApplication('${application.ApplicationId}');>Pull</button>":"Cannot Pull"
+                    canPull?JsonConvert.SerializeObject(button):"Cannot Pull"
                 ];
 
                 if (serviceSpecific["DateOfMarriage"] != null)
