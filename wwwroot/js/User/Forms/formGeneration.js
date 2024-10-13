@@ -205,11 +205,11 @@ function createRadioInput(obj, columSize, label, value, readonly, border) {
     .join("");
 
   return `
-    <div class="${columSize} mb-2">
-      ${radioOptions}
-      <input type="text" class="form-control ${border}" id="${
-    obj.label
-  }" name="${obj.label}" value="${value}" ${readonly ? "readonly" : ""}/>
+    <div class="${columSize} mb-2 d-flex flex-column">
+      ${label}
+      <div>
+        ${radioOptions}
+      </div>
     </div>
   `;
 }

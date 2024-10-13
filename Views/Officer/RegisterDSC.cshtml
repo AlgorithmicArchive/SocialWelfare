@@ -1,4 +1,4 @@
-<div class="full-screen-section center-align py-5 flex-column">
+<div class="full-screen-section center-align py-5 flex-column" id="container">
     <form class="w-100" id="certificateForm">
         <div
             class="container d-flex flex-column justify-content-center align-items-center p-5 gap-2  border rounded-border">
@@ -14,8 +14,9 @@
 
 <script>
     const isCertificate = @Html.Raw(Json.Serialize(Model));
-    @* if (isCertificate != null) { *@
-    @* $("#certificateForm").hide(); *@
-    @* } *@
+    if (isCertificate != null) { 
+        $("#certificateForm").hide(); 
+        $("#container").append(`<p class="fs-2">Already have a certificate registered.`)
+    }
 </script>
 <script src="~/js/Officer/registerDSC.js"></script>

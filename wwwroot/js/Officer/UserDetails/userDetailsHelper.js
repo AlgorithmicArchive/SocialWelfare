@@ -215,16 +215,19 @@ function ProceedAction(applicationId, officer, letterUpdateDetails) {
       break;
 
     case "Sanction":
-      const updateDetails = {};
-      letterUpdateDetails.forEach((item) => {
-        updateDetails[item.name] = {
-          OldValue: $("#" + item.name).val(),
-          NewValue: $("#new" + item.name).val(),
-          UpdatedBy: ApplicationDetails.currentOfficer,
-          UpdatedAt: formatDate(),
-        };
-      });
-      formData.append("letterUpdateDetails", JSON.stringify(updateDetails));
+      if(letterUpdateDetails){
+        const updateDetails = {};
+        letterUpdateDetails.forEach((item) => {
+          updateDetails[item.name] = {
+            OldValue: $("#" + item.name).val(),
+            NewValue: $("#new" + item.name).val(),
+            UpdatedBy: ApplicationDetails.currentOfficer,
+            UpdatedAt: formatDate(),
+          };
+        });
+        formData.append("letterUpdateDetails", JSON.stringify(updateDetails));
+      }
+     
       break;
 
     case "Forward":
@@ -258,10 +261,17 @@ function ProceedAction(applicationId, officer, letterUpdateDetails) {
             console.log("click", id);
             fetch("/Officer/SignPdf?ApplicationId=" + id)
               .then((res) => res.json())
-              .then((data) => console.log(data));
+              .then((data) => {
+                console.log(data);
+                $("#showSanctionLetter").modal("hide");
+                $("#showSanctionLetter").modal("show");
+                const parent  = $("#approveSingle").parent();
+                $("#approveSingle").remove();
+                parent.append(`<button class="btn btn-dark d-flex mx-auto" data-bs-dismiss="modal">OK</button>`)
+                $("#sanctionFrame").attr("src", filePath);
+              });
 
-            $("#showSanctionLetter").modal("hide");
-            window.location.href = "/Officer/Index";
+            // window.location.href = "/Officer/Index";
           });
         } else {
           window.location.href = "/Officer/Index";
@@ -354,39 +364,44 @@ function attachValidations(obj) {
 }
 
 function CertificateDetails(letterUpdateDetails, generalDetails) {
-  if ((letterUpdateDetails != null) & (letterUpdateDetails.length > 0)) {
-    $("#ceritificateDetails").show();
-    $("#ceritificateDetails").empty();
-
-    $("#ceritificateDetails").append(
-      `<p class="fs-3 fw-bold text-center">Certificate Details</p>`
-    );
-
-    letterUpdateDetails.forEach((item) => {
-      const type = item.type == "date" ? "text" : item.type;
-      let value;
-      if (generalDetails.hasOwnProperty(convertToCamelCase(item.name))) {
-        value = generalDetails[convertToCamelCase(item.name)];
-      } else {
-        const serviceSpecific = JSON.parse(generalDetails.serviceSpecific);
-        if (serviceSpecific.hasOwnProperty(item.name)) {
-          value = serviceSpecific[item.name];
+  try {
+    if (letterUpdateDetails && letterUpdateDetails.length > 0) {
+      $("#ceritificateDetails").show();
+      $("#ceritificateDetails").empty();
+  
+      $("#ceritificateDetails").append(
+        `<p class="fs-3 fw-bold text-center">Certificate Details</p>`
+      );
+  
+      letterUpdateDetails.forEach((item) => {
+        const type = item.type == "date" ? "text" : item.type;
+        let value;
+        if (generalDetails.hasOwnProperty(convertToCamelCase(item.name))) {
+          value = generalDetails[convertToCamelCase(item.name)];
+        } else {
+          const serviceSpecific = JSON.parse(generalDetails.serviceSpecific);
+          if (serviceSpecific.hasOwnProperty(item.name)) {
+            value = serviceSpecific[item.name];
+          }
         }
-      }
-      $("#ceritificateDetails").append(`
-          <div class="row mt-2">
-              <div class="col-sm-6">
-                <label>${item.label}</label>
-                <input type="${type}" class="form-control" name="${item.name}" id="${item.name}" value="${value}" disabled/>
-              </div>
-              <div class="col-sm-6">
-                <label>New ${item.label}</label>
-                <input type="${type}" class="form-control" name="new${item.name}" id="new${item.name}" />
-              </div>
-          </div>
-      `);
-
-      attachValidations(item);
-    });
+        $("#ceritificateDetails").append(`
+            <div class="row mt-2">
+                <div class="col-sm-6">
+                  <label>${item.label}</label>
+                  <input type="${type}" class="form-control" name="${item.name}" id="${item.name}" value="${value}" disabled/>
+                </div>
+                <div class="col-sm-6">
+                  <label>New ${item.label}</label>
+                  <input type="${type}" class="form-control" name="new${item.name}" id="new${item.name}" />
+                </div>
+            </div>
+        `);
+  
+        attachValidations(item);
+      });
+    }
+  } catch (error) {
+    console.error("Error accessing letterUpdateDetails:", error);
   }
+ 
 }
