@@ -6,6 +6,10 @@
   modelBuilder.Entity<BankFileModel>().HasNoKey();
 
 
+// NOTES
+  Set Header of Website for font size ,screen reader, language
+  Set Size for images and pdfs
+
 
 public Dictionary<string, object> getDocumentHash(String outputFilePath, String userName, byte[] pdfbytes, bool RequestVisibleSignature)
         {

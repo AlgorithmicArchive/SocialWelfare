@@ -183,11 +183,34 @@ namespace SocialWelfare.Controllers.Officer
             string DebitAccountNumber = "01234567890123456";
             string DebitBankName = "THE JAMMU AND KASHMIR BANK";
             string DebitIfsc = "JAKA0KEEPER";
-            string DistrictShort = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtIdInt)!.DistrictName;
-            string MonthShort = DateTime.Now.ToString("MMMyy").ToUpper();
+            string DistrictShort = dbcontext.Districts.FirstOrDefault(d => d.DistrictId == districtIdInt)!.DistrictShort;
+            string MonthShort = DateTime.Now.ToString("MMMyyyy").ToUpper();
+            int count=0;
+            var uniqueId = dbcontext.UniqueIdtables.FirstOrDefault(u=>u.DistrictNameShort==DistrictShort && u.MonthShort==MonthShort);
+            if(uniqueId!=null)
+                count = uniqueId.LastSequentialNumber +1;
+            else count = 1;
+
+            if (uniqueId == null)
+            {
+                // Handle the case where uniqueId is not found, perhaps create a new entry or return an error
+                uniqueId = new UniqueIdtable
+                {
+                    DistrictNameShort = DistrictShort,
+                    MonthShort = MonthShort,
+                    LastSequentialNumber = 1 // Initialize with zero or another value if necessary
+                };
+                dbcontext.UniqueIdtables.Add(uniqueId);
+                await dbcontext.SaveChangesAsync(); // Save the new uniqueId record to the database
+            }
+
+            count = uniqueId.LastSequentialNumber + 1;
+            dbcontext.SaveChanges();
+            string formattedNumber = count.ToString().PadLeft(12,'0');
+            string UniqueID = DistrictShort+MonthShort+formattedNumber;
             // Fetch data using the stored procedure
             var bankFileData = await dbcontext.BankFileModels
-                .FromSqlRaw("EXEC GetBankFileData @ServiceId, @DistrictId, @DepartmentName, @DebitAccountNumber, @StaticAmount, @FileCreationDate, @DebitBankName, @DebitIfsc, @DistrictShort, @MonthShort",
+                .FromSqlRaw("EXEC GetBankFileData @ServiceId, @DistrictId, @DepartmentName, @DebitAccountNumber, @StaticAmount, @FileCreationDate, @DebitBankName, @DebitIfsc, @UniqueId",
                             new SqlParameter("@ServiceId", serviceIdInt),
                             new SqlParameter("@DistrictId", districtId),
                             new SqlParameter("@DepartmentName", DepartmentName),
@@ -196,8 +219,7 @@ namespace SocialWelfare.Controllers.Officer
                             new SqlParameter("@FileCreationDate", DateTime.Now.ToString("dd MMM yyyy hh:mm tt")),
                             new SqlParameter("@DebitBankName", DebitBankName),
                             new SqlParameter("@DebitIfsc", DebitIfsc),
-                            new SqlParameter("@DistrictShort", DistrictShort),
-                            new SqlParameter("@MonthShort", MonthShort)
+                            new SqlParameter("@UniqueId", UniqueID)
                             )
                 .AsNoTracking()
                 .ToListAsync();

@@ -135,6 +135,7 @@ function handleFormData(
   formNo
 ) {
   if (isFormDataEmpty(originalForm)) {
+    console.log(currentForm);
     copyFormData(currentForm, originalForm);
     processApplication(originalForm, urlInsert);
   } else if (isEqual(currentForm, originalForm).length != 0) {

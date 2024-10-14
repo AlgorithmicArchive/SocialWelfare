@@ -23,24 +23,37 @@ public class UserHelperFunctions
         string docPath = "";
         string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
         string shortGuid = Guid.NewGuid().ToString("N")[..8];
-        string uniqueName = shortGuid + "_" + docFile?.FileName;
+     
+        string fileExtension = Path.GetExtension(docFile?.FileName)!;
+        string uniqueName = shortGuid + fileExtension;
+
 
         if (!Directory.Exists(uploadsFolder))
         {
             Directory.CreateDirectory(uploadsFolder);
         }
 
-        if (docFile != null && docFile.Length > 0)
+       if (docFile != null && docFile.Length > 0)
         {
-            string filePath = Path.Combine(uploadsFolder, uniqueName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            _logger.LogInformation($"----File:{docFile?.FileName} Extension:{Path.GetExtension(docFile?.FileName)}-------");
+            try
             {
-                await docFile.CopyToAsync(stream);
-            }
+                string filePath = Path.Combine(uploadsFolder, uniqueName);
 
-            docPath = "/uploads/" + uniqueName;
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await docFile!.CopyToAsync(stream);
+                }
+
+                docPath = "/uploads/" + uniqueName;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error while uploading file: {ex.Message}");
+                throw;
+            }
         }
+
 
         return docPath;
     }

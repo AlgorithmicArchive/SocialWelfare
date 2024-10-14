@@ -17,6 +17,7 @@ $(document).ready(function () {
       $("#profile").attr("src", reader.result);
     };
     reader.readAsDataURL(event.target.files[0]);
+
   });
 
   $(document).on("click", ".file-input", function () {

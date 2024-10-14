@@ -60,9 +60,8 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Village> Villages { get; set; }
 
     public virtual DbSet<Ward> Wards { get; set; }
-
-     public virtual DbSet<AddressJoin> AddressJoins { get; set; }   
-     public virtual DbSet<BankFileModel> BankFileModels { get; set; }
+    public virtual DbSet<AddressJoin> AddressJoins { get; set; }
+    public virtual DbSet<BankFileModel> BankFileModels { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=DefaultConnection");
 
@@ -417,10 +416,11 @@ public partial class SocialWelfareDepartmentContext : DbContext
 
         modelBuilder.Entity<UniqueIdtable>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("UniqueIDTable");
+            entity.HasKey(e => e.Uuid);
 
+            entity.ToTable("UniqueIDTable");
+
+            entity.Property(e => e.Uuid).HasColumnName("UUID");
             entity.Property(e => e.DistrictNameShort)
                 .HasMaxLength(10)
                 .IsUnicode(false);
