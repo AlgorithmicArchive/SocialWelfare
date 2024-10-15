@@ -8,6 +8,7 @@ const validationFunctionsList = {
   isDateWithinRange,
   CapitalizeAlphabets,
   duplicateAccountNumber,
+  validateFile,
 };
 
 function setErrorSpan(id, msg) {
@@ -128,6 +129,23 @@ async function duplicateAccountNumber(id, value, applicationId) {
   }
   setErrorSpan(id, msg);
   return msg;
+}
+
+async function  validateFile(field,value) {
+  const id = field.name;
+  const fileInput = $(`#${id}`)[0]; // Get the actual DOM element
+  const file = fileInput.files[0]; // Get the first selected file
+  const formData = new FormData();
+  if(field.accept.includes(".jpg"))
+    formData.append('fileType','image');
+  else if(field.accept.includes(".pdf"))
+    formData.append('fileType','pdf');
+
+  formData.append('file',file);
+  const res = await fetch("/Base/Validate",{method:'POST',body:formData})  ;
+  const data = await res.json();
+  if(!data.isValid) setErrorSpan(field.name,data.errorMessage);
+  return data.errorMessage;
 }
 
 function CapitalizeAlphabets(field, value) {

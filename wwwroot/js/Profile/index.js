@@ -31,9 +31,16 @@ function ChangePassword() {
   `);
 }
 
-$(document).ready(function () {
-  const { username, email, mobileNumber, designation } = userDetails;
+function ChangeImage(button) {
+  $(button).after(`<input id="chooseProfile" type="file" class="form-control" />`);
+  $(button).remove(); // Removes the button after inserting the file input
+}
 
+$(document).ready(function () {
+  
+  const { username, email, mobileNumber, designation } = userDetails;
+  const userSpecific = JSON.parse(userDetails.userSpecificDetails);
+  if(userSpecific.Profile!="") $("#Profile").attr('src',userSpecific.Profile);
   const appendWithIcon = (selector, content) => {
     $("#" + selector + "Text").html(
       `${content} <i class="fa-solid fa-pencil fs-6" role="button" onclick='UpdateDetail("${selector}")'></i>`
@@ -88,4 +95,26 @@ $(document).ready(function () {
       errorList = ["Confirm Password should be same as password."];
     AddErrorSpan(id, errorList);
   });
+
+  $(document).on('change',"#chooseProfile",async function(){
+    const file = this.files[0]; // Get the selected file
+    if (file) {
+      const reader = new FileReader(); // Create a FileReader to read the file
+
+      reader.onload = function(e) {
+        // Set the image src to the file's data URL
+        $('#Profile').attr('src', e.target.result);
+      };
+
+      reader.readAsDataURL(file); // Read the file as a data URL
+      const formdata = new FormData();
+      formdata.append('file',file);
+      const res = await fetch('/Profile/ChangeImage',{method:'POST',body:formdata});
+      const data = await res.json();
+      if(data.isValid){
+        $(this).after(`<button class="btn btn-dark" onclick="ChangeImage(this);">Change Image</button>`)
+        $(this).remove();
+      }
+    }
+  })
 });

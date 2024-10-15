@@ -60,8 +60,10 @@ public partial class SocialWelfareDepartmentContext : DbContext
     public virtual DbSet<Village> Villages { get; set; }
 
     public virtual DbSet<Ward> Wards { get; set; }
+
     public virtual DbSet<AddressJoin> AddressJoins { get; set; }
     public virtual DbSet<BankFileModel> BankFileModels { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=DefaultConnection");
 
@@ -394,6 +396,7 @@ public partial class SocialWelfareDepartmentContext : DbContext
             entity.Property(e => e.ServiceName)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+            entity.Property(e => e.ServiceNameShort).HasMaxLength(50);
             entity.Property(e => e.UpdateColumn).IsUnicode(false);
             entity.Property(e => e.WorkForceOfficers).IsUnicode(false);
         });
@@ -425,7 +428,7 @@ public partial class SocialWelfareDepartmentContext : DbContext
                 .HasMaxLength(10)
                 .IsUnicode(false);
             entity.Property(e => e.MonthShort)
-                .HasMaxLength(3)
+                .HasMaxLength(10)
                 .IsUnicode(false);
         });
 

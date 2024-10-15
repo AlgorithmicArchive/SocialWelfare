@@ -28,7 +28,7 @@
             <div class="col-sm-6">
                 <div class="card border-0 p-3 py-5 bg-white shadow rounded-border">
                     <h3>My Profile</h3>
-                    <img src="/resources/profile.jpg" class="card-img-top rounded-pill w-25 mx-auto"
+                    <img id="Profile" src="/resources/profile.jpg" class="card-img-top rounded-pill w-25 mx-auto"
                         alt="Profile Picture">
                     <div class="card-body">
                         <h5 class="card-title" id="username"></h5>
@@ -43,6 +43,8 @@
 
 <script>
     const details = @Html.Raw(Json.Serialize(Model));
+    const userSpecific = JSON.parse(details.userDetails.userSpecificDetails);
+    if(userSpecific.Profile!="") $("#Profile").attr('src',userSpecific.Profile);
     $("#username").text("Username: " + details.userDetails["username"]);
     $("#email").text("Email: " + details.userDetails["email"]);
     $("#mobileNumber").text("Mobile Number: " + details.userDetails["mobileNumber"]);

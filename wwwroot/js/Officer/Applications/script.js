@@ -160,7 +160,6 @@ function updateOptionButtons(tableId) {
 
 function onSelect(list) {
   Applications = list;
-  console.log(Applications);
   serviceId = Applications.serviceId;
   bankDispatchFile = Applications.bankFile;
   const initializeTable = (type, length) => {
@@ -214,6 +213,7 @@ function onSelect(list) {
       }
       break;
     case "Sent":
+    case "Reject":
     case "Sanction":
       hideContainerSwitcher();
       initializeTable(Applications.type, 10);

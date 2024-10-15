@@ -10,7 +10,6 @@ namespace SocialWelfare.Controllers.Officer
 {
     public partial class OfficerController : Controller
     {
-
         public static string ConvertCamelCaseToUppercaseWithSpaces(string input)
         {
             if (string.IsNullOrEmpty(input))
@@ -78,7 +77,6 @@ namespace SocialWelfare.Controllers.Officer
 
             _pdfService.CreateSanctionPdf(sanctionObject, Officer, ApplicationId);
         }
-
         private static void UpdateRecordCounts(RecordCount recordsCount, int pendingCount = 0, int pendingWithCitizenCount = 0, int forwardCount = 0, int returnCount = 0, int sanctionCount = 0, int rejectCount = 0)
         {
             if (recordsCount == null) return;
@@ -89,7 +87,6 @@ namespace SocialWelfare.Controllers.Officer
             recordsCount.Sanction += sanctionCount;
             recordsCount.Reject += rejectCount;
         }
-
         private async Task UpdateRelatedRecordsCount(string officer, int serviceId, int forwardCount = 0, int returnCount = 0)
         {
             var recordsCount = await dbcontext.RecordCounts.FirstOrDefaultAsync(rc => rc.ServiceId == serviceId && rc.Officer == officer);
@@ -102,8 +99,6 @@ namespace SocialWelfare.Controllers.Officer
                 recordsCount.Pending++;
             }
         }
-
-
         [HttpPost]
         public async Task<IActionResult> HandleAction([FromForm] IFormCollection form)
         {
@@ -146,8 +141,6 @@ namespace SocialWelfare.Controllers.Officer
 
             var nextRecordCount = await dbcontext.RecordCounts.FirstOrDefaultAsync(rc => rc.ServiceId == serviceId && rc.Officer == nextOfficer && (rc.AccessCode == accessCode || rc.AccessCode == 0));
 
-            _logger.LogInformation($"--------------NEXT PHASE: {nextPhase == null} NEXTRECORDCoUNT:{nextRecordCount == null}--------------------");
-
             switch (action)
             {
                 case "Forward":
@@ -180,11 +173,9 @@ namespace SocialWelfare.Controllers.Officer
                 case "Return":
                     UpdateRecordCounts(recordsCount!, pendingCount: -1, returnCount: 1);
 
-                    _logger.LogInformation($"-----------------ACTION TAKEN IN RETURN: {previousPhase!.ActionTaken}---------------");
 
-                    if (previousPhase.ActionTaken!.Trim().Equals("Forward", StringComparison.OrdinalIgnoreCase))
+                    if (previousPhase!.ActionTaken!.Trim().Equals("Forward", StringComparison.OrdinalIgnoreCase))
                     {
-                        _logger.LogInformation($"-----------------ACTION TAKEN: {previousPhase!.ActionTaken}");
                         await UpdateRelatedRecordsCount(previousPhase.Officer!, serviceId, forwardCount: -1);
                     }
                     HandleReturn(currentPhase, remarks);
@@ -201,21 +192,19 @@ namespace SocialWelfare.Controllers.Officer
                     break;
 
                 case "Update":
+                    UpdateRecordCounts(recordsCount!, pendingCount: -1, forwardCount: 1);
                     await HandleUpdate(form, currentPhase, officerDesignation, remarks, serviceId, applicationId, accessCode);
                     break;
 
                 case "Reject":
+                    UpdateRecordCounts(recordsCount!, pendingCount:-1, rejectCount: 1);
                     HandleReject(currentPhase, applicationIdParam, officerDesignation, remarks);
-                    UpdateRecordCounts(recordsCount!, -1, rejectCount: 1);
                     break;
             }
 
             // await dbcontext.SaveChangesAsync();
             return Json(new { status = true, applicationId });
         }
-
-
-
         private async Task HandleForward(IFormCollection form, CurrentPhase? currentPhase, string officerDesignation, int serviceId, string remarks, string applicationId, int accessCode, bool update = false)
         {
             string file = await helper.GetFilePath(form.Files["ForwardFile"]);
@@ -280,7 +269,6 @@ namespace SocialWelfare.Controllers.Officer
                 helper.UpdateApplicationHistory(applicationId, officerDesignation, "Forward", remarks, string.Empty, file);
 
         }
-
         private void HandleReturn(CurrentPhase? currentPhase, string remarks)
         {
             var previousPhase = dbcontext.CurrentPhases.FirstOrDefault(cur => cur.PhaseId == currentPhase!.Previous);
@@ -296,7 +284,6 @@ namespace SocialWelfare.Controllers.Officer
 
             helper.UpdateApplicationHistory(currentPhase.ApplicationId, currentPhase.Officer, "Return", remarks, "", "");
         }
-
         private void HandleReturnToEdit(CurrentPhase? currentPhase, IFormCollection form, SqlParameter applicationIdParam, string officerDesignation, string remarks)
         {
             if (currentPhase != null)
@@ -311,7 +298,6 @@ namespace SocialWelfare.Controllers.Officer
             helper.UpdateApplication("EditList", form["editList"].ToString(), applicationIdParam);
             helper.UpdateApplicationHistory(currentPhase!.ApplicationId, officerDesignation, "ReturnToEdit", remarks, string.Empty, string.Empty);
         }
-
         private void HandleSanction(IFormCollection form, CurrentPhase? currentPhase, string applicationId, string officerDesignation, string remarks)
         {
             if (currentPhase != null)
@@ -351,7 +337,6 @@ namespace SocialWelfare.Controllers.Officer
             helper.UpdateApplication("ApplicationStatus", "Sanctioned", new SqlParameter("@ApplicationId", applicationId));
             helper.UpdateApplicationHistory(applicationId, officerDesignation, "Sanction", remarks, string.Empty, string.Empty);
         }
-
         private async Task HandleUpdate(IFormCollection form, CurrentPhase? currentPhase, string officerDesignation, string remarks, int serviceId, string applicationId, int accessCode)
         {
             await HandleForward(form, currentPhase, officerDesignation, serviceId, remarks, applicationId, accessCode);
@@ -393,7 +378,6 @@ namespace SocialWelfare.Controllers.Officer
             var updateObject = JsonConvert.SerializeObject(new { Officer = desigShort, ColumnName = field, OldValue = oldValue, NewValue = newValue, File = updateColumnFile });
             helper.UpdateApplicationHistory(applicationId, officerDesignation, "Update", remarks, updateObject, updateColumnFile);
         }
-
         private void HandleReject(CurrentPhase? currentPhase, SqlParameter applicationIdParam, string officerDesignation, string remarks)
         {
             if (currentPhase != null)
@@ -407,6 +391,5 @@ namespace SocialWelfare.Controllers.Officer
             helper.UpdateApplication("ApplicationStatus", "Rejected", applicationIdParam);
             helper.UpdateApplicationHistory(currentPhase!.ApplicationId, officerDesignation, "Reject", remarks, string.Empty, string.Empty);
         }
-
     }
 }

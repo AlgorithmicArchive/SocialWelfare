@@ -612,7 +612,7 @@ namespace SocialWelfare.Controllers.Officer
             var obj = new
             {
 
-                SanctionList = new
+                RejectList = new
                 {
                     data = RejectApplications.AsEnumerable().Skip(start).Take(length),
                     columns = RejectColumns,
@@ -620,7 +620,7 @@ namespace SocialWelfare.Controllers.Officer
                     recordsFiltered = RejectApplications.AsEnumerable().Skip(start).Take(length).ToList().Count
                 },
                 Type = type,
-                ServiceId = 1
+                ServiceId = serviceId
             };
 
             if (!AllData)

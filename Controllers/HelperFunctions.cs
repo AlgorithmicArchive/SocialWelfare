@@ -18,10 +18,10 @@ public class UserHelperFunctions
     }
 
 
-    public async Task<string> GetFilePath(IFormFile? docFile)
+    public async Task<string> GetFilePath(IFormFile? docFile,string folder="uploads")
     {
         string docPath = "";
-        string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
+        string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, folder);
         string shortGuid = Guid.NewGuid().ToString("N")[..8];
      
         string fileExtension = Path.GetExtension(docFile?.FileName)!;

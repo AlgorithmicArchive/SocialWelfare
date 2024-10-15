@@ -1,17 +1,20 @@
 function SetCards(countList) {
-  console.log(countList);
   $("#detailsCards").show();
   $("#pending").text(countList.pending);
   $("#forward").text(countList.forward);
   $("#sanction").text(countList.sanction);
   $("#reject").text(countList.reject);
   $("#return").text(countList.return);
+  $("#pendingWithCitizen").text(countList.pendingWithCitizen);
+
 
   const canSaction = countList.canSanction;
   const canForward = countList.canForward;
 
   if (!canSaction) $("#sanction").parent().parent().parent().remove();
   if (!canForward) $("#forward").parent().parent().parent().remove();
+  if(countList.pendingWithCitizen>0) $("#return").parent().parent().parent().remove();
+  else $("#pendingWithCitizen").parent().parent().parent().remove();
 
   $('[data-bs-toggle="tooltip"]').tooltip({
     trigger: "manual", // Prevents automatic display on hover
@@ -43,7 +46,6 @@ $(document).ready(function () {
       fetch(`/Officer/GetApplicationsList?serviceId=${serviceId}`)
         .then((res) => res.json())
         .then((data) => {
-          console.log(data);
           hideSpinner();
           SetCards(data.countList);
         });

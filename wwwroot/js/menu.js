@@ -33,7 +33,7 @@ $(document).ready(function () {
       ],
       profile: [
         {
-          label: userName,
+          label: `<img src="${profile}" class="img-fluid" style="width:40px;border:2px solid black;border-radius:25px"/>`,
           dropdown: [
             { label: "Manage Profile", link: "/Profile/Index" },
             { label: "Settings", link: "/Profile/Settings" },
@@ -75,7 +75,7 @@ $(document).ready(function () {
       ],
       profile: [
         {
-          label: userName,
+          label: `<img src="${profile}" class="img-fluid" style="width:40px;border:2px solid black;border-radius:25px"/>`,
           dropdown: [
             { label: "Manage Profile", link: "/Profile/Index" },
             { label: "Settings", link: "/Profile/Settings" },

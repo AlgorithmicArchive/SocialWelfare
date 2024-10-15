@@ -22,7 +22,6 @@ function initializeDataTable(
   fetch(Url)
     .then((res) => res.json())
     .then((json) => {
-      console.log(json);
       hideSpinner();
       $("#SanctionContainer").removeClass("d-flex").addClass("d-none");
       let applications;
@@ -251,11 +250,12 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
   let Url = url + `?type=${type}&start=${start}&length=${length}`;
   if (serviceId != null && serviceId != 0)
     Url += `&serviceId=${parseInt(serviceId)}`;
-  showSpinner();
+
+  console.log(Url);
+  // showSpinner();
   fetch(Url)
     .then((res) => res.json())
     .then((json) => {
-      console.log(json);
       hideSpinner();
       $("#SanctionContainer").removeClass("d-flex").addClass("d-none");
       let applications;
@@ -264,6 +264,7 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
         applications = json.applicationList.approveList;
       else if (type == "Pool") applications = json.applicationList.poolList;
       else if (type == "Sent") applications = json.applicationList.sentList;
+      else if(type =="Reject") applications = json.applicationList.rejectList;
       else if (type == "Sanction") {
         applications = json.applicationList.sanctionList;
         switchContainer("SanctionContainer", "sendToBank");
@@ -274,11 +275,11 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
       )
         applications = json.obj;
 
+      console.log(applications);
       const data = applications.data;
       const columns = applications.columns;
       const recordsTotal = applications.recordsTotal;
       const recordsFiltered = applications.recordsFiltered;
-      console.log(data);
       let activeButtons = [];
       const table = $(`#${tableId}`).DataTable({
         data: data,
@@ -682,7 +683,6 @@ $(document).ready(function () {
     }
 
     if (callFunction) {
-      console.log(serviceId);
       initializeRecordTables(
         tableId,
         url,

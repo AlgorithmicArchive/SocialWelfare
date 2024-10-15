@@ -148,7 +148,7 @@ const generalDummyData = {
   District: districts[Math.floor(Math.random() * districts.length)],
   ApplicantName: getRandomName(indianFemaleNames),
   DateOfBirth: getRandomBirthDate(),
-  ApplicantImage: "user-33638_1280.png",
+  ApplicantImage: "formImage.jpg",
   RelationName: getRandomName(indianMaleNames),
   MotherName: getRandomName(indianFemaleNames),
   DateOfMarriage: getRandomMarriageDate(),
@@ -207,8 +207,8 @@ async function appendDummyData(formNo) {
   if (formNo === 3) dummyData = bankdummyDetails;
 
   if (formNo == 4) {
-    try {
-      const file = await fetchFile("DummyDocument.pdf");
+    try { 
+      const file = await fetchFile("file-sample.pdf");
 
       dummyDocuments.forEach((id) => {
         const $fileInput = $("#" + id);

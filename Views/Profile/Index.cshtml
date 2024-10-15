@@ -2,27 +2,27 @@
     <div class="container rounded-border shadow-lg p-5 mt-5">
         <div class="row">
             <div class="col-sm-4 d-flex flex-column gap-2">
-                <img src="/resources/profile.jpg" alt="Profile" class="img-fluid">
-                <button class="btn btn-dark">Change Image</button>
+                <img id="Profile" src="/resources/profile.jpg" alt="Profile" class="img-fluid">
+                <button class="btn btn-dark" onclick="ChangeImage(this);">Change Image</button>
                 <button class="btn btn-dark" onclick="ChangePassword();">Change Password</button>
             </div>
-            <div class="col-sm-8">
+            <div class="col-sm-8 d-flex align-items-center">
                 <table class="table table-responsive table-borderless fs-4">
                     <tbody id="userDetails">
-                        <tr>
+                        <tr class="border border-dark">
                             <th>Username</th>
                             <td class="d-flex align-items-center gap-2 text-break" id="usernameText">
                             </td>
                         </tr>
-                        <tr>
+                        <tr class="border border-dark">
                             <th>Email</th>
                             <td class="d-flex align-items-center gap-2 text-break" id="emailText"></td>
                         </tr>
-                        <tr>
+                        <tr class="border border-dark">
                             <th>Mobile Number</th>
                             <td class="d-flex align-items-center gap-2 text-break" id="mobileNumberText"></td>
                         </tr>
-                        <tr>
+                        <tr class="border border-dark">
                             <th>Designation</th>
                             <td class="d-flex align-items-center gap-2 text-break" id="designationText"></td>
                         </tr>

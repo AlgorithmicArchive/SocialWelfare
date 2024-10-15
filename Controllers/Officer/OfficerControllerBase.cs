@@ -41,8 +41,10 @@ namespace SocialWelfare.Controllers.Officer
             base.OnActionExecuted(context);
             int? userId = HttpContext.Session.GetInt32("UserId");
             var Officer = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+            string Profile = JsonConvert.DeserializeObject<dynamic>(Officer!.UserSpecificDetails)!.Profile;
             ViewData["UserType"] = "Officer";
             ViewData["UserName"] = Officer!.Username;
+            ViewData["Profile"]= Profile=="" ? "/resources/dummyDocs/formImage.jpg":Profile;
         }
         public IActionResult Index()
         {
@@ -94,7 +96,6 @@ namespace SocialWelfare.Controllers.Officer
                     ServiceId = serviceId,
                     Officer = officerDesignation,
                     AccessCode = accessCode,
-                    Pending = 1
                 });
             }
 
@@ -112,8 +113,9 @@ namespace SocialWelfare.Controllers.Officer
             var countList = new
             {
                 Pending = counts?.Pending ?? 0,
+                PendingWithCitizen = counts?.PendingWithCitizen ?? 0,
                 Forward = counts?.Forward ?? 0,
-                Sanction = counts?.Sanction ?? 0,
+                Sanction = counts?.Sanction ?? 0, 
                 Reject = counts?.Reject ?? 0,
                 Return = counts?.Return ?? 0,
                 CanSanction = canSanction,

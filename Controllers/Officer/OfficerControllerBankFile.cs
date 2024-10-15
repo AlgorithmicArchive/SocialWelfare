@@ -144,7 +144,8 @@ namespace SocialWelfare.Controllers.Officer
         {
             int serviceIdInt = Convert.ToInt32(serviceId);
             int districtIdInt = Convert.ToInt32(districtId);
-            string staticAmount = "50000"; // or any other value you need
+            var service = dbcontext.Services.FirstOrDefault(s=>s.ServiceId == serviceIdInt);
+            string staticAmount = service!.Amount.ToString()!;
             int? userId = HttpContext.Session.GetInt32("UserId");
 
             if (userId == null) return Unauthorized();

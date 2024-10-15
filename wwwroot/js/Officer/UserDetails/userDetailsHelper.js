@@ -310,7 +310,7 @@ function getWorkForceOfficer(
       ? `<option value="Sanction">Issue Sanction Letter</option>`
       : "",
     officer.canUpdate
-      ? `<option value="Update">Update and Forward To ${officer.nextOfficer}</option>`
+      ? `<option value="Update">Update and Forward To ${workForceOfficers[currentIndex+1].Designation}</option>`
       : "",
     `<option value="Reject">Reject</option>`,
   ];

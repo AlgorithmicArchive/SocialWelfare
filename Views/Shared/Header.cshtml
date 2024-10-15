@@ -1,4 +1,4 @@
-<div class="container-fluid p-0">
+<div class="container-fluid p-0" translate="no">
     <div class="container-fluid border-bottom">
         <div class="container d-flex flex-row justify-content-between p-0">
             <div class="d-flex align-items-center">
@@ -10,7 +10,14 @@
                 <span class="border-start border-end border-2 p-1">
                  <button id="toggleSpeech" class="bg-white border-0 shadow-0">SCREEN READER ACCESS</button>
                 </span>
-                <span class="border-end border-2 p-1">Tt</span>
+                <span class="border-end border-2 p-1">
+                    <select class="form-select" name="fontSize" id="fontSize">
+                        <option value="">Aa</option>
+                        <option value="+">A+</option>
+                        <option value="-">A-</option>
+                        <option value="default">A</option>
+                    </select>
+                </span>
                 <span class="border-end border-2 p-1">SiteMap</span>
                 <span class="p-1">
                     <div id="google_translate_element"></div>
@@ -97,4 +104,9 @@
       }
     });
 
+    $("#increaseFont").click(function(){
+        $("p")
+    })
+
 </script>
+<script src="/js/header.js"></script>

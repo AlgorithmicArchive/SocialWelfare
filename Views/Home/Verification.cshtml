@@ -1,27 +1,30 @@
 <div class="full-screen-section center-align flex-column gap-4">
-    <div id="mainContainer" class="width-25 shadow-lg rounded-border center-align flex-column p-3">
-        <p class="fs-4 fw-bod text-center">Two Step Verification</p>
-        <button class="btn btn-danger width-50 rounded-pill fw-bold" id="otpButton">OTP in Mail</button>
-        <p class="fs-5 fw-bold text-center my-auto">OR</p>
-        <button class="btn btn-warning width-50 rounded-pill fw-bold" id="backupButton">Backup Code</button>
-        <p class="text-center text-danger">@TempData["ErrorMessage"]</p>
-    </div>
-    <form id="verificationForm">
-        <div id="otpContainer" class="shadow-lg rounded-border center-align flex-column p-3 gap-3"
-            style="display: none;">
-            <p class="fs-4 fw-bod text-center">OTP has been sent to email.</p>
-            <input type="text" class="form-control width-50 border-dark" name="otp" id="otp" placeholder="OTP">
-            <button class="btn btn-dark">Submit</button>
+    <div class="container-fluid center-align">
+        <div id="mainContainer" class="width-25 shadow-lg rounded-border center-align flex-column p-3">
+            <p class="fs-4 fw-bod text-center">Two Step Verification</p>
+            <button class="btn btn-danger width-50 rounded-pill fw-bold" id="otpButton">OTP in Mail</button>
+            <p class="fs-5 fw-bold text-center my-auto">OR</p>
+            <button class="btn btn-warning width-50 rounded-pill fw-bold" id="backupButton">Backup Code</button>
+            <p class="text-center text-danger">@TempData["ErrorMessage"]</p>
         </div>
+        <form id="verificationForm">
+            <div id="otpContainer" class="shadow-lg rounded-border center-align flex-column p-3 gap-3"
+                style="display: none;">
+                <p class="fs-4 fw-bod text-center">OTP has been sent to email.</p>
+                <input type="text" class="form-control width-50 border-dark" name="otp" id="otp" placeholder="OTP">
+                <button class="btn btn-dark">Submit</button>
+            </div>
 
-        <div id="backupContainer" class="shadow-lg rounded-border center-align flex-column p-3 gap-3"
-            style="display: none;">
-            <p class="fs-4 fw-bod text-center">Provide Bakcup Code.</p>
-            <input type="text" class="form-control width-50 border-dark" name="backupCode" id="backupCode"
-                placeholder="Backup Code">
-            <button class="btn btn-dark">Submit</button>
-        </div>
-    </form>
+            <div id="backupContainer" class="shadow-lg rounded-border center-align flex-column p-3 gap-3"
+                style="display: none;">
+                <p class="fs-4 fw-bod text-center">Provide Bakcup Code.</p>
+                <input type="text" class="form-control width-50 border-dark" name="backupCode" id="backupCode"
+                    placeholder="Backup Code">
+                <button class="btn btn-dark">Submit</button>
+            </div>
+        </form>
+    </div>
+
 </div>
 
 <script src="/js/Home/verification.js"></script>

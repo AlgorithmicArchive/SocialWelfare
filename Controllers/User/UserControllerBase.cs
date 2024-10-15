@@ -25,9 +25,10 @@ namespace SocialWelfare.Controllers.User
             base.OnActionExecuted(context);
             int? userId = HttpContext.Session.GetInt32("UserId");
             var Citizen = dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+            string Profile = JsonConvert.DeserializeObject<dynamic>(Citizen!.UserSpecificDetails)!.Profile;
             ViewData["UserType"] = "Citizen";
             ViewData["UserName"] = Citizen!.Username;
-
+            ViewData["Profile"]= Profile;
         }
 
         public IActionResult Index()
