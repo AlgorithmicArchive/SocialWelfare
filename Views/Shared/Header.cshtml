@@ -7,15 +7,13 @@
                 <span class="p-1">حکومت جموں و کشمیر</span>
             </div>
             <div class="d-flex align-items-center">
-                <span class="border-start border-end border-2 p-1">SCREEN READER ACCESS</span>
+                <span class="border-start border-end border-2 p-1">
+                 <button id="toggleSpeech" class="bg-white border-0 shadow-0">SCREEN READER ACCESS</button>
+                </span>
                 <span class="border-end border-2 p-1">Tt</span>
                 <span class="border-end border-2 p-1">SiteMap</span>
                 <span class="p-1">
-                    <select class="form-select" name="language" id="language">
-                        <option value="en">English</option>
-                        <option value="hi">Hindi</option>
-                        <option value="ur">Urdu</option>
-                    </select>
+                    <div id="google_translate_element"></div>
                 </span>
             </div>
         </div>
@@ -35,3 +33,68 @@
         <div><img src="/resources/swach-bharat.png" alt="Swatch Bharat" ></div>
     </div>
 </div>
+
+<script>
+   function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+          pageLanguage: 'en',
+          includedLanguages: 'en,hi,ur', // English, Hindi, Urdu
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+  }
+
+  // Function to hide Google Translate toolbar iframe
+  function hideGoogleTranslateToolbar() {
+      // Hide the iframe by checking if it exists every time there's a DOM mutation
+      const observer = new MutationObserver(function() {
+          var frame = document.querySelector('iframe'); // Select the iframe
+          if (frame && frame.style.display !== 'none') {
+              frame.style.display = 'none'; // Hide the iframe that contains the toolbar
+          }
+      });
+
+      // Start observing changes in the body for any added nodes (like iframes)
+      observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // Initialize the toolbar hiding function when the page loads
+  window.onload = function() {
+      hideGoogleTranslateToolbar();
+  };
+
+
+   // Track whether text-to-speech is enabled
+    let speechEnabled = false;
+    let isSpeaking = false;
+
+    // Function to speak the text content
+    function speakText(text) {
+      if (isSpeaking) return; // Prevent overlapping speech
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US'; // Set language (you can change this to your desired language)
+      isSpeaking = true;
+
+      utterance.onend = function() {
+        isSpeaking = false; // Reset after speech ends
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Enable or disable the text-to-speech functionality when button is clicked
+    $('#toggleSpeech').on('click', function() {
+      speechEnabled = !speechEnabled; // Toggle the state
+      console.log("Button ",speechEnabled);
+      @* $(this).text(speechEnabled ? 'Disable Text-to-Speech' : 'Enable Text-to-Speech'); *@
+    });
+
+    // Hover event for all text elements (headings and paragraphs)
+    $(document).on('mouseenter', 'p, h1, h2, h3,a,label,button', function() {
+        console.log(speechEnabled,!isSpeaking);
+      if (speechEnabled && !isSpeaking) { // Only speak if enabled and not currently speaking
+        const textContent = $(this).text().trim(); // Get the text content
+        speakText(textContent); // Speak the content
+      }
+    });
+
+</script>
