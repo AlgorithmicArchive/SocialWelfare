@@ -455,5 +455,23 @@ namespace SocialWelfare.Controllers.Officer
 
             return Json(new{ServiceList});
         }
+        
+        [HttpGet]
+        public IActionResult ServePdf(string fileName)
+        {
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", fileName);
+
+            _logger.LogInformation($"------------File Path: {filePath}----------------");
+            if (!System.IO.File.Exists(filePath))
+            {
+                return NotFound();
+            }
+            var fileBytes = System.IO.File.ReadAllBytes(filePath);
+            // Force the file to be displayed inline
+            Response.Headers.Append("Content-Disposition", "inline; filename=" + fileName);
+
+            return File(fileBytes, "application/pdf");
+        }
+
     }
 }

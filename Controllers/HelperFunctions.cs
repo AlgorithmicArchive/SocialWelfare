@@ -39,7 +39,7 @@ public class UserHelperFunctions
             try
             {
                 string filePath = Path.Combine(uploadsFolder, uniqueName);
-
+                _logger.LogInformation($"-----Attempting to save file at: {filePath}----");
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await docFile!.CopyToAsync(stream);

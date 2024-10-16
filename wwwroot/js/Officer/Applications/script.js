@@ -46,7 +46,7 @@ function transferToApproveList() {
   approvalIdList = [];
   selectedCount("transferToApproveButton", approvalIdList);
   toggleTransferButton();
-  $("#approveButton").click();
+  $("#mainButton").click();
 }
 
 function transferBackFromApproveList() {
@@ -63,7 +63,7 @@ function transferBackFromApproveList() {
   selectedCount("transferToPoolButton", finalList);
   selectedCount("transferBackFromApprove", finalList);
   togglePoolButtons();
-  $("#mainButton").click();
+  $("#approveButton").click();
 }
 
 function transferToPoolList() {
@@ -79,7 +79,7 @@ function transferToPoolList() {
   selectedCount("transferToPoolButton", finalList);
   selectedCount("transferBackFromApprove", finalList);
   togglePoolButtons();
-  $("#poolButton").click();
+  $("#approveButton").click();
 }
 
 function transferFromPoolToApproveList() {
@@ -96,7 +96,7 @@ function transferFromPoolToApproveList() {
   selectedCount("transferBackFromPool", finalList);
   selectedCount("transferBackToInbox", finalList);
   toggleSanctionButtons();
-  $("#approveButton").click();
+  $("#poolButton").click();
 }
 
 function transferBackFromPoolList() {
@@ -112,7 +112,7 @@ function transferBackFromPoolList() {
   selectedCount("sanctionAll", finalList);
   selectedCount("transferBackFromPool", finalList);
   toggleSanctionButtons();
-  $("#mainButton").click();
+  $("#poolButton").click();
 }
 
 function updatePool(listType, idList, action) {
@@ -321,6 +321,7 @@ $(document).ready(function () {
       10
     );
     switchContainer("PoolContainer", "poolButton");
+    $("#currentTable").text("Pool List");
   });
 
   $("#mainButton").on("click", function () {
@@ -333,6 +334,8 @@ $(document).ready(function () {
       10
     );
     switchContainer("MainContainer", "mainButton");
+    $("#currentTable").text("Inbox List");
+
   });
 
   $("#approveButton").on("click", function () {
@@ -345,5 +348,8 @@ $(document).ready(function () {
       10
     );
     switchContainer("ApproveContainer", "approveButton");
+    console.log("Table Heading",$("#currentTable").text());
+    $("#currentTable").text("Approve List");
+
   });
 });

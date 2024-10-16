@@ -37,3 +37,4 @@ packages/
 # Build output
 .build/
 publish/
+node_modules

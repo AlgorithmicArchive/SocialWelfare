@@ -1,6 +1,7 @@
 // Utility functions
 function openInIframe(url) {
   $("#myIframe").attr("src", url);
+  $("#myIframe").css("display", 'block');
   $("#showDoc").click();
 }
 function camelCaseToTitleCase(input) {

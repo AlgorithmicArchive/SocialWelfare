@@ -275,7 +275,6 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
       )
         applications = json.obj;
 
-      console.log(applications);
       const data = applications.data;
       const columns = applications.columns;
       const recordsTotal = applications.recordsTotal;
@@ -510,7 +509,15 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
 
       // $(`#${tableId}_filter`).addClass("w-100");
       $(`#${tableId}_filter`).after(
-        `<div class="d-flex justify-content-center gap-3 w-100 mt-3"><p><b>Total Records</b>:${recordsTotal}</p> <p><b>Filtered Records</b>:${recordsFiltered}</p></div>`
+        `<div class="d-flex flex-column">
+           <div>
+              <p id="currentTable" class="text-center fs-3 fw-bold">${type=="Pending"?"Inbox":type} List</p>
+           </div>
+           <div class="d-flex justify-content-center gap-3 w-100 mt-3">
+            <p><b>Total Records</b>:${recordsTotal}</p> 
+            <p><b>Filtered Records</b>:${recordsFiltered}</p>
+           </div>
+         </div>`
       );
     });
 }

@@ -26,6 +26,7 @@ namespace SocialWelfare.Controllers.User
             int.TryParse(form["ServiceId"].ToString(), out int serviceId);
             string ApplicationId = helper.GenerateApplicationId(districtId, dbcontext, _logger);
             IFormFile? photographFile = form.Files["ApplicantImage"];
+            _logger.LogInformation($"===============Received file: {photographFile?.FileName} with size: {photographFile?.Length}===========");
             string? photographPath = await helper.GetFilePath(photographFile);
             int? userId = HttpContext.Session.GetInt32("UserId");
 

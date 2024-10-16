@@ -73,7 +73,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions{
+    OnPrepareResponse = ctx=>{
+        if(ctx.File.Name.EndsWith(".pdf",StringComparison.OrdinalIgnoreCase)){
+            ctx.Context.Response.Headers.Append("Content-Disposition", "inline");
+        }
+    }
+});
 
 app.UseRouting();
 app.UseCors("AllowLocalhost");

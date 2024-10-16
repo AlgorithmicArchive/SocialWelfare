@@ -114,7 +114,7 @@ $(document).ready(function () {
           <li class="nav-item ${
             id == "profileContainer" ? "dropstart " : "dropend "
           }">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button"
+            <a class="nav-link dropdown-toggle text-white fs-5 fw-bold" href="#" id="navbarDropdownMenuLink" role="button"
                 data-bs-toggle="dropdown" aria-expanded="false">
                 ${item.label}
             </a>
@@ -125,7 +125,7 @@ $(document).ready(function () {
       } else {
         element = `
           <li class="nav-item">
-            <a class="nav-link" href="${item.link}">${item.label}</a>
+            <a class="nav-link text-white fs-5 fw-bold" href="${item.link}">${item.label}</a>
           </li>`;
       }
       container.append(element);
