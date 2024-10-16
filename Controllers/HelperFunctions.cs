@@ -45,7 +45,7 @@ public class UserHelperFunctions
                     await docFile!.CopyToAsync(stream);
                 }
 
-                docPath = "/uploads/" + uniqueName;
+                docPath = "/"+folder+"/" + uniqueName;
             }
             catch (Exception ex)
             {

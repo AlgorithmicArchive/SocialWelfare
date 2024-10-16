@@ -12,23 +12,47 @@
                         <option value="general">General</option>
                         <option value="service">Service</option>
                     </select>
-                    <textarea name="message" id="message" placeholder="Message" cols="30" rows="5"
-                        class="form-control"></textarea>
                     <label for="Satisfaction Level">Satisfaction Level</label>
-                    <select class="form-select rounded" name="relatedTo" id="relatedTo">
-                        <option value="unsatisfied">Unsatisfied</option>
-                        <option value="satisfied">Satisfied</option>
-                    </select>
-                    <button class="btn btn-dark w-25">Submit</button>
+                    <!-- Star Rating System -->
+                    <div class="star-rating" id="star-rating">
+                        <input type="hidden" name="satisfactionLevel" id="satisfactionLevel" value="0">
+                        <i class="fa fa-star star" data-value="1"></i>
+                        <i class="fa fa-star star" data-value="2"></i>
+                        <i class="fa fa-star star" data-value="3"></i>
+                        <i class="fa fa-star star" data-value="4"></i>
+                        <i class="fa fa-star star" data-value="5"></i>
+                    </div>
+                     <textarea name="message" id="message" placeholder="Message" cols="30" rows="5"
+                        class="form-control"></textarea>
+                    <button class="btn btn-dark w-25 mt-3">Submit</button>
                 </div>
             </div>
         </div>
     </div>
 </form>
+
+<!-- Add Font Awesome for star icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
 <script>
+    // Star rating logic
+    document.querySelectorAll('.star-rating .star').forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = this.getAttribute('data-value');
+            document.getElementById('satisfactionLevel').value = rating;
+
+            // Highlight stars based on the clicked rating
+            document.querySelectorAll('.star-rating .star').forEach(s => {
+                s.classList.remove('selected');
+                if (s.getAttribute('data-value') <= rating) {
+                    s.classList.add('selected');
+                }
+            });
+        });
+    });
+
     $("#relatedTo").change(function () {
         if ($(this).val() == "service") {
-
             fetch("/User/GetServiceNames", { method: "get" }).then(res => res.json()).then(data => {
                 if (data.status) {
                     const ServiceList = data.serviceList;
@@ -36,7 +60,6 @@
                     ServiceList.map(item => {
                         options += `<option value="${item.serviceId}">${item.serviceName}</option>`
                     })
-
                     $(this).after(`
                         <div id="forRelatedToService" class="w-100">
                             <label for="Service">Service</label>
@@ -48,17 +71,13 @@
                             </select>
                         </div>
                     `);
-
                     $("#service").trigger('change');
                 }
             })
-
-
-        }
-        else {
+        } else {
             $(this).next().remove();
         }
-    })
+    });
 
     $(document).on('change', "#service", function () {
         const value = $(this).val();
@@ -68,12 +87,28 @@
                 let options = ``;
                 Ids.map(item => {
                     options += `<option value="${item}">${item}</option>`;
-                })
+                });
                 $("#ApplicationId").append(`
                     ${options}
-                `)
+                `);
             }
-        })
-    })
-
+        });
+    });
 </script>
+
+<style>
+    /* Star rating styles */
+    .star-rating .star {
+        font-size: 2rem;
+        color: lightgray;
+        cursor: pointer;
+    }
+
+    .star-rating .star.selected {
+        color: gold;
+    }
+
+    .star-rating .star:hover {
+        color: gold;
+    }
+</style>

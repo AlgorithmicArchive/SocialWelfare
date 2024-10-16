@@ -21,6 +21,7 @@
                 <span class="border-end border-2 p-1">SiteMap</span>
                 <span class="p-1">
                     <div id="google_translate_element"></div>
+                    <div id="loading-spinner"></div> <!-- Spinner element -->
                 </span>
             </div>
         </div>
@@ -42,33 +43,70 @@
 </div>
 
 <script>
-   function googleTranslateElementInit() {
-      new google.translate.TranslateElement({
-          pageLanguage: 'en',
-          includedLanguages: 'en,hi,ur', // English, Hindi, Urdu
-          layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-      }, 'google_translate_element');
-  }
+   // Initialize Google Translate
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            includedLanguages: 'en,hi,ur', // English, Hindi, Urdu
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
 
-  // Function to hide Google Translate toolbar iframe
-  function hideGoogleTranslateToolbar() {
-      // Hide the iframe by checking if it exists every time there's a DOM mutation
-      const observer = new MutationObserver(function() {
-          var frame = document.querySelector('iframe'); // Select the iframe
-          if (frame && frame.style.display !== 'none') {
-              frame.style.display = 'none'; // Hide the iframe that contains the toolbar
-          }
-      });
+    // Function to hide Google Translate toolbar iframe
+    function hideGoogleTranslateToolbar() {
+        const observer = new MutationObserver(function() {
+            var frame = document.querySelector('iframe'); // Select the iframe
+            if (frame && frame.style.display !== 'none') {
+                frame.style.display = 'none'; // Hide the iframe that contains the toolbar
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
 
-      // Start observing changes in the body for any added nodes (like iframes)
-      observer.observe(document.body, { childList: true, subtree: true });
-  }
+    // Add loading spinner during language change
+    function showLoadingSpinner() {
+        document.getElementById('loading-spinner').style.display = 'block';
+    }
 
-  // Initialize the toolbar hiding function when the page loads
-  window.onload = function() {
-      hideGoogleTranslateToolbar();
-  };
+    function hideLoadingSpinner() {
+        document.getElementById('loading-spinner').style.display = 'none';
+    }
 
+    // Store the language in LocalStorage and reload when language changes
+    function setLanguage(lang) {
+        localStorage.setItem('selectedLanguage', lang); // Save the language
+        showLoadingSpinner(); // Show spinner during language change
+        setTimeout(function () {
+            location.reload(); // Reload the page to apply the language change
+        }, 500); // Short delay to show the loading spinner
+    }
+
+    // Apply the saved language immediately
+    function applySavedLanguageImmediately() {
+        const savedLanguage = localStorage.getItem('selectedLanguage');
+        if (savedLanguage) {
+            const translateDropdown = document.querySelector('.goog-te-combo');
+            if (translateDropdown) {
+                translateDropdown.value = savedLanguage;
+                translateDropdown.dispatchEvent(new Event('change')); // Trigger language change immediately
+            }
+        }
+    }
+
+    // Initialize Google Translate and toolbar hiding on page load
+    window.onload = function() {
+        showLoadingSpinner(); // Show spinner on page load
+        hideGoogleTranslateToolbar(); // Hide the toolbar
+        googleTranslateElementInit(); // Initialize Google Translate
+        applySavedLanguageImmediately(); // Apply saved language immediately
+        hideLoadingSpinner(); // Hide the spinner once done
+    };
+
+    // Ensure the translation applies before Google Translate fully initializes
+    document.addEventListener('DOMContentLoaded', function() {
+        applySavedLanguageImmediately(); // Try to apply language as soon as the DOM is ready
+    });
 
    // Track whether text-to-speech is enabled
     let speechEnabled = false;

@@ -30,9 +30,11 @@ namespace SocialWelfare.Controllers.Profile
             base.OnActionExecuted(context);
             int? userId = HttpContext.Session.GetInt32("UserId");
             string? userType = HttpContext.Session.GetString("UserType");
-            string? username = _dbcontext.Users.FirstOrDefault(u => u.UserId == userId)!.Username;
+            var User = _dbcontext.Users.FirstOrDefault(u => u.UserId == userId);
+            string Profile = JsonConvert.DeserializeObject<dynamic>(User!.UserSpecificDetails)!.Profile;
             ViewData["UserType"] = userType;
-            ViewData["UserName"] = username;
+            ViewData["UserName"] = User!.Username;
+            ViewData["Profile"]= Profile;
         }
 
         [HttpGet]

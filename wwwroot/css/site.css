@@ -255,6 +255,32 @@ body::-webkit-scrollbar {
     transition: background-color 0.3s;
 }
 
+#goog-gt-tt{
+    display: none !important;
+}
+
+ /* Simple loading spinner */
+ #loading-spinner {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 50px;
+    border: 5px solid lightgray;
+    border-top: 5px solid blue;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
 
 
 

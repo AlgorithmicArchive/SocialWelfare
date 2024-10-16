@@ -1,7 +1,5 @@
 $(document).ready(function () {
-  const textElements = $("h1, h2, h3, h4, h5, h6, p, span, div,label").not(
-    "nav, .navbar, .navbar *"
-  );
+  const textElements = $("h1, h2, h3, h4, h5, h6, p, span, div,label,button").not("header");
 
   // Store the default font size of each element when the page loads
   textElements.each(function () {
