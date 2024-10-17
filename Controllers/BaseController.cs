@@ -180,63 +180,61 @@ namespace SocialWelfare.Controllers
         }
 
         [HttpPost]
-    public IActionResult Validate([FromForm] IFormCollection file)
-    {
-        // Ensure a file is provided
-        if (file.Files.Count == 0)
+        public IActionResult Validate([FromForm] IFormCollection file)
         {
-            return Json(new { isValid = false, errorMessage = "No file uploaded." });
+            // Ensure a file is provided
+            if (file.Files.Count == 0)
+            {
+                return Json(new { isValid = false, errorMessage = "No file uploaded." });
+            }
+
+            var uploadedFile = file.Files[0];
+            string fileType = file["fileType"].ToString();
+
+            using (var fileStream = uploadedFile.OpenReadStream())
+            {
+                byte[] fileHeader = new byte[4];
+                fileStream.Read(fileHeader, 0, 4); // Read first 4 bytes of the file
+
+                string fileExtension = Path.GetExtension(uploadedFile.FileName)?.ToLower()!;
+
+                // Check if the file type is an image
+                if (fileType == "image")
+                {
+                    if (!IsValidImage(fileHeader, fileExtension))
+                    {
+                        return Json(new { isValid = false, errorMessage = "The uploaded file is not a valid image." });
+                    }
+
+                    // If it's a valid image, check the file size
+                    if (uploadedFile.Length < MinImageFile || uploadedFile.Length > MaxImageFile)
+                    {
+                        return Json(new { isValid = false, errorMessage = "Image file size must be between 20KB and 50KB." });
+                    }
+                }
+                // Check if the file type is a PDF
+                else if (fileType == "pdf")
+                {
+                    if (!IsValidPdf(fileHeader, fileExtension))
+                    {
+                        return Json(new { isValid = false, errorMessage = "The uploaded file is not a valid PDF." });
+                    }
+
+                    // If it's a valid PDF, check the file size
+                    if (uploadedFile.Length < MinPdfFile || uploadedFile.Length > MaxPdfFile)
+                    {
+                        return Json(new { isValid = false, errorMessage = "PDF file size must be between 100KB and 200KB." });
+                    }
+                }
+                else
+                {
+                    return Json(new { isValid = false, errorMessage = "Unsupported file type." });
+                }
+            }
+
+            // If all checks pass, return success
+            return Json(new { isValid = true, message = "" });
         }
-
-        var uploadedFile = file.Files[0];
-        string fileType = file["fileType"].ToString();
-
-        using (var fileStream = uploadedFile.OpenReadStream())
-        {
-            byte[] fileHeader = new byte[4];
-            fileStream.Read(fileHeader, 0, 4); // Read first 4 bytes of the file
-
-            string fileExtension = Path.GetExtension(uploadedFile.FileName)?.ToLower()!;
-
-            // Check if the file type is an image
-            if (fileType == "image")
-            {
-                if (!IsValidImage(fileHeader, fileExtension))
-                {
-                    return Json(new { isValid = false, errorMessage = "The uploaded file is not a valid image." });
-                }
-
-                // If it's a valid image, check the file size
-                if (uploadedFile.Length < MinImageFile || uploadedFile.Length > MaxImageFile)
-                {
-                    return Json(new { isValid = false, errorMessage = "Image file size must be between 20KB and 50KB." });
-                }
-            }
-            // Check if the file type is a PDF
-            else if (fileType == "pdf")
-            {
-                if (!IsValidPdf(fileHeader, fileExtension))
-                {
-                    return Json(new { isValid = false, errorMessage = "The uploaded file is not a valid PDF." });
-                }
-
-                // If it's a valid PDF, check the file size
-                if (uploadedFile.Length < MinPdfFile || uploadedFile.Length > MaxPdfFile)
-                {
-                    return Json(new { isValid = false, errorMessage = "PDF file size must be between 100KB and 200KB." });
-                }
-            }
-            else
-            {
-                return Json(new { isValid = false, errorMessage = "Unsupported file type." });
-            }
-        }
-
-        // If all checks pass, return success
-        return Json(new { isValid = true, message = "" });
-    }
-
-
 
         private bool IsValidImage(byte[] header, string fileExtension)
         {

@@ -289,9 +289,10 @@ namespace SocialWelfare.Controllers.Officer
             return Json(new { status = true });
         }
         [HttpGet]
-        public IActionResult DownloadAllData(string? type, string? activeButtons)
+        public IActionResult DownloadAllData(string? type,string? serviceId, string? activeButtons)
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
+            int ServiceId = Convert.ToInt32(serviceId);
             Models.Entities.User Officer = dbcontext.Users.Find(userId)!;
 
             try
@@ -309,22 +310,23 @@ namespace SocialWelfare.Controllers.Officer
                     case "Pending":
                     case "Approve":
                     case "Pool":
-                        ApplicationList = PendingApplications(Officer, 0, 0, type, 1, true);
+                        ApplicationList = PendingApplications(Officer, 0, 0, type, ServiceId, true);
+                        _logger.LogInformation($"Application List: {ApplicationList}");
                         break;
                     case "Sent":
-                        ApplicationList = SentApplications(Officer, 0, 0, type, 1, true);
+                        ApplicationList = SentApplications(Officer, 0, 0, type, ServiceId, true);
                         break;
                     case "Sanction":
-                        ApplicationList = SanctionApplications(Officer, 0, 0, type, 1, true);
+                        ApplicationList = SanctionApplications(Officer, 0, 0, type, ServiceId, true);
                         break;
                     case "Reject":
-                        ApplicationList = RejectApplications(Officer, 0, 0, type, 1, true);
+                        ApplicationList = RejectApplications(Officer, 0, 0, type, ServiceId, true);
                         break;
                     default:
                         _logger.LogError("Invalid application type: {Type}", type);
                         return BadRequest("Invalid application type.");
                 }
-
+                
                 using var workbook = new XLWorkbook();
                 var worksheet = workbook.Worksheets.Add("Applications");
                 var currentRow = 1;
@@ -334,7 +336,8 @@ namespace SocialWelfare.Controllers.Officer
                 {
                     string header = ApplicationList.columns[i].title.ToString();
 
-                    if (ActiveButtons.Count == 0 || ActiveButtons.Contains(header))
+                    // Check if the header contains HTML, for example, the "input" tag
+                    if ((ActiveButtons.Count == 0  && !header.Contains("<input")) || ActiveButtons.Contains(header))
                     {
                         worksheet.Cell(currentRow, currentColumn).Value = header;
                         currentColumn++;
@@ -349,23 +352,23 @@ namespace SocialWelfare.Controllers.Officer
                     for (int i = 0; i < application.Count; i++)
                     {
                         string cellValue = application[i]?.ToString()!;
-                        if (ActiveButtons.Count == 0 || ActiveButtons.Contains(ApplicationList.columns[i].title.ToString()))
+                        if ((ActiveButtons.Count == 0 && !ApplicationList.columns[i].title.ToString().Contains("<input")) || ActiveButtons.Contains(ApplicationList.columns[i].title.ToString()))
                         {
+                            if(cellValue.Contains("{\"function\":")) {
+                                var obj = JsonConvert.DeserializeObject<dynamic>(cellValue);
+                                cellValue = obj!.buttonText;
+                            }
                             worksheet.Cell(currentRow, currentColumn).Value = cellValue;
                             currentColumn++;
                         }
                     }
                 }
 
+
                 var fileName = DateTime.Now.ToString("dd MMM yyyy hh:mm tt") + "_Applications.xlsx";
                 var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "exports", fileName);
-
-                // Ensure the directory exists
                 Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-
-                // Save the workbook
                 workbook.SaveAs(filePath);
-
                 return Json(new { filePath = "/exports/" + fileName });
             }
             catch (Exception ex)

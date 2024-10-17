@@ -7,116 +7,79 @@ let finalList = [];
 let serviceId = 0;
 let bankDispatchFile = "";
 
-function selectedCount(id, arr) {
-  let count = Array.isArray(arr) ? arr.length : arr;
-  $(`#${id}`).text($(`#${id}`).text().split("(")[0] + `(${count})`);
+function selectedCount(count,type) {
+  $("#selectedCount").val("0");
+  $("#selectedCount").val(count);
+  const selectOptions={
+    inbox:[{value:"ItoA",label:"Transfer To Approve List"}],
+    approve:[{value:"AtoP",label:"Transder to Pool"},{value:'AtoI',label:"Transfer to Inbox"}],
+    pool:[{value:"PtoA",label:"Transder to Approve List"},{value:'PtoI',label:"Transfer to Inbox"},{value:'sanctionAll',label:"Sanction Application(s)"}]
+  }
+  const options = selectOptions[type].map(item => {
+    return `<option value="${item.value}">${item.label}</option>`;
+  });
+  $("#actionSelect").empty();
+  $("#actionSelect").append(options);
+  if(count>0) $("#actionButton").attr('disabled',false);
+  else $("#actionButton").attr('disabled',true);
+  listCount(Applications.pendingList.recordsTotal,Applications.approveCount,Applications.poolCount);
 }
 
-function toggleTransferButton() {
-  const isDisabled = approvalIdList.length === 0;
-  $("#transferToApproveButton").prop("disabled", isDisabled);
+function listCount(inboxCount,approveCount,poolCount){
+  setTimeout(()=>{
+    $('#inboxCount').text(inboxCount);        // Set the count for Inbox
+    $('#approveCount').text(approveCount);      // Set the count for Approve List
+    $('#poolCount').text(poolCount);         // Set the count for Pool
+  },100);
 }
 
-function togglePoolButtons() {
-  const isDisabled = finalList.length === 0;
-  $("#transferToPoolButton, #transferBackFromApprove").prop(
-    "disabled",
-    isDisabled
-  );
-}
 
-function toggleSanctionButtons() {
-  const isDisabled = finalList.length === 0;
-  console.log(isDisabled);
-  $("#sanctionAll, #transferBackFromPool,#transferBackToInbox").prop(
-    "disabled",
-    isDisabled
-  );
-}
-
-function transferToApproveList() {
-  $("#containerSwitcher").show();
+function ItoA() {
   updatePool("Approve", approvalIdList, "add");
   $("#pending-parent").prop("checked", false).trigger("change");
   Applications.pendingList.recordsTotal -= approvalIdList.length;
   Applications.approveCount += approvalIdList.length;
-  selectedCount("mainButton", Applications.pendingList.recordsTotal);
-  selectedCount("approveButton", Applications.approveCount);
-  selectedCount("poolButton", Applications.poolCount);
   approvalIdList = [];
-  selectedCount("transferToApproveButton", approvalIdList);
-  toggleTransferButton();
-  $("#mainButton").click();
+  selectedCount(approvalIdList.length,'inbox');
 }
 
-function transferBackFromApproveList() {
-  $("#containerSwitcher").show();
+function AtoI() {
   updatePool("Approve", finalList, "remove");
   $("#approve-parent").prop("checked", false).trigger("change");
-
   Applications.pendingList.recordsTotal += finalList.length;
   Applications.approveCount -= finalList.length;
-  selectedCount("mainButton", Applications.pendingList.recordsTotal);
-  selectedCount("approveButton", Applications.approveCount);
-  selectedCount("poolButton", Applications.poolCount);
   finalList = [];
-  selectedCount("transferToPoolButton", finalList);
-  selectedCount("transferBackFromApprove", finalList);
-  togglePoolButtons();
-  $("#approveButton").click();
+  selectedCount(finalList.length,'approve');
 }
 
-function transferToPoolList() {
-  $("#containerSwitcher").show();
+function AtoP() {
   updatePool("ApproveToPool", finalList, "add");
   $("#approve-parent").prop("checked", false).trigger("change");
   Applications.approveCount -= finalList.length;
   Applications.poolCount += finalList.length;
-  selectedCount("mainButton", Applications.pendingList.recordsTotal);
-  selectedCount("approveButton", Applications.approveCount);
-  selectedCount("poolButton", Applications.poolCount);
   finalList = [];
-  selectedCount("transferToPoolButton", finalList);
-  selectedCount("transferBackFromApprove", finalList);
-  togglePoolButtons();
-  $("#approveButton").click();
+  selectedCount(finalList.length,'approve')
 }
 
-function transferFromPoolToApproveList() {
-  $("#containerSwitcher").show();
+function PtoA() {
   updatePool("PoolToApprove", finalList, "add");
   $("#approve-parent").prop("checked", false).trigger("change");
   Applications.poolCount -= finalList.length;
   Applications.approveCount += finalList.length;
-  selectedCount("mainButton", Applications.pendingList.recordsTotal);
-  selectedCount("approveButton", Applications.approveCount);
-  selectedCount("poolButton", Applications.poolCount);
   finalList = [];
-  selectedCount("sanctionAll", finalList);
-  selectedCount("transferBackFromPool", finalList);
-  selectedCount("transferBackToInbox", finalList);
-  toggleSanctionButtons();
-  $("#poolButton").click();
+  selectedCount(finalList.length,'pool')
 }
 
-function transferBackFromPoolList() {
-  $("#containerSwitcher").show();
+function PtoI() {
   updatePool("Pool", finalList, "remove");
   $("#poolList-parent").prop("checked", false).trigger("change");
   Applications.pendingList.recordsTotal += finalList.length;
   Applications.poolCount -= finalList.length;
-  selectedCount("mainButton", Applications.pendingList.recordsTotal);
-  selectedCount("approveButton", Applications.approveCount);
-  selectedCount("poolButton", Applications.poolCount);
   finalList = [];
-  selectedCount("sanctionAll", finalList);
-  selectedCount("transferBackFromPool", finalList);
-  toggleSanctionButtons();
-  $("#poolButton").click();
+  selectedCount(finalList.length,'pool');
 }
 
 function updatePool(listType, idList, action) {
-  console.log(listType, idList, action);
   const formData = new FormData();
   formData.append("serviceId", Applications.serviceId);
   formData.append("listType", listType);
@@ -158,8 +121,23 @@ function updateOptionButtons(tableId) {
   $(this).removeClass("btn-secondary").addClass("btn-dark");
 }
 
+const showContainerSwitcher = () => {
+  setTimeout(()=>{
+    $("#containerSwitcher").removeClass("d-none").addClass("d-flex");
+  },100);
+};
+const hideContainerSwitcher = () => {
+  setTimeout(()=>{
+    $("#containerSwitcher").removeClass("d-flex").addClass("d-none");
+  },100)
+};
+const showListTable = () => {
+  $("#listTable").show();
+};
+
 function onSelect(list) {
   Applications = list;
+  console.log(Applications);
   serviceId = Applications.serviceId;
   bankDispatchFile = Applications.bankFile;
   const initializeTable = (type, length) => {
@@ -172,35 +150,15 @@ function onSelect(list) {
       length
     );
   };
-
-  const showContainerSwitcher = () => {
-    $("#containerSwitcher").show();
-  };
-
-  const hideContainerSwitcher = () => {
-    $("#containerSwitcher").hide();
-    $("#MainContainer").hide();
-  };
-
-  const switchToMainContainer = () => {
-    switchContainer("MainContainer", "transferToApproveButton");
-  };
-
-  const showListTable = () => {
-    $("#listTable").show();
-  };
-
+  
   const processApplications = (
     applications,
-    idList,
     containerSwitcherVisibility
   ) => {
     if (applications > 0) {
-      if (containerSwitcherVisibility) showContainerSwitcher();
-      $("#mainButton").removeClass("btn-secondary").addClass("btn-dark");
-      selectedCount("mainButton", Applications.pendingList.recordsTotal);
-      selectedCount("approveButton", Applications.approveCount);
-      selectedCount("poolButton", Applications.poolCount);
+           if (containerSwitcherVisibility) showContainerSwitcher();
+          $("#mainButton").removeClass("btn-secondary").addClass("btn-dark");
+        listCount(Applications.pendingList.recordsTotal,Applications.approveCount,Applications.poolCount);
     }
   };
 
@@ -209,7 +167,6 @@ function onSelect(list) {
       initializeTable(Applications.type, 10);
       if (Applications.poolCount > 0 || Applications.approveCount > 0) {
         showContainerSwitcher();
-        switchToMainContainer();
       }
       break;
     case "Sent":
@@ -224,132 +181,92 @@ function onSelect(list) {
 
   showListTable();
 
-  processApplications(Applications.poolCount, poolIdList, true);
-  processApplications(Applications.approveCount, poolIdList, true);
+  processApplications(Applications.poolCount, true);
+  processApplications(Applications.approveCount, true);
 }
 
+function updateList(elementClass, list, type) {
+  const currentVal = $(elementClass).val();
+  if ($(elementClass).is(":checked")) {
+    if (!list.includes(currentVal)) {
+      list.push(currentVal);
+    }
+  } else {
+    list = list.filter((item) => item !== currentVal);
+  }
+  selectedCount(list.length, type);
+  return list;
+}
+
+function toggleAll(parentClass, elementClass) {
+  const isChecked = $(parentClass).is(":checked");
+  $(elementClass).prop("checked", isChecked).trigger("change");
+}
+
+
 $(document).ready(function () {
+
   $(document).on("change", ".pending-element", function () {
-    const currentVal = $(this).val();
-    if ($(this).is(":checked")) {
-      if (!approvalIdList.includes(currentVal)) {
-        approvalIdList.push(currentVal);
-      }
-    } else {
-      approvalIdList = approvalIdList.filter((item) => item !== currentVal);
-    }
-    toggleTransferButton();
-    switchContainer("MainContainer", "transferToApproveButton");
-    selectedCount("transferToApproveButton", approvalIdList);
+    approvalIdList = updateList(this, approvalIdList, "inbox");
   });
-
   $(document).on("change", ".pending-parent", function () {
-    const isChecked = $(this).is(":checked");
-    $(".pending-element").prop("checked", isChecked).trigger("change");
+    toggleAll(this, ".pending-element");
   });
-
   $(document).on("change", ".approve-element", function () {
-    const currentVal = $(this).val();
-    if ($(this).is(":checked")) {
-      if (!finalList.includes(currentVal)) {
-        finalList.push(currentVal);
-      }
-    } else {
-      finalList = finalList.filter((item) => item !== currentVal);
-    }
-    togglePoolButtons();
-    selectedCount("transferToPoolButton", finalList);
-    selectedCount("transferBackFromApprove", finalList);
+    finalList = updateList(this, finalList, "approve");
   });
-
   $(document).on("change", ".approve-parent", function () {
-    const isChecked = $(this).is(":checked");
-    $(".approve-element").prop("checked", isChecked).trigger("change");
+    toggleAll(this, ".approve-element");
   });
-
-  $(document).on("change", ".poolList-parent", function () {
-    const isChecked = $(this).is(":checked");
-    $(".poolList-element").prop("checked", isChecked).trigger("change");
-  });
-
   $(document).on("change", ".poolList-element", function () {
-    const currentVal = $(this).val();
-    if ($(this).is(":checked")) {
-      if (!finalList.includes(currentVal)) {
-        finalList.push(currentVal);
-      }
-    } else {
-      finalList = finalList.filter((item) => item !== currentVal);
-    }
-    toggleSanctionButtons();
-    selectedCount("sanctionAll", finalList);
-    selectedCount("transferBackFromPool", finalList);
-    selectedCount("transferBackToInbox", finalList);
+    finalList = updateList(this, finalList, "pool");
   });
-
-  $(document).on("click", "#transferToApproveButton", function () {
-    transferToApproveList();
+  $(document).on("change", ".poolList-parent", function () {
+    toggleAll(this, ".poolList-element");
   });
-
-  $(document).on("click", "#transferBackFromApprove", function () {
-    transferBackFromApproveList();
-  });
-
-  $(document).on("click", "#transferToPoolButton", function () {
-    transferToPoolList();
-  });
-
-  $(document).on("click", "#transferBackFromPool", function () {
-    transferBackFromPoolList();
-  });
-
-  $(document).on("click", "#transferBackToInbox", function () {
-    transferFromPoolToApproveList();
-  });
-
   $("#sanctionAll").on("click", () =>
     SanctionAll(poolIdList, finalList, serviceId)
   );
 
-  $("#poolButton").on("click", function () {
+ 
+  $(document).on('click','#actionButton',function(){
+    const selectedAction = $("#actionSelect").val();
+    const actions = {
+      'ItoA': ItoA,
+      'AtoP': AtoP,
+      'AtoI': AtoI,
+      'PtoA': PtoA,
+      'PtoI': PtoI
+    };
+    if (actions[selectedAction]) {
+      actions[selectedAction]();  // Call the corresponding function
+    } else {
+      console.log('Invalid action selected');
+    }
+    setTimeout(()=>{
+      selectedAction.charAt(0) == 'I'? $('.list-button[value="Inbox"]').trigger('click'):selectedAction.charAt(0)=='P'?$('.list-button[value="Pool"]').trigger('click'):$('.list-button[value="Approve"]').trigger('click');
+    },500);
+  })
+
+  $(document).on('click', '.list-button', function() {
+    const value = $(this).val();
     initializeRecordTables(
       "applicationsTable",
       "/Officer/Applications",
       serviceId,
-      "Pool",
+      value === "Inbox" ? "Pending" : value,
       0,
       10
     );
-    switchContainer("PoolContainer", "poolButton");
-    $("#currentTable").text("Pool List");
-  });
+    showContainerSwitcher();
+    $("#currentTable").text(`${value} List`);
+    setTimeout(() => {
+      listCount(Applications.pendingList.recordsTotal, Applications.approveCount, Applications.poolCount);
+      $('.list-button').removeClass('btn-dark').addClass('btn-secondary');
+      $(`.list-button[value="${value}"]`).removeClass('btn-secondary').addClass('btn-dark');
+    }, 100);
+});
 
-  $("#mainButton").on("click", function () {
-    initializeRecordTables(
-      "applicationsTable",
-      "/Officer/Applications",
-      serviceId,
-      "Pending",
-      0,
-      10
-    );
-    switchContainer("MainContainer", "mainButton");
-    $("#currentTable").text("Inbox List");
 
-  });
 
-  $("#approveButton").on("click", function () {
-    initializeRecordTables(
-      "applicationsTable",
-      "/Officer/Applications",
-      serviceId,
-      "Approve",
-      0,
-      10
-    );
-    switchContainer("ApproveContainer", "approveButton");
-    console.log("Table Heading",$("#currentTable").text());
-    $("#currentTable").text("Approve List");
-
-  });
 });

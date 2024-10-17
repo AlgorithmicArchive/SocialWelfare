@@ -281,7 +281,10 @@ body::-webkit-scrollbar {
 }
 
 
-
+.goog-te-gadget-simple{
+    border-radius: 5px;
+    padding: 5px !important;
+}
 
 
 
