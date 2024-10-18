@@ -26,11 +26,9 @@ function selectedCount(count,type) {
 }
 
 function listCount(inboxCount,approveCount,poolCount){
-  setTimeout(()=>{
     $('#inboxCount').text(inboxCount);        // Set the count for Inbox
     $('#approveCount').text(approveCount);      // Set the count for Approve List
     $('#poolCount').text(poolCount);         // Set the count for Pool
-  },100);
 }
 
 
@@ -122,9 +120,7 @@ function updateOptionButtons(tableId) {
 }
 
 const showContainerSwitcher = () => {
-  setTimeout(()=>{
     $("#containerSwitcher").removeClass("d-none").addClass("d-flex");
-  },100);
 };
 const hideContainerSwitcher = () => {
   setTimeout(()=>{
@@ -258,9 +254,9 @@ $(document).ready(function () {
       0,
       10
     );
-    showContainerSwitcher();
     $("#currentTable").text(`${value} List`);
     setTimeout(() => {
+      showContainerSwitcher();
       listCount(Applications.pendingList.recordsTotal, Applications.approveCount, Applications.poolCount);
       $('.list-button').removeClass('btn-dark').addClass('btn-secondary');
       $(`.list-button[value="${value}"]`).removeClass('btn-secondary').addClass('btn-dark');

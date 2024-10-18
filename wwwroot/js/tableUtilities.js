@@ -509,11 +509,6 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
       // $(`#${tableId}_filter`).addClass("w-100");
       $(`#${tableId}_filter`).after(
         `<div class="d-flex flex-column">
-          <div class="container d-none justify-content-center gap-2 mb-2" id="containerSwitcher">
-            <button class="btn btn-dark list-button" value="Inbox">Inbox(<span id="inboxCount">0</span>)</button>
-            <button class="btn btn-secondary list-button" value="Approve">Approve List(<span id="approveCount">0</span>)</button>
-            <button class="btn btn-secondary list-button" value="Pool">Pool(<span id="poolCount">0</span>)</button>
-          </div>
           <div>
               <p id="currentTable" class="text-center fs-3 fw-bold">${type=="Pending"?"Inbox":type} List</p>
            </div>

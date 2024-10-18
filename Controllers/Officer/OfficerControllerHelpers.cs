@@ -308,11 +308,14 @@ namespace SocialWelfare.Controllers.Officer
                 switch (type)
                 {
                     case "Pending":
+                         ApplicationList = PendingApplications(Officer, 0, 0, type, ServiceId, true);
+                         break;
                     case "Approve":
+                         ApplicationList = ApproveApplications(Officer,0,0,type,ServiceId,true);
+                         break;
                     case "Pool":
-                        ApplicationList = PendingApplications(Officer, 0, 0, type, ServiceId, true);
-                        _logger.LogInformation($"Application List: {ApplicationList}");
-                        break;
+                         ApplicationList = PoolApplications(Officer,0,0,type,ServiceId,true);
+                         break;
                     case "Sent":
                         ApplicationList = SentApplications(Officer, 0, 0, type, ServiceId, true);
                         break;

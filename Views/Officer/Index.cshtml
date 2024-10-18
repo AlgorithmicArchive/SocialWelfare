@@ -92,6 +92,11 @@
         </div>
         <div class="container-fluid py-5" id="printableArea">
             <div id="mainContainer" class="container-fluid mb-5 py-5">
+                 <div class="container d-none justify-content-center gap-2" id="containerSwitcher">
+                    <button class="btn btn-dark list-button" value="Inbox">Inbox(<span id="inboxCount">0</span>)</button>
+                    <button class="btn btn-secondary list-button" value="Approve">Approve List(<span id="approveCount">0</span>)</button>
+                    <button class="btn btn-secondary list-button" value="Pool">Pool(<span id="poolCount">0</span>)</button>
+                </div>
                 <div class="table-responsive" style="overflow-x: auto;">
                     <table class="table table-striped table-hover table-bordered w-100" id="applicationsTable">
                         <thead class="bg-dark text-white">

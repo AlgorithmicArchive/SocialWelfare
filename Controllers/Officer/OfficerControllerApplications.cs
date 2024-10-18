@@ -276,9 +276,9 @@ namespace SocialWelfare.Controllers.Officer
                 };
 
                 if (serviceSpecific["DateOfMarriage"] != null)
-                    approveData.Insert(approveData.Count - 2, serviceSpecific["DateOfMarriage"]);
+                    approveData.Insert(8, serviceSpecific["DateOfMarriage"]);
                 else
-                    approveColumns.RemoveAt(approveColumns.Count - 2);
+                    approveColumns.RemoveAt(8);
 
                 ApproveList.Add(approveData);
                 approveIndex++;
