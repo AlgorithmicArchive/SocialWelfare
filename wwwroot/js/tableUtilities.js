@@ -509,7 +509,9 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
       // $(`#${tableId}_filter`).addClass("w-100");
       $(`#${tableId}_filter`).after(
         `<div class="d-flex flex-column">
-          <div>
+          ${
+            type=="Pending" || type=="Approve" || type=="Pool" &&
+          `<div>
               <p id="currentTable" class="text-center fs-3 fw-bold">${type=="Pending"?"Inbox":type} List</p>
            </div>
            <div id="actionButtons" class="container-fluid d-flex justify-content-center align-items-center gap-2">
@@ -521,7 +523,7 @@ function initializeRecordTables(tableId, url, serviceId, type, start, length) {
                   </select>
                 </p>
                 <p class="d-flex align-items-center"><button id="actionButton" class="btn btn-dark mt-0" disabled>Proceed</button></p>
-           </div>
+           </div>`}
            <div class="d-flex justify-content-center gap-3 w-100 mt-3">
             <p><b>Total Records</b>:${recordsTotal}</p> 
             <p><b>Filtered Records</b>:${recordsFiltered}</p>

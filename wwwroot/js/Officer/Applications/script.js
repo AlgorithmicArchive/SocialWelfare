@@ -13,7 +13,7 @@ function selectedCount(count,type) {
   const selectOptions={
     inbox:[{value:"ItoA",label:"Transfer To Approve List"}],
     approve:[{value:"AtoP",label:"Transder to Pool"},{value:'AtoI',label:"Transfer to Inbox"}],
-    pool:[{value:"PtoA",label:"Transder to Approve List"},{value:'PtoI',label:"Transfer to Inbox"},{value:'sanctionAll',label:"Sanction Application(s)"}]
+    pool:[{value:"PtoA",label:"Transder to Approve List"},{value:'PtoI',label:"Transfer to Inbox"},{value:'SanctionAll',label:"Sanction Application(s)"}]
   }
   const options = selectOptions[type].map(item => {
     return `<option value="${item.value}">${item.label}</option>`;
@@ -232,10 +232,13 @@ $(document).ready(function () {
       'AtoP': AtoP,
       'AtoI': AtoI,
       'PtoA': PtoA,
-      'PtoI': PtoI
+      'PtoI': PtoI,
+      'SanctionAll':SanctionAll
     };
     if (actions[selectedAction]) {
-      actions[selectedAction]();  // Call the corresponding function
+      if(selectedAction=="SanctionAll")
+          actions[selectedAction](poolIdList, finalList, serviceId);  // Call the corresponding function
+      else actions[selectedAction]();
     } else {
       console.log('Invalid action selected');
     }
