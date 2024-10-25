@@ -53,12 +53,13 @@
         }, 'google_translate_element');
     }
 
-    // Function to hide Google Translate toolbar iframe
+   // Function to hide only the Google Translate toolbar iframe
     function hideGoogleTranslateToolbar() {
         const observer = new MutationObserver(function() {
-            var frame = document.querySelector('iframe'); // Select the iframe
+            // Select the iframe with Google Translate in the src
+            var frame = document.querySelector('iframe[src*="translate.google.com"]');
             if (frame && frame.style.display !== 'none') {
-                frame.style.display = 'none'; // Hide the iframe that contains the toolbar
+                frame.style.display = 'none'; // Hide only the Google Translate iframe
             }
         });
         observer.observe(document.body, { childList: true, subtree: true });

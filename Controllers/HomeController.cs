@@ -13,14 +13,22 @@ using SocialWelfare.Models.Entities;
 
 namespace SocialWelfare.Controllers
 {
-    public class HomeController(ILogger<HomeController> logger, SocialWelfareDepartmentContext dbContext, OtpStore otpStore, EmailSender emailSender, UserHelperFunctions helper, PdfService pdfService) : Controller
+    public class HomeController(
+       ILogger<HomeController> logger,
+       SocialWelfareDepartmentContext dbContext,
+       OtpStore otpStore,
+       IEmailSender emailSender,
+       UserHelperFunctions helper,
+       PdfService pdfService,
+       IConfiguration configuration) : Controller
     {
         private readonly ILogger<HomeController> _logger = logger;
         private readonly SocialWelfareDepartmentContext _dbContext = dbContext;
         private readonly OtpStore _otpStore = otpStore;
-        private readonly EmailSender _emailSender = emailSender;
+        private readonly IEmailSender _emailSender = emailSender;
         private readonly UserHelperFunctions _helper = helper;
         private readonly PdfService _pdfService = pdfService;
+        private readonly IConfiguration _configuration = configuration;
 
         public override void OnActionExecuted(ActionExecutedContext context)
         {
@@ -76,11 +84,11 @@ namespace SocialWelfare.Controllers
             string? AccessLevel = OfficersDesignations!.AccessLevel;
 
             var UserSpecificDetails = new Dictionary<string, dynamic>
-            {
-                { "Profile", "" },
-                { "Designation", designation },
-                { "AccessLevel", AccessLevel! }
-            };
+                {
+                    { "Profile", "" },
+                    { "Designation", designation },
+                    { "AccessLevel", AccessLevel! }
+                };
 
             switch (AccessLevel)
             {
@@ -111,7 +119,7 @@ namespace SocialWelfare.Controllers
             };
             var backupCodesParam = new SqlParameter("@BackupCodes", JsonConvert.SerializeObject(backupCodes));
 
-            var registeredDate = new SqlParameter("@RegisteredDate",DateTime.Now.ToString("dd MMM yyyy hh:mm:ss tt"));
+            var registeredDate = new SqlParameter("@RegisteredDate", DateTime.Now.ToString("dd MMM yyyy hh:mm:ss tt"));
 
             var result = _dbContext.Users.FromSqlRaw(
                 "EXEC RegisterUser @Username, @Password, @Email, @MobileNumber, @UserSpecificDetails, @UserType, @BackupCodes, @RegisteredDate",
@@ -254,20 +262,20 @@ namespace SocialWelfare.Controllers
 
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
                 if (userType == "Citizen" || userType == "Officer" || userType == "Admin")
-                    return Json(new{status = true,userType});
+                    return Json(new { status = true, userType });
                 else
-                    return Json(new{status = false, url = "/Home/Authentication"});
+                    return Json(new { status = false, url = "/Home/Authentication" });
             }
             else
             {
-                return Json(new{status = false, message = "Invalid Code"});
+                return Json(new { status = false, message = "Invalid Code" });
             }
         }
 
         public async Task<IActionResult> Register(IFormCollection form)
         {
             var username = new SqlParameter("@Username", form["Username"].ToString());
-            var password = new SqlParameter("@Password", form["Password"].ToString());  
+            var password = new SqlParameter("@Password", form["Password"].ToString());
             var email = new SqlParameter("@Email", form["Email"].ToString());
             var mobileNumber = new SqlParameter("@MobileNumber", form["MobileNumber"].ToString());
 
@@ -288,8 +296,8 @@ namespace SocialWelfare.Controllers
             var UserType = new SqlParameter("@UserType", "Citizen");
 
             var backupCodesParam = new SqlParameter("@BackupCodes", JsonConvert.SerializeObject(backupCodes));
-            
-            var registeredDate = new SqlParameter("@RegisteredDate",DateTime.Now.ToString("dd MMM yyyy hh:mm:ss tt"));
+
+            var registeredDate = new SqlParameter("@RegisteredDate", DateTime.Now.ToString("dd MMM yyyy hh:mm:ss tt"));
 
             var result = _dbContext.Users.FromSqlRaw(
                 "EXEC RegisterUser @Username, @Password, @Email, @MobileNumber, @UserSpecificDetails, @UserType, @BackupCodes, @RegisteredDate",
@@ -333,7 +341,7 @@ namespace SocialWelfare.Controllers
             {
                 if (int.TryParse(form["CitizenId"].ToString(), out int parsedCitizenId))
                 {
-                    var Citizen = _dbContext.Users.FirstOrDefault(u=>u.UserId == parsedCitizenId);
+                    var Citizen = _dbContext.Users.FirstOrDefault(u => u.UserId == parsedCitizenId);
                     Citizen!.EmailValid = true;
                     _dbContext.SaveChanges();
                     return Json(new { status = true, response = "Registration Successful." });

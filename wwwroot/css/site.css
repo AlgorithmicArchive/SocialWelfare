@@ -255,9 +255,6 @@ body::-webkit-scrollbar {
     transition: background-color 0.3s;
 }
 
-#goog-gt-tt{
-    display: none !important;
-}
 
  /* Simple loading spinner */
  #loading-spinner {
@@ -281,10 +278,21 @@ body::-webkit-scrollbar {
 }
 
 
-.goog-te-gadget-simple{
-    border-radius: 5px;
-    padding: 5px !important;
-}
+.skiptranslate iframe{
+    display: none;
+  }
+  #goog-gt-tt{
+    display: none !important;
+  }
+  
+  #google_translate_element{
+    display: flex;
+    align-items: center;
+  }
+  
+  .goog-te-gadget-simple{
+    border-radius: 25px !important;
+  }
 
 
 

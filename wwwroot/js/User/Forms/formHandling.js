@@ -67,7 +67,7 @@ function handleFormAppend(formNo) {
       urlInsert = "/User/InsertBankDetails";
       urlUpdate = "/User/UpdateBankDetails";
       const bankDetails = {
-        BankName: $("#BankName").val(),
+        BankName: $("#BankName").val(), 
         BranchName: $("#BranchName").val(),
         IfscCode: $("#IfscCode").val(),
         AccountNumber: $("#AccountNumber").val(),

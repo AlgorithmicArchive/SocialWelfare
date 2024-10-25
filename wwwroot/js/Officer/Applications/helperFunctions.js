@@ -16,6 +16,7 @@ function UserDetails(applicationId) {
 }
 
 async function SanctionAll(poolList, finalList, ServiceId) {
+  console.log(poolList,finalList,ServiceId);
   if (finalList.length > 0) {
     const id = finalList.shift();
     showSpinner();
@@ -59,7 +60,6 @@ async function SanctionAll(poolList, finalList, ServiceId) {
       .then((res) => res.json())
       .then((data) => {
         if (data.status) {
-          hideSpinner();
           window.location.href = "/Officer/Index";
         }
       });

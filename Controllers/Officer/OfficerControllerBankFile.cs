@@ -61,22 +61,32 @@ namespace SocialWelfare.Controllers.Officer
             int serviceId = Convert.ToInt32(form["serviceId"].ToString());
             int districtId = Convert.ToInt32(form["districtId"].ToString());
 
-            var bankFile = dbcontext.BankFiles.FirstOrDefault(bf => bf.ServiceId == serviceId && bf.DistrictId == districtId && bf.FileSent == false);
+            var bankFile = dbcontext.BankFiles.FirstOrDefault(bf => bf.ServiceId == serviceId && bf.DistrictId == districtId);
+            
+            if(bankFile == null){
+                return Json(new{status=false,message="No Bank File for this district."});
+            }
+            else if(bankFile!=null && bankFile.FileSent==false){
+                return Json(new{status=false,message="Bank File not sent."});
+            }
+
+            if (!string.IsNullOrEmpty(bankFile!.ResponseFile))
+            {
+                return Json(new { status = true, file = bankFile.ResponseFile });
+            }
+
+
             string originalFileName = Path.GetFileNameWithoutExtension(bankFile!.FileName);
             string responseFile = $"{originalFileName}_response.csv";
 
             var ftpClient = new SftpClient(ftpHost, 22, ftpUser, ftpPassword);
             ftpClient.Connect();
 
+         
 
             if (!ftpClient.IsConnected)
             {
                 return Json(new { status = false, message = "Unable to connect to the SFTP server." });
-            }
-
-            if (!string.IsNullOrEmpty(bankFile.ResponseFile))
-            {
-                return Json(new { status = true, file = bankFile.ResponseFile });
             }
 
             if (!ftpClient.Exists(responseFile))

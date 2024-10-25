@@ -7,9 +7,7 @@ let finalList = [];
 let serviceId = 0;
 let bankDispatchFile = "";
 
-function selectedCount(count,type) {
-  $("#selectedCount").val("0");
-  $("#selectedCount").val(count);
+function setActionOptions(type,count){
   const selectOptions={
     inbox:[{value:"ItoA",label:"Transfer To Approve List"}],
     approve:[{value:"AtoP",label:"Transder to Pool"},{value:'AtoI',label:"Transfer to Inbox"}],
@@ -22,6 +20,12 @@ function selectedCount(count,type) {
   $("#actionSelect").append(options);
   if(count>0) $("#actionButton").attr('disabled',false);
   else $("#actionButton").attr('disabled',true);
+}
+
+function selectedCount(count,type) {
+  $("#selectedCount").val("0");
+  $("#selectedCount").val(count);
+  setActionOptions(type,count);
   listCount(Applications.pendingList.recordsTotal,Applications.approveCount,Applications.poolCount);
 }
 
@@ -220,32 +224,45 @@ $(document).ready(function () {
   $(document).on("change", ".poolList-parent", function () {
     toggleAll(this, ".poolList-element");
   });
-  $("#sanctionAll").on("click", () =>
-    SanctionAll(poolIdList, finalList, serviceId)
-  );
-
  
-  $(document).on('click','#actionButton',function(){
+  $(document).on('click', '#actionButton', function() {
     const selectedAction = $("#actionSelect").val();
-    const actions = {
-      'ItoA': ItoA,
-      'AtoP': AtoP,
-      'AtoI': AtoI,
-      'PtoA': PtoA,
-      'PtoI': PtoI,
-      'SanctionAll':SanctionAll
-    };
-    if (actions[selectedAction]) {
-      if(selectedAction=="SanctionAll")
-          actions[selectedAction](poolIdList, finalList, serviceId);  // Call the corresponding function
-      else actions[selectedAction]();
-    } else {
-      console.log('Invalid action selected');
+    if (!selectedAction) {
+        console.log('No action selected');
+        return;
     }
-    setTimeout(()=>{
-      selectedAction.charAt(0) == 'I'? $('.list-button[value="Inbox"]').trigger('click'):selectedAction.charAt(0)=='P'?$('.list-button[value="Pool"]').trigger('click'):$('.list-button[value="Approve"]').trigger('click');
-    },500);
-  })
+
+    const actions = {
+        'ItoA': ItoA,
+        'AtoP': AtoP,
+        'AtoI': AtoI,
+        'PtoA': PtoA,
+        'PtoI': PtoI,
+        'SanctionAll': SanctionAll
+    };
+
+    if (actions[selectedAction]) {
+        if (selectedAction === "SanctionAll") {
+            actions[selectedAction](poolIdList, finalList, serviceId);
+        } else {
+            actions[selectedAction]();
+        }
+    } else {
+        console.log('Invalid action selected');
+    }
+
+    setTimeout(() => {
+        const [firstChar] = selectedAction;
+        if (firstChar === 'I') {
+            $('.list-button[value="Inbox"]').trigger('click');
+        } else if (firstChar === 'P') {
+            $('.list-button[value="Pool"]').trigger('click');
+        } else if(firstChar == "A"){
+            $('.list-button[value="Approve"]').trigger('click');
+        }
+    }, 500);
+});
+
 
   $(document).on('click', '.list-button', function() {
     const value = $(this).val();
@@ -257,12 +274,15 @@ $(document).ready(function () {
       0,
       10
     );
+    const type = value.toLowerCase();
+    const count = type=="inbox"?Applications.pendingList.recordsTotal:type=="approve"?Applications.approveCount:Applications.poolCount;
     $("#currentTable").text(`${value} List`);
     setTimeout(() => {
       showContainerSwitcher();
       listCount(Applications.pendingList.recordsTotal, Applications.approveCount, Applications.poolCount);
       $('.list-button').removeClass('btn-dark').addClass('btn-secondary');
       $(`.list-button[value="${value}"]`).removeClass('btn-secondary').addClass('btn-dark');
+      setActionOptions(type,count);
     }, 100);
 });
 
